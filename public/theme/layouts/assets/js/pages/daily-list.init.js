@@ -1,327 +1,250 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('daily-list.init.js: Script loaded');
+    console.log('daily-list.init.js: Loaded');
 
-    // Initialize Choices.js
-    const dayFilter = document.getElementById('dayFilter');
-    if (dayFilter) {
-        try {
-            new Choices(dayFilter, { removeItemButton: true, searchEnabled: true });
-            console.log('Choices.js initialized for dayFilter');
-        } catch (e) {
-            console.error('Error initializing Choices.js:', e);
-        }
-    } else {
-        console.warn('dayFilter: #dayFilter not found');
-    }
+    // CSRF Token Setup
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    if (!csrfToken) console.error('CSRF token not found');
 
-    // Initialize List.js
-    let dailyList = null;
-    try {
-        dailyList = new List('dailyList', {
-            valueNames: ['day_number', 'daily_feeds', 'daily_mortality', 'current_birds', 'daily_egg_production', 'created_at'],
-            listClass: 'list',
-            searchClass: 'search',
-            item: 'dailyRowTemplate'
-        });
-        console.log('List.js initialized');
-    } catch (e) {
-        console.error('Error initializing List.js:', e);
-    }
-
-    // Filter data (search, filter, pagination)
+    // Filter Data
     window.filterData = function (url = null) {
-        console.log('filterData: Starting', { url });
+        console.log('filterData:', { url });
         const search = document.getElementById('searchDay').value;
-        const dayFilterValue = dayFilter.value;
-        const fetchUrl = url || `/daily-entries/${window.weekId}?search=${encodeURIComponent(search)}&day_filter=${encodeURIComponent(dayFilterValue)}`;
+        const dayFilter = document.getElementById('dayFilter').value;
+        const fetchUrl = url || `/daily-entries/${window.weekId}?search=${encodeURIComponent(search)}&day_filter=${encodeURIComponent(dayFilter)}`;
         fetch(fetchUrl, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
         })
         .then(response => {
-            if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();
         })
         .then(data => {
-            if (dailyList) {
-                dailyList.clear();
-                dailyList.add(data.dailyEntries);
-            }
+            const tbody = document.getElementById('dailyList');
+            tbody.innerHTML = data.dailyEntries.map(entry => `
+                <tr>
+                    <td><input type="checkbox" class="chk-child" value="${entry.id}" data-id="${entry.id}"></td>
+                    <td class="day_number">${entry.day_number}</td>
+                    <td class="daily_feeds">${entry.daily_feeds}</td>
+                    <td class="daily_mortality">${entry.daily_mortality}</td>
+                    <td class="current_birds">${entry.current_birds}</td>
+                    <td class="daily_egg_production">${entry.daily_egg_production}</td>
+                    <td class="created_at">${entry.created_at}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-secondary edit-item-btn" data-id="${entry.id}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-item-btn" data-id="${entry.id}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
             document.getElementById('pagination-element').innerHTML = data.pagination;
-            document.querySelector('.badge.bg-dark-subtle').textContent = data.total;
             if (window.dailyChart) {
                 window.dailyChart.data.labels = data.chartData.labels;
                 window.dailyChart.data.datasets[0].data = data.chartData.daily_egg_production;
                 window.dailyChart.update();
             }
-            console.log('filterData: Data updated');
-            // Rebind pagination clicks
+            console.log('filterData: Updated');
             bindPagination();
         })
-        .catch(error => {
-            console.error('Error filtering data:', error);
-            alert('Failed to filter data: ' + error.message);
-        });
+        .catch(error => console.error('filterData error:', error));
     };
 
-    // Bind pagination clicks
+    // Bind Pagination
     function bindPagination() {
-        console.log('bindPagination: Binding clicks');
+        console.log('bindPagination');
         document.querySelectorAll('#pagination-element .page-link').forEach(link => {
-            link.addEventListener('click', function (e) {
+            link.addEventListener('click', e => {
                 e.preventDefault();
-                const href = this.getAttribute('href');
+                const href = link.getAttribute('href');
                 if (href && href !== '#') {
-                    console.log('Pagination: Clicking', href);
+                    console.log('Pagination:', href);
                     window.filterData(href);
                 }
             });
         });
     }
-
-    // Initial pagination binding
     bindPagination();
 
-    // Add daily entry
+    // Add Entry
     const addForm = document.getElementById('add-daily-form');
     if (addForm) {
         addForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            console.log('Add modal: Form submitted');
+            console.log('Add modal: Submit');
             const formData = new FormData(this);
             fetch(`/daily-entries/${window.weekId}`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 },
                 body: formData
             })
             .then(response => {
                 if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || `HTTP ${response.status}`);
-                    });
+                    return response.json().then(err => { throw new Error(JSON.stringify(err)); });
                 }
                 return response.json();
             })
             .then(data => {
-                if (data.id) {
-                    if (dailyList) dailyList.add(data);
-                    bootstrap.Modal.getInstance(document.getElementById('addDailyModal')).hide();
-                    filterData();
-                    alert('Daily entry added successfully');
-                    addForm.reset();
-                    document.getElementById('add-error-msg').classList.add('d-none');
-                    console.log('Add modal: Entry added', data);
-                }
+                console.log('Add modal: Success', data);
+                bootstrap.Modal.getInstance(document.getElementById('addDailyModal')).hide();
+                window.filterData();
+                alert('Daily entry added successfully');
+                addForm.reset();
+                document.getElementById('add-error-msg').classList.add('d-none');
             })
             .catch(error => {
-                console.error('Error adding daily entry:', error);
-                let errorMessage = error.message;
+                console.error('Add error:', error);
+                let errorMsg = 'Failed to add entry';
                 try {
                     const err = JSON.parse(error.message);
-                    if (err.errors) errorMessage = Object.values(err.errors).flat().join(', ');
+                    errorMsg = err.errors ? Object.values(err.errors).flat().join(', ') : err.message;
                 } catch (e) {}
-                document.getElementById('add-error-msg').textContent = errorMessage;
+                document.getElementById('add-error-msg').textContent = errorMsg;
                 document.getElementById('add-error-msg').classList.remove('d-none');
             });
         });
     } else {
-        console.warn('Add modal: #add-daily-form not found');
+        console.warn('Add form not found');
     }
 
-    // Open edit modal
+    // Edit Modal
     document.addEventListener('click', function (e) {
         if (e.target.closest('.edit-item-btn')) {
             console.log('Edit modal: Opening');
             const row = e.target.closest('tr');
-            const entryId = parseInt(row.querySelector('.chk-child').value);
-            const dayNumber = row.querySelector('.day_number').textContent.replace('Day ', '');
-            const dailyFeeds = parseFloat(row.querySelector('.daily_feeds').textContent) || 0;
-            const dailyMortality = parseInt(row.querySelector('.daily_mortality').textContent) || 0;
-            const dailyEggProduction = parseInt(row.querySelector('.daily_egg_production').textContent) || 0;
-
-            document.getElementById('edit-id-field').value = entryId;
-            document.getElementById('edit_day_number').value = dayNumber;
-            document.getElementById('edit_daily_feeds').value = dailyFeeds;
-            document.getElementById('edit_daily_mortality').value = dailyMortality;
-            document.getElementById('edit_daily_egg_production').value = dailyEggProduction;
-
-            ['available_feeds', 'total_feeds_consumed', 'sick_bay', 'total_mortality', 
-             'daily_sold_egg', 'total_sold_egg', 'broken_egg', 'outstanding_egg', 
-             'total_egg_in_farm', 'drugs', 'reorder_feeds'].forEach(field => {
-                document.getElementById(`edit_${field}`).value = '';
-            });
-
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('editDailyModal')).show();
+            const entryId = row.querySelector('.chk-child').value;
+            fetch(`/daily-entries/${window.weekId}/${entryId}`, {
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('edit-id-field').value = data.id;
+                document.getElementById('edit_day_number').value = data.day_number.replace('Day ', '');
+                document.getElementById('edit_daily_feeds').value = data.daily_feeds;
+                document.getElementById('edit_available_feeds').value = data.available_feeds || 0;
+                document.getElementById('edit_total_feeds_consumed').value = data.total_feeds_consumed || 0;
+                document.getElementById('edit_daily_mortality').value = data.daily_mortality;
+                document.getElementById('edit_sick_bay').value = data.sick_bay || 0;
+                document.getElementById('edit_total_mortality').value = data.total_mortality || 0;
+                document.getElementById('edit_daily_egg_production').value = data.daily_egg_production;
+                document.getElementById('edit_daily_sold_egg').value = data.daily_sold_egg || 0;
+                document.getElementById('edit_total_sold_egg').value = data.total_sold_egg || 0;
+                document.getElementById('edit_broken_egg').value = data.broken_egg || 0;
+                document.getElementById('edit_outstanding_egg').value = data.outstanding_egg || 0;
+                document.getElementById('edit_total_egg_in_farm').value = data.total_egg_in_farm || 0;
+                document.getElementById('edit_drugs').value = data.drugs || '';
+                document.getElementById('edit_reorder_feeds').value = data.reorder_feeds || '';
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('editDailyModal')).show();
+            })
+            .catch(error => console.error('Edit fetch error:', error));
         }
     });
 
-    // Update daily entry
+    // Update Entry
     const editForm = document.getElementById('edit-daily-form');
     if (editForm) {
         editForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            console.log('Edit modal: Form submitted');
-            const entryId = parseInt(document.getElementById('edit-id-field').value);
+            console.log('Edit modal: Submit');
+            const entryId = document.getElementById('edit-id-field').value;
             const formData = new FormData(this);
             fetch(`/daily-entries/${window.weekId}/${entryId}`, {
                 method: 'PUT',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 },
                 body: formData
             })
             .then(response => {
                 if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || `HTTP ${response.status}`);
-                    });
+                    return response.json().then(err => { throw new Error(JSON.stringify(err)); });
                 }
                 return response.json();
             })
             .then(data => {
-                if (data.id) {
-                    if (dailyList) {
-                        dailyList.remove('id', data.id);
-                        dailyList.add(data);
-                    }
-                    bootstrap.Modal.getInstance(document.getElementById('editDailyModal')).hide();
-                    filterData();
-                    alert('Daily entry updated successfully');
-                    document.getElementById('edit-error-msg').classList.add('d-none');
-                    console.log('Edit modal: Entry updated', data);
-                }
+                console.log('Edit modal: Success', data);
+                bootstrap.Modal.getInstance(document.getElementById('editDailyModal')).hide();
+                window.filterData();
+                alert('Daily entry updated successfully');
+                document.getElementById('edit-error-msg').classList.add('d-none');
             })
             .catch(error => {
-                console.error('Error updating daily entry:', error);
-                let errorMessage = error.message;
+                console.error('Edit error:', error);
+                let errorMsg = 'Failed to update entry';
                 try {
                     const err = JSON.parse(error.message);
-                    if (err.errors) errorMessage = Object.values(err.errors).flat().join(', ');
+                    errorMsg = err.errors ? Object.values(err.errors).flat().join(', ') : err.message;
                 } catch (e) {}
-                document.getElementById('edit-error-msg').textContent = errorMessage;
+                document.getElementById('edit-error-msg').textContent = errorMsg;
                 document.getElementById('edit-error-msg').classList.remove('d-none');
             });
         });
     } else {
-        console.warn('Edit modal: #edit-daily-form not found');
+        console.warn('Edit form not found');
     }
 
-    // Open delete modal
+    // Delete Modal
     document.addEventListener('click', function (e) {
         if (e.target.closest('.remove-item-btn')) {
             console.log('Delete modal: Opening');
-            const row = e.target.closest('tr');
-            const entryId = parseInt(row.querySelector('.chk-child').value);
+            const entryId = e.target.closest('tr').querySelector('.chk-child').value;
             document.getElementById('delete-record').dataset.entryId = entryId;
             bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteRecordModal')).show();
         }
     });
 
-    // Delete single entry
+    // Delete Entry
     const deleteButton = document.getElementById('delete-record');
     if (deleteButton) {
         deleteButton.addEventListener('click', function () {
-            console.log('Delete modal: Deleting entry');
-            const entryId = parseInt(this.dataset.entryId);
+            console.log('Delete modal: Deleting');
+            const entryId = this.dataset.entryId;
             fetch(`/daily-entries/${window.weekId}/${entryId}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 }
             })
             .then(response => {
-                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 return response.json();
             })
             .then(data => {
-                if (dailyList) dailyList.remove('id', entryId);
+                console.log('Delete modal: Success', data);
                 bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal')).hide();
-                filterData();
-                alert(data.message || 'Daily entry deleted successfully');
-                console.log('Delete modal: Entry deleted', entryId);
+                window.filterData();
+                alert('Daily entry deleted successfully');
             })
-            .catch(error => {
-                console.error('Error deleting daily entry:', error);
-                alert('Failed to delete entry: ' + error.message);
-            });
+            .catch(error => console.error('Delete error:', error));
         });
     } else {
-        console.warn('Delete modal: #delete-record not found');
+        console.warn('Delete button not found');
     }
 
-    // Delete multiple entries
-    window.deleteMultiple = function () {
-        console.log('deleteMultiple: Starting');
-        const selectedIds = Array.from(document.querySelectorAll('.chk-child:checked')).map(checkbox => parseInt(checkbox.value));
-        if (selectedIds.length) {
-            Promise.all(selectedIds.map(id =>
-                fetch(`/daily-entries/${window.weekId}/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                }).then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    return response.json();
-                })
-            ))
-            .then(() => {
-                if (dailyList) selectedIds.forEach(id => dailyList.remove('id', id));
-                document.getElementById('remove-actions').classList.add('d-none');
-                document.getElementById('checkAll').checked = false;
-                filterData();
-                alert('Daily entries deleted successfully');
-                console.log('deleteMultiple: Entries deleted', selectedIds);
-            })
-            .catch(error => {
-                console.error('Error deleting daily entries:', error);
-                alert('Failed to delete entries: ' + error.message);
-            });
-        }
-    };
-
-    // Check all checkboxes
+    // Check All
     const checkAll = document.getElementById('checkAll');
     if (checkAll) {
         checkAll.addEventListener('change', function () {
-            document.querySelectorAll('.chk-child').forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-            document.getElementById('remove-actions').classList.toggle('d-none', !this.checked);
-            console.log('checkAll: Toggled', this.checked);
+            document.querySelectorAll('.chk-child').forEach(cb => cb.checked = this.checked);
+            console.log('checkAll:', this.checked);
         });
     } else {
-        console.warn('checkAll: #checkAll not found');
-    }
-
-    // Toggle delete button visibility
-    document.querySelectorAll('.chk-child').forEach(checkbox => {
-        checkbox.addEventListener('change', function () {
-            const anyChecked = document.querySelectorAll('.chk-child:checked').length > 0;
-            document.getElementById('remove-actions').classList.toggle('d-none', !anyChecked);
-            console.log('chk-child: Toggled', anyChecked);
-        });
-    });
-
-    // Debug add button
-    const addButton = document.querySelector('.add-btn');
-    if (addButton) {
-        addButton.addEventListener('click', () => {
-            console.log('Add button: Clicked');
-            const modal = document.getElementById('addDailyModal');
-            if (modal) {
-                console.log('Add modal: Found, showing');
-                bootstrap.Modal.getOrCreateInstance(modal).show();
-            } else {
-                console.error('Add modal: #addDailyModal not found');
-            }
-        });
-    } else {
-        console.warn('Add button: .add-btn not found');
+        console.warn('checkAll not found');
     }
 });
