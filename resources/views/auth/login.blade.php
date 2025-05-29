@@ -199,82 +199,13 @@
                                         </div>
                                     </div>
                                 </div> --}}
-                                <div class="col-xxl-5">
-                                    <div class="card auth-card bg-secondary h-100 border-0 shadow-none d-none d-sm-block mb-0">
-                                        <div class="card-body py-5 d-flex justify-content-between flex-column">
-                                            <div class="text-center">
-                                                <h3 class="text-white">Start your journey with us.</h3>
-                                                <p class="text-white opacity-75 fs-base">It makes school operations SEEMLESS...</p>
-                                            </div>
-                            
-                                            <div class="auth-effect-main my-5 position-relative rounded-circle d-flex align-items-center justify-content-center mx-auto">
-                                                <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
-                                                    <div class="effect-circle-2 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
-                                                        <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center">
-                                                            Welcome to <span class="text-primary ms-1">Vite-ESchool</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <ul class="auth-user-list list-unstyled">
-                                                    <li>
-                                                        {{-- <a href="{{ route('users.show', $user->id) }}" class="avatar-sm d-inline-block" title="{{ $user->name }}">
-                                                            <div class="avatar-title bg-white shadow-lg overflow-hidden rounded-circle">
-                                                                <img src="{{ asset($user->avatar) }}" alt="{{ $user->name }}" class="img-fluid">
-                                                            </div>
-                                                            <span class="avatar-tooltip">{{ $user->name }}</span>
-                                                        </a> --}}
-                                                        <div class="avatar-sm d-inline-block">
-                                                            <div class="avatar-title bg-white shadow-lg overflow-hidden rounded-circle">
-                                                                <img src="{{ asset('theme/layouts/assets/images/users/avatar-1.jpg')}}" alt="" class="img-fluid">
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                    <li>
-                                                        <div class="avatar-sm d-inline-block">
-                                                            <div class="avatar-title bg-white shadow-lg overflow-hidden rounded-circle">
-                                                                <img src="{{ asset('theme/layouts/assets/images/users/avatar-2.jpg')}}" alt="" class="img-fluid">
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                    <li>
-                                                        <div class="avatar-sm d-inline-block">
-                                                            <div class="avatar-title bg-white shadow-lg overflow-hidden rounded-circle">
-                                                                <img src="{{ asset('theme/layouts/assets/images/users/avatar-3.jpg')}}" alt="" class="img-fluid">
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                    <li>
-                                                        <div class="avatar-sm d-inline-block">
-                                                            <div class="avatar-title bg-white shadow-lg overflow-hidden rounded-circle">
-                                                                <img src="{{ asset('theme/layouts/assets/images/users/avatar-4.jpg')}}" alt="" class="img-fluid">
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                    <li>
-                                                        <div class="avatar-sm d-inline-block">
-                                                            <div class="avatar-title bg-white shadow-lg overflow-hidden rounded-circle">
-                                                                <img src="{{ asset('theme/layouts/assets/images/users/avatar-5.jpg')}}" alt="" class="img-fluid">
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                </ul>
-                                                
-                                            </div>
-                            
-                                            <div class="text-center">
-                                                <p class="text-white opacity-75 mb-0 mt-3">
-                                                    &copy; <script>document.write(new Date().getFullYear())</script> Vite-ESchool. Created with <i class="mdi mdi-heart text-danger"></i> by Qudroid Systems
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                              
                                 <!--end col-->
                                 <div class="col-xxl-6 mx-auto">
                                     <div class="card mb-0 border-0 shadow-none mb-0">
                                         <div class="card-body p-sm-5 m-lg-4">
                                             <div class="text-center mt-5">
-                                                <h5 class="fs-3xl">TopClass College Portal</h5>
+                                                <h5 class="fs-3xl">Poultritics Portal</h5>
                                                 <p class="text-muted">Sign in to continue</p>
                                             </div>
                                             <div class="p-2 mt-5">
