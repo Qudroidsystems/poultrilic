@@ -64,9 +64,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::delete('weeks/bulk', [WeekEntryController::class, 'bulkDestroy'])->name('week-entries.bulk-delete');
     });
 
-    Route::get('/daily-entries/{weekId}', [DailyEntryController::class, 'index'])->name('daily-entries.index');
-    Route::get('/daily-entries/{weekId}/create', [DailyEntryController::class, 'create'])->name('daily-entries.create');
-    Route::post('/daily-entries/{weekId}', [DailyEntryController::class, 'store'])->name('daily-entries.store');
-    Route::put('/daily-entries/{weekId}/{id}', [DailyEntryController::class, 'update'])->name('daily-entries.update');
-    Route::delete('/daily-entries/{weekId}/{entryId}', [DailyEntryController::class, 'destroy'])->name('daily-entries.destroy');
+    Route::prefix('daily-entries/{weekId}')->group(function () {
+        Route::get('/', [DailyEntryController::class, 'index'])->name('daily-entries.index');
+        Route::post('/', [DailyEntryController::class, 'store'])->name('daily-entries.store');
+        Route::put('/{id}', [DailyEntryController::class, 'update'])->name('daily-entries.update');
+        Route::delete('/{id}', [DailyEntryController::class, 'destroy'])->name('daily-entries.delete');
+        Route::get('/create', [DailyEntryController::class, 'create'])->name('daily-entries.create');
+    });
 });

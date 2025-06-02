@@ -4,11 +4,6 @@
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
-            <!-- CSRF Token -->
-            <meta name="csrf-token" content="{{ csrf_token() }}">
-            <!-- Bird Count Ranges for JavaScript -->
-            <meta name="bird-count-ranges" content="{{ json_encode($bird_count_ranges) }}">
-
             <!-- Start page title -->
             <div class="row">
                 <div class="col-12">
@@ -24,6 +19,8 @@
                 </div>
             </div>
             <!-- End page title -->
+
+          
 
             @if ($errors->any())
                 <div class="alert alert-danger">
@@ -43,17 +40,6 @@
                 </div>
             @endif
 
-            <!-- Chart -->
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <canvas id="flockChart" height="100"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div id="flockList">
                 <div class="row">
                     <div class="col-lg-12">
@@ -62,7 +48,7 @@
                                 <div class="row g-3 align-items-center">
                                     <div class="col-md-4">
                                         <div class="search-box">
-                                            <input type="text" class="form-control search" id="searchFlock" placeholder="Search flocks by ID or count" aria-label="Search flocks">
+                                            <input type="text" class="form-control search" id="searchFlock" placeholder="Search flocks by ID" aria-label="Search flocks">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
@@ -100,81 +86,83 @@
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-centered align-middle table-nowrap mb-0" id="flockTable">
-                                        <thead class="table-active">
-                                            <tr>
-                                                <th scope="col">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="checkAll" value="option">
-                                                        <label class="form-check-label"></label>
-                                                    </div>
-                                                </th>
-                                                <th scope="col">Initial Bird Count</th>
-                                                <th scope="col">Current Bird Count</th>
-                                                <th scope="col">Created At</th>
-                                                <th scope="col">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="list form-check-all">
-                                            @forelse ($flocks as $flock)
-                                                <tr data-id="{{ $flock->id }}">
-                                                    <td>
+                                    <div class="table-responsive">
+                                        <table class="table table-centered align-middle table-nowrap mb-0" id="flockTable">
+                                            <thead class="table-active">
+                                                <tr>
+                                                    <th scope="col">
                                                         <div class="form-check">
-                                                            <input class="form-check-input chk-child" type="checkbox" name="chk_child" value="{{ $flock->id }}" data-id="{{ $flock->id }}">
+                                                            <input class="form-check-input" type="checkbox" id="checkAll" value="option">
                                                             <label class="form-check-label"></label>
                                                         </div>
-                                                    </td>
-                                                    <td class="initial_bird_count">{{ $flock->initial_bird_count }}</td>
-                                                    <td class="current_bird_count">{{ $flock->current_bird_count }}</td>
-                                                    <td class="created_at">{{ $flock->created_at->format('Y-m-d') }}</td>
-                                                    <td>
-                                                        <div class="hstack gap-2">
-                                                            @can('View flock')
+                                                    </th>
+                                                    <th scope="col">Initial Bird Count</th>
+                                                    <th scope="col">Current Bird Count</th>
+                                                    <th scope="col">Created At</th>
+                                                    <th scope="col">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="list form-check-all">
+                                                @forelse ($flocks as $flock)
+                                                    <tr key="{{ $flock->id }}">
+                                                        <td>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input chk-child" type="checkbox" name="chk_child" value="{{ $flock->id }}" data-id="{{ $flock->id }}">
+                                                                <label class="form-check-label"></label>
+                                                            </div>
+                                                        </td>
+                                                        <td class="initial_bird_count">{{ $flock->initial_bird_count }}</td>
+                                                        <td class="current_bird_count">{{ $flock->current_bird_count }}</td>
+                                                        <td class="created_at">{{ $flock->created_at->format('Y-m-d') }}</td>
+                                                        <td>
+                                                            <div class="hstack gap-2">
+                                                                @can('View flock')
                                                                 <a href="{{ route('week-entries.index', $flock->id) }}" class="btn btn-subtle-primary btn-icon btn-sm" title="View flock"><i class="ph-eye"></i></a>
-                                                            @endcan
-                                                            @can('Update flock')
-                                                                <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-flock-id="{{ $flock->id }}" title="Edit flock"><i class="ph-pencil"></i></button>
-                                                            @endcan
-                                                            @can('Delete flock')
-                                                                <button type="button" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-flock-id="{{ $flock->id }}" title="Delete flock"><i class="ph-trash"></i></button>
-                                                            @endcan
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr class="noresult">
-                                                    <td colspan="5" class="text-center">No flocks found</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                    <!-- Template for List.js new items -->
-                                    <template id="flockRowTemplate">
-                                        <tr data-id="{!! '{{id}}' !!}">
-                                            <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input chk-child" type="checkbox" name="chk_child" value="{!! '{{id}}' !!}" data-id="{!! '{{id}}' !!}">
-                                                    <label class="form-check-label"></label>
-                                                </div>
-                                            </td>
-                                            <td class="initial_bird_count">{!! '{{initial_bird_count}}' !!}</td>
-                                            <td class="current_bird_count">{!! '{{current_bird_count}}' !!}</td>
-                                            <td class="created_at">{!! '{{created_at}}' !!}</td>
-                                            <td>
-                                                <div class="hstack gap-2">
-                                                    @can('View flock')
-                                                        <a href="/week-entries/{!! '{{id}}' !!}" class="btn btn-subtle-primary btn-icon btn-sm" title="View flock"><i class="ph-eye"></i></a>
-                                                    @endcan
-                                                    @can('Update flock')
-                                                        <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-flock-id="{!! '{{id}}' !!}" title="Edit flock"><i class="ph-pencil"></i></button>
-                                                    @endcan
-                                                    @can('Delete flock')
-                                                        <button type="button" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-flock-id="{!! '{{id}}' !!}" title="Delete flock"><i class="ph-trash"></i></button>
-                                                    @endcan
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </template>
+                                                                @endcan
+                                                                @can('Update flock')
+                                                                    <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit flock"><i class="ph-pencil"></i></button>
+                                                                @endcan
+                                                                @can('Delete flock')
+                                                                    <button type="button" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" title="Delete flock"><i class="ph-trash"></i></button>
+                                                                @endcan
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @empty
+                                                    <tr class="noresult">
+                                                        <td colspan="5" class="text-center">No flocks found</td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                        <!-- Template for List.js new items -->
+                                        <template id="flockRowTemplate">
+                                            <tr>
+                                                <td>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input chk-child" type="checkbox" name="chk_child" value="{!! '{{id}}' !!}" data-id="{!! '{{id}}' !!}">
+                                                        <label class="form-check-label"></label>
+                                                    </div>
+                                                </td>
+                                                <td class="initial_bird_count">{!! '{{initial_bird_count}}' !!}</td>
+                                                <td class="current_bird_count">{!! '{{current_bird_count}}' !!}</td>
+                                                <td class="created_at">{!! '{{created_at}}' !!}</td>
+                                                <td>
+                                                    <div class="hstack gap-2">
+                                                        @can('View flock')
+                                                            <a href="/flocks/{!! '{{id}}' !!}" class="btn btn-subtle-primary btn-icon btn-sm" title="View flock"><i class="ph-eye"></i></a>
+                                                        @endcan
+                                                        @can('Update flock')
+                                                            <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit flock"><i class="ph-pencil"></i></button>
+                                                        @endcan
+                                                        @can('Delete flock')
+                                                            <button type="button" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" title="Delete flock"><i class="ph-trash"></i></button>
+                                                        @endcan
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </div>
                                 </div>
                                 <div class="row mt-3 align-items-center" id="pagination-element">
                                     <div class="col-sm">
@@ -207,7 +195,7 @@
             </div>
 
             <!-- Add Flock Modal -->
-            <div id="addFlockModal" class="modal fade" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+            <div id="addFlockModal" class="modal fade" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -233,7 +221,7 @@
             </div>
 
             <!-- Edit Flock Modal -->
-            <div id="editFlockModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div id="editFlockModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -285,18 +273,12 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                        </div>
             </div>
         </div>
     </div>
-
-    <!-- Libraries -->
-    {{-- <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/list.js@2.3.1/dist/list.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.1/public/assets/scripts/choices.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> --}}
+   
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-    {{-- <script src="{{ asset('js/flock-list.init.js') }}"></script> --}}
+    {{-- // <script src="{{ asset('js/flock-list.init.js') }}"></script> --}}
 </div>
 @endsection

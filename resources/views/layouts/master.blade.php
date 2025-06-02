@@ -1445,7 +1445,7 @@
       @endif  
        
       @if (Route::is('daily-entries.*'))
-             @include('layouts.pages-assets.js.daily-list-js')
+             @include('layouts.pages-assets.js.week-list-js')
       @endif  
   
       </body>
