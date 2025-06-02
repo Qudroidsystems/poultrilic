@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class FlockController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $flocks = Flock::paginate(5);
         $bird_count_ranges = [
@@ -18,6 +18,14 @@ class FlockController extends Controller
             '201-500' => Flock::whereBetween('initial_bird_count', [201, 500])->count(),
             '501+' => Flock::where('initial_bird_count', '>', 500)->count(),
         ];
+
+        if ($request->ajax()) {
+            return response()->json([
+                'flocks' => $flocks,
+                'bird_count_ranges' => $bird_count_ranges
+            ]);
+        }
+
         return view('flocks.flocks.index', [
             'flocks' => $flocks,
             'bird_count_ranges' => $bird_count_ranges,

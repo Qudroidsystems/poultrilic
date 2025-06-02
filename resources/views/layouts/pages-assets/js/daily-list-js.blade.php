@@ -18,5 +18,3 @@
 <script src="{{ asset('theme/layouts/assets/js/pages/daily-list.init.js') }}"></script>
 <!-- App js -->
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
-{{-- <!-- Dashboard script (load last to minimize conflicts) -->
-<script src="{{ asset('theme/layouts/assets/js/pages/dashboard-real-estate.init.js') }}"></script> --}}

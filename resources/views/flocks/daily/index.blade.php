@@ -157,8 +157,14 @@
                                             <td class="created_at">{created_at}</td>
                                             <td>
                                                 <div class="hstack gap-2">
-                                                    <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit entry"><i class="ph-pencil"></i></button>
-                                                    <button type="button" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" title="Delete entry"><i class="ph-trash"></i></button>
+                                                    @can('Update daily-entry')
+                                                         <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit entry"><i class="ph-pencil"></i></button>
+                                                    @endcan
+                                                    @can('Delete daily-entry')
+                                                        <button type="button" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" title="Delete entry"><i class="ph-trash"></i></button>
+                                                    @endcan
+                                                   
+                                                    
                                                 </div>
                                             </td>
                                         </tr>
@@ -431,7 +437,7 @@
                 }
             });
         </script>
-        <script src="{{ asset('js/daily-list.init.js') }}"></script>
+        {{-- <script src="{{ asset('js/daily-list.init.js') }}"></script> --}}
     </div>
 </div>
 @endsection
