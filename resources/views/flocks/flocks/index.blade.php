@@ -1,5 +1,4 @@
 @extends('layouts.master')
-
 @section('content')
 <div class="main-content">
     <div class="page-content">
@@ -20,6 +19,8 @@
             </div>
             <!-- End page title -->
 
+          
+
             @if ($errors->any())
                 <div class="alert alert-danger">
                     <strong>Whoops!</strong> There were some problems with your input.<br><br>
@@ -37,6 +38,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
+
+            <a href="{{ route('dashboard') }}" class="btn btn-info mb-3"><i class="bi bi-bar-chart me-1"></i> View Dashboard</a>
 
             <div id="flockList">
                 <div class="row">
@@ -101,10 +104,10 @@
                                         </thead>
                                         <tbody class="list form-check-all">
                                             @forelse ($flocks as $flock)
-                                                <tr key="{{ $flock->id }}">
+                                                <tr class="list" key="{{ $flock->id }}">
                                                     <td>
                                                         <div class="form-check">
-                                                            <input class="form-check-input chk-child" type="checkbox" name="chk_child" value="{{ $flock->id }}" data-id="{{ $flock->id }}">
+                                                            <input class="form-check-input chk-child id" type="checkbox" name="chk_child" value="{{ $flock->id }}" data-id="{{ $flock->id }}">
                                                             <label class="form-check-label"></label>
                                                         </div>
                                                     </td>
@@ -132,12 +135,11 @@
                                             @endforelse
                                         </tbody>
                                     </table>
-                                    <!-- Template for List.js new items -->
                                     <template id="flockRowTemplate">
-                                        <tr>
+                                        <tr class="list">
                                             <td>
                                                 <div class="form-check">
-                                                    <input class="form-check-input chk-child" type="checkbox" name="chk_child" value="{id}" data-id="{id}">
+                                                    <input class="form-check-input chk-child id" type="checkbox" name="chk_child" value="{id}" data-id="{id}">
                                                     <label class="form-check-label"></label>
                                                 </div>
                                             </td>
@@ -147,7 +149,7 @@
                                             <td>
                                                 <div class="hstack gap-2">
                                                     @can('View flock')
-                                                        <a href="/flocks/{id}/weeks" class="btn btn-subtle-primary btn-icon btn-sm" title="View week entries"><i class="ph-eye"></i></a>
+                                                        <a href="/flocks/{id}/week-entries" class="btn btn-subtle-primary btn-icon btn-sm" title="View week entries"><i class="ph-eye"></i></a>
                                                     @endcan
                                                     @can('Update flock')
                                                         <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit flock"><i class="ph-pencil"></i></button>
@@ -177,7 +179,6 @@
                     </div>
                 </div>
 
-                <!-- Charts and Statistics -->
                 <div class="row mt-4">
                     <div class="col-lg-6">
                         <div class="card">
@@ -292,7 +293,7 @@
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <button type="button" class="btn-close" id="deleteRecord-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-md-5">
                             <div class="text-center">
@@ -313,9 +314,10 @@
                 </div>
             </div>
         </div>
-
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
-        {{-- <script src="{{ asset('js/flock-list.init.js') }}"></script> --}}
     </div>
 </div>
+
+
+    <!-- Custom JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 @endsection

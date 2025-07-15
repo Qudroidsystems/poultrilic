@@ -2,18 +2,43 @@ const perPage = 5;
 let editlist = false;
 let birdCountFilterVal = null;
 
-const options = {
-    valueNames: ['id', 'initial_bird_count', 'current_bird_count', 'created_at'],
-    page: perPage,
-    pagination: false,
-    item: document.getElementById('flockRowTemplate').innerHTML
-};
-
 let flockList;
 
 function initializeList() {
     try {
-        flockList = new List('flockList', options);
+        const flockListContainer = document.getElementById('flockList');
+        if (!flockListContainer) {
+            console.error('Flock list container (#flockList) not found in DOM');
+            return false;
+        }
+
+        const flockTableBody = flockListContainer.querySelector('tbody.list');
+        if (!flockTableBody) {
+            console.error('Table body with class "list" not found in #flockList');
+            return false;
+        }
+
+        const flockRowTemplate = document.getElementById('flockRowTemplate');
+        if (!flockRowTemplate) {
+            console.error('Flock row template (#flockRowTemplate) not found in DOM');
+            return false;
+        }
+
+        const hasOnlyNoResult = flockTableBody.querySelector('tr.noresult') && flockTableBody.children.length === 1;
+        if (hasOnlyNoResult) {
+            console.warn('No flock data available, initializing empty list');
+            flockTableBody.innerHTML = '';
+        }
+
+        const options = {
+            valueNames: ['id', 'initial_bird_count', 'current_bird_count', 'created_at'],
+            page: perPage,
+            pagination: false,
+            item: flockRowTemplate.innerHTML,
+            listClass: 'list'
+        };
+
+        flockList = new List(flockListContainer, options);
         console.log('List.js initialized with', flockList.items.length, 'items');
         flockList.on('updated', function (e) {
             console.log('List updated, matching items:', e.matchingItems.length);
@@ -46,22 +71,35 @@ function updateFlockChart() {
     }
     const birdCountRanges = ['0-100', '101-200', '201-500', '501+'];
     const birdCountData = [0, 0, 0, 0];
-    
-    if (flockList && flockList.items) {
-        flockList.items.forEach(item => {
-            const values = item.values();
-            const count = parseInt(values.initial_bird_count, 10) || 0;
-            if (count <= 100) birdCountData[0]++;
-            else if (count <= 200) birdCountData[1]++;
-            else if (count <= 500) birdCountData[2]++;
-            else birdCountData[3]++;
-        });
-    }
-    
-    console.log('Flock chart data:', birdCountData);
-    window.flockChart.data.labels = birdCountRanges;
-    window.flockChart.data.datasets[0].data = birdCountData;
+
     try {
+        if (flockList && flockList.items) {
+            flockList.items.forEach(item => {
+                const values = item.values();
+                const count = parseInt(values.initial_bird_count, 10) || 0;
+                if (count <= 100) birdCountData[0]++;
+                else if (count <= 200) birdCountData[1]++;
+                else if (count <= 500) birdCountData[2]++;
+                else birdCountData[3]++;
+            });
+        } else {
+            console.warn('flockList or flockList.items not available, using DOM fallback');
+            const rows = document.querySelectorAll('tbody.list tr.list');
+            rows.forEach(row => {
+                const countCell = row.querySelector('.initial_bird_count');
+                if (countCell) {
+                    const count = parseInt(countCell.textContent.trim(), 10) || 0;
+                    if (count <= 100) birdCountData[0]++;
+                    else if (count <= 200) birdCountData[1]++;
+                    else if (count <= 500) birdCountData[2]++;
+                    else birdCountData[3]++;
+                }
+            });
+        }
+
+        console.log('Flock chart data:', birdCountData);
+        window.flockChart.data.labels = birdCountRanges;
+        window.flockChart.data.datasets[0].data = birdCountData;
         window.flockChart.update();
         console.log('Flock chart updated successfully');
     } catch (err) {
@@ -74,9 +112,20 @@ function updateWeekChart(data) {
         console.warn('Week chart instance not found');
         return;
     }
-    window.weekChart.data.labels = data.weekChartData.labels;
-    window.weekChart.data.datasets[0].data = data.weekChartData.daily_entries_counts;
     try {
+        const labels = data.weekChartData?.labels || [];
+        const counts = data.weekChartData?.daily_entries_counts || [];
+        console.log('Week chart data:', { labels, counts });
+
+        if (!labels.length || !counts.length) {
+            console.warn('No data available for weekChart, setting empty state');
+            window.weekChart.data.labels = ['No Data'];
+            window.weekChart.data.datasets[0].data = [0];
+        } else {
+            window.weekChart.data.labels = labels;
+            window.weekChart.data.datasets[0].data = counts;
+        }
+
         window.weekChart.update();
         console.log('Week chart updated successfully');
     } catch (err) {
@@ -120,90 +169,49 @@ function updateStats(flockStats, allFlocksStats) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing...');
-    
-    if (!initializeList()) {
-        console.error('Failed to initialize List.js');
-        return;
-    }
-
-    // Initialize Flock Chart
-    const flockChartCanvas = document.getElementById('flockChart');
-    if (flockChartCanvas) {
-        window.flockChart = new Chart(flockChartCanvas, {
-            type: 'bar',
-            data: {
-                labels: ['0-100', '101-200', '201-500', '501+'],
-                datasets: [{
-                    label: 'Number of Flocks',
-                    data: [],
-                    backgroundColor: '#0d6efd',
-                    borderColor: '#0d6efd',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Number of Flocks' } },
-                    x: { title: { display: true, text: 'Initial Bird Count Range' } }
-                },
-                plugins: {
-                    legend: { display: true },
-                    title: { display: true, text: 'Flock Distribution by Initial Bird Count' }
-                }
-            }
+function showError(message) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: message,
+            confirmButtonText: 'OK'
         });
-    }
-
-    // Initialize Week Chart
-    let weekChart = null;
-    const weekChartCanvas = document.getElementById('weekChart');
-    if (weekChartCanvas) {
-        window.weekChart = new Chart(weekChartCanvas, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Daily Entries per Week',
-                    data: [],
-                    backgroundColor: '#36A2EB',
-                    borderColor: '#36A2EB',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Number of Daily Entries' } },
-                    x: { title: { display: true, text: 'Week' } }
-                },
-                plugins: {
-                    legend: { display: true },
-                    title: { display: true, text: 'Week Entries for Selected Flock' }
-                }
-            }
-        });
-    }
-
-    if (typeof Choices !== 'undefined') {
-        const birdCountSelect = document.getElementById('birdCountFilter');
-        if (birdCountSelect) {
-            birdCountFilterVal = new Choices(birdCountSelect, {
-                searchEnabled: true,
-                removeItemButton: true
-            });
-        }
     } else {
-        console.warn('Choices.js not available');
+        alert(message);
     }
-    
-    refreshCallbacks();
-    ischeckboxcheck();
-    updateFlockChart();
-    updateStats(null, null); // Initialize stats containers
-});
+}
+
+function showSuccess(message) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'success',
+            title: message,
+            showConfirmButton: false,
+            timer: 2000,
+            showCloseButton: true
+        });
+    } else {
+        alert(message);
+    }
+}
+
+function ensureAxios() {
+    if (typeof axios === 'undefined') {
+        console.error('Axios is not defined');
+        showError('Axios library is missing');
+        return false;
+    }
+    return true;
+}
+
+function ensureSwal() {
+    if (typeof Swal === 'undefined') {
+        console.warn('SweetAlert2 not available, using alert');
+        return false;
+    }
+    return true;
+}
 
 function filterData(url = null) {
     const search = document.getElementById('searchFlock')?.value || '';
@@ -222,8 +230,10 @@ function filterData(url = null) {
         return response.json();
     })
     .then(data => {
-        flockList.clear();
-        flockList.add(data.flocks);
+        if (flockList) {
+            flockList.clear();
+            flockList.add(data.flocks);
+        }
         document.getElementById('pagination-element').innerHTML = data.pagination;
         document.querySelector('.badge.bg-dark-subtle').textContent = data.total;
         updateFlockChart();
@@ -240,16 +250,7 @@ function filterData(url = null) {
         } catch (e) {
             errorMsg = 'An unexpected error occurred. Please try again.';
         }
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: errorMsg,
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert(errorMsg);
-        }
+        showError(errorMsg);
     });
 }
 
@@ -272,7 +273,7 @@ function fetchWeekEntries(flockId) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
     if (!csrfToken) {
         console.error('CSRF token not found');
-        alert('CSRF token missing. Please refresh the page.');
+        showError('CSRF token missing. Please refresh the page.');
         return;
     }
     fetch(`/flocks/${flockId}/week-entries`, {
@@ -302,68 +303,12 @@ function fetchWeekEntries(flockId) {
         } catch (e) {
             errorMsg = 'An unexpected error occurred. Please try again.';
         }
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: errorMsg,
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert(errorMsg);
-        }
+        showError(errorMsg);
     });
-}
-
-const checkAll = document.getElementById('checkAll');
-if (checkAll) {
-    checkAll.addEventListener('click', function () {
-        const checkboxes = document.querySelectorAll('.chk-child');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-            checkbox.closest('tr').classList.toggle('table-active', this.checked);
-        });
-        const removeActions = document.getElementById('remove-actions');
-        if (removeActions) {
-            removeActions.classList.toggle('d-none', !this.checked);
-        }
-    });
-}
-
-const addIdField = document.getElementById('add-id-field');
-const addInitialBirdCount = document.getElementById('initial_bird_count');
-const editIdField = document.getElementById('edit-id-field');
-const editInitialBirdCountField = document.getElementById('edit-initial_bird_count');
-const editCurrentBirdCount = document.getElementById('edit-current_bird_count');
-
-function ensureAxios() {
-    if (typeof axios === 'undefined') {
-        console.error('Axios is not defined');
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'error',
-                title: 'Configuration Error',
-                text: 'Axios library is missing',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert('Axios library is missing');
-        }
-        return false;
-    }
-    return true;
-}
-
-function ensureSwal() {
-    if (typeof Swal === 'undefined') {
-        console.warn('SweetAlert2 not available, using alert');
-        return false;
-    }
-    return true;
 }
 
 function ischeckboxcheck() {
-    const checkboxes = document.querySelectorAll('.chk-child');
+    const checkboxes = document.querySelectorAll('.chk-child.id');
     checkboxes.forEach(checkbox => {
         checkbox.removeEventListener('change', handleCheckboxChange);
         checkbox.addEventListener('change', handleCheckboxChange);
@@ -375,13 +320,14 @@ function handleCheckboxChange(e) {
     if (row) {
         row.classList.toggle('table-active', e.target.checked);
     }
-    const checkedCount = document.querySelectorAll('.chk-child:checked').length;
+    const checkedCount = document.querySelectorAll('.chk-child.id:checked').length;
     const removeActions = document.getElementById('remove-actions');
     if (removeActions) {
         removeActions.classList.toggle('d-none', checkedCount === 0);
     }
+    const checkAll = document.getElementById('checkAll');
     if (checkAll) {
-        const allCheckboxes = document.querySelectorAll('.chk-child');
+        const allCheckboxes = document.querySelectorAll('.chk-child.id');
         checkAll.checked = allCheckboxes.length > 0 && checkedCount === allCheckboxes.length;
     }
 }
@@ -390,23 +336,32 @@ function refreshCallbacks() {
     console.log('Refreshing callbacks...');
     const removeButtons = document.querySelectorAll('.remove-item-btn');
     const editButtons = document.querySelectorAll('.edit-item-btn');
-    const rows = document.querySelectorAll('tr');
-    
-    console.log('Found', removeButtons.length, 'remove buttons and', editButtons.length, 'edit buttons');
-    
-    removeButtons.forEach(btn => {
+    const rows = document.querySelectorAll('tr.list');
+
+    console.log('Found', removeButtons.length, 'remove buttons,', editButtons.length, 'edit buttons,', rows.length, 'rows');
+
+    removeButtons.forEach((btn, index) => {
         btn.removeEventListener('click', handleRemoveClick);
-        btn.addEventListener('click', handleRemoveClick);
-    });
-    
-    editButtons.forEach(btn => {
-        btn.removeEventListener('click', handleEditClick);
-        btn.addEventListener('click', handleEditClick);
+        btn.addEventListener('click', (e) => {
+            console.log(`Remove button ${index} clicked`);
+            handleRemoveClick(e);
+        });
     });
 
-    rows.forEach(row => {
+    editButtons.forEach((btn, index) => {
+        btn.removeEventListener('click', handleEditClick);
+        btn.addEventListener('click', (e) => {
+            console.log(`Edit button ${index} clicked`);
+            handleEditClick(e);
+        });
+    });
+
+    rows.forEach((row, index) => {
         row.removeEventListener('click', handleRowClick);
-        row.addEventListener('click', handleRowClick);
+        row.addEventListener('click', (e) => {
+            console.log(`Row ${index} clicked`);
+            handleRowClick(e);
+        });
     });
 }
 
@@ -414,233 +369,211 @@ function handleRowClick(e) {
     if (e.target.closest('.edit-item-btn, .remove-item-btn, .chk-child, .btn-subtle-primary')) {
         return;
     }
-    const flockId = e.target.closest('tr').querySelector('.chk-child').value;
+    const flockId = e.target.closest('tr').querySelector('.chk-child.id').value;
     document.querySelectorAll('tr').forEach(row => row.classList.remove('table-active'));
     e.target.closest('tr').classList.add('table-active');
     fetchWeekEntries(flockId);
 }
 
-function handleRemoveClick(e) {
+function handleEditClick(e) {
     e.preventDefault();
     e.stopPropagation();
-    
+    console.log('handleEditClick triggered');
+
     try {
         const tr = e.target.closest('tr');
         if (!tr) {
-            console.error('Could not find table row');
+            console.error('Table row not found for edit button');
+            showError('Could not find table row');
             return;
         }
-        
-        const checkbox = tr.querySelector('.chk-child');
+
+        const checkbox = tr.querySelector('.chk-child.id');
         if (!checkbox) {
-            console.error('Could not find checkbox in row');
+            console.error('Checkbox with class "chk-child id" not found in row');
+            showError('Could not find checkbox in row');
             return;
         }
-        
+
         const itemId = checkbox.getAttribute('data-id');
         if (!itemId || isNaN(parseInt(itemId))) {
             console.error('Invalid item ID:', itemId);
-            if (ensureSwal()) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Flock ID',
-                    text: 'Cannot delete flock with invalid ID',
-                    confirmButtonText: 'OK'
-                });
-            } else {
-                alert('Cannot delete flock with invalid ID');
-            }
+            showError('Cannot edit flock with invalid ID');
             tr.remove();
-            flockList.reIndex();
-            flockList.update();
+            if (flockList) {
+                flockList.reIndex();
+                flockList.update();
+            }
             return;
         }
-        
-        console.log('Remove clicked for ID:', itemId);
-        
+
+        console.log('Edit clicked for ID:', itemId);
+
+        editlist = true;
+        const editIdField = document.getElementById('edit-id-field');
+        const editInitialBirdCountField = document.getElementById('edit-initial_bird_count');
+        const editCurrentBirdCount = document.getElementById('edit-current_bird_count');
+
+        if (editIdField) editIdField.value = itemId;
+        const initialBirdCountCell = tr.querySelector('.initial_bird_count');
+        const currentBirdCountCell = tr.querySelector('.current_bird_count');
+
+        if (editInitialBirdCountField && initialBirdCountCell) {
+            editInitialBirdCountField.value = initialBirdCountCell.textContent.trim();
+        } else {
+            console.warn('Initial bird count field or cell not found');
+        }
+
+        if (editCurrentBirdCount && currentBirdCountCell) {
+            editCurrentBirdCount.value = currentBirdCountCell.textContent.trim();
+        } else {
+            console.warn('Current bird count field or cell not found');
+        }
+
+        const editModal = document.getElementById('editFlockModal');
+        if (editModal) {
+            console.log('Opening editFlockModal for ID:', itemId);
+            const modal = new bootstrap.Modal(editModal);
+            modal.show();
+        } else {
+            console.error('Edit modal element (#editFlockModal) not found');
+            showError('Edit modal not found');
+        }
+    } catch (error) {
+        console.error('Error in handleEditClick:', error);
+        showError('Failed to open edit modal');
+    }
+}
+
+function handleRemoveClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('handleRemoveClick triggered');
+
+    try {
+        const tr = e.target.closest('tr');
+        if (!tr) {
+            console.error('Table row not found for delete button');
+            showError('Could not find table row');
+            return;
+        }
+
+        const checkbox = tr.querySelector('.chk-child.id');
+        if (!checkbox) {
+            console.error('Checkbox with class "chk-child id" not found in row');
+            showError('Could not find checkbox in row');
+            return;
+        }
+
+        const itemId = checkbox.getAttribute('data-id');
+        if (!itemId || isNaN(parseInt(itemId))) {
+            console.error('Invalid item ID:', itemId);
+            showError('Cannot delete flock with invalid ID');
+            tr.remove();
+            if (flockList) {
+                flockList.reIndex();
+                flockList.update();
+            }
+            return;
+        }
+
+        console.log('Delete clicked for ID:', itemId);
+
         const deleteModal = document.getElementById('deleteRecordModal');
         const deleteButton = document.getElementById('delete-record');
-        
+
         if (!deleteModal || !deleteButton) {
-            console.error('Delete modal or button not found');
+            console.error('Delete modal (#deleteRecordModal) or button (#delete-record) not found');
+            showError('Delete modal or button not found');
             return;
         }
-        
+
         const deleteHandler = (event) => {
             event.preventDefault();
+            console.log('Delete button in modal clicked for ID:', itemId);
             if (!ensureAxios()) return;
-            
-            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
             if (!csrfToken) {
                 console.error('CSRF token not found');
+                showError('CSRF token missing. Please refresh the page.');
                 return;
             }
-            
+
             axios.delete(`/flocks/${itemId}`, {
-                headers: { 'X-CSRF-TOKEN': csrfToken.content }
-            }).then(() => {
+                headers: { 'X-CSRF-TOKEN': csrfToken }
+            })
+            .then(() => {
                 console.log('Deleted flock ID:', itemId);
-                
+
                 if (flockList) {
                     const item = flockList.items.find(i => {
-                        const id = i._values.id || i.elm.querySelector('.chk-child')?.getAttribute('data-id');
+                        const id = i._values.id || i.elm.querySelector('.chk-child.id')?.getAttribute('data-id');
                         return id === itemId;
                     });
-                    
+
                     if (item) {
                         flockList.remove('id', itemId);
                     } else {
                         console.warn('List.js item not found, removing DOM row');
                         tr.remove();
                     }
-                    
+
                     flockList.reIndex();
                     flockList.update();
                 }
-                
+
                 updateFlockChart();
                 updateStats(null, null);
-                
+
                 const modal = bootstrap.Modal.getInstance(deleteModal);
                 if (modal) modal.hide();
-                
-                if (ensureSwal()) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Deleted successfully!',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        showCloseButton: true
-                    });
-                } else {
-                    alert('Flock deleted successfully!');
-                }
-            }).catch(error => {
+
+                showSuccess('Flock deleted successfully!');
+            })
+            .catch(error => {
                 console.error('Error deleting flock:', error);
                 const modal = bootstrap.Modal.getInstance(deleteModal);
                 if (modal) modal.hide();
-                
-                let message = error.response?.data?.message || error.message || 'An error occurred';
+
+                let message = error.response?.data?.message || 'An error occurred';
                 if (error.response?.status === 404) {
                     message = `Flock ID ${itemId} not found`;
                     console.warn('Removing stale row for ID:', itemId);
                     tr.remove();
-                    flockList.reIndex();
-                    flockList.update();
+                    if (flockList) {
+                        flockList.reIndex();
+                        flockList.update();
+                    }
                 }
-                
-                if (ensureSwal()) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error Deleting Flock',
-                        text: message,
-                        confirmButtonText: 'OK'
-                    });
-                } else {
-                    alert('Error deleting flock: ' + message);
-                }
+
+                showError(message);
             });
         };
-        
+
         deleteButton.removeEventListener('click', deleteHandler);
         deleteButton.addEventListener('click', deleteHandler, { once: true });
-        
+
+        console.log('Opening deleteRecordModal for ID:', itemId);
         const modal = new bootstrap.Modal(deleteModal);
         modal.show();
     } catch (error) {
-        console.error('Error in remove-item-btn click:', error);
-        if (ensureSwal()) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to initiate delete',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert('Failed to initiate delete');
-        }
-    }
-}
-
-function handleEditClick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    try {
-        const tr = e.target.closest('tr');
-        if (!tr) {
-            console.error('Could not find table row');
-            return;
-        }
-        
-        const checkbox = tr.querySelector('.chk-child');
-        if (!checkbox) {
-            console.error('Could not find checkbox in row');
-            return;
-        }
-        
-        const itemId = checkbox.getAttribute('data-id');
-        if (!itemId || isNaN(parseInt(itemId))) {
-            console.error('Invalid item ID:', itemId);
-            if (ensureSwal()) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Invalid Flock ID',
-                    text: 'Cannot edit flock with invalid ID',
-                    confirmButtonText: 'OK'
-                });
-            } else {
-                alert('Cannot edit flock with invalid ID');
-            }
-            tr.remove();
-            flockList.reIndex();
-            flockList.update();
-            return;
-        }
-        
-        console.log('Edit clicked for ID:', itemId);
-        editlist = true;
-        if (editIdField) editIdField.value = itemId;
-        
-        const initialBirdCountCell = tr.querySelector('.initial_bird_count');
-        const currentBirdCountCell = tr.querySelector('.current_bird_count');
-        
-        if (editInitialBirdCountField && initialBirdCountCell) {
-            editInitialBirdCountField.value = initialBirdCountCell.innerText.trim();
-        }
-        
-        if (editCurrentBirdCount && currentBirdCountCell) {
-            editCurrentBirdCount.value = currentBirdCountCell.innerText.trim();
-        }
-        
-        const editModal = document.getElementById('editFlockModal');
-        if (editModal) {
-            const modal = new bootstrap.Modal(editModal);
-            modal.show();
-        } else {
-            console.error('Edit modal not found');
-        }
-    } catch (error) {
-        console.error('Error in edit-item-btn click:', error);
-        if (ensureSwal()) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to populate edit modal',
-                confirmButtonText: 'OK'
-            });
-        } else {
-            alert('Failed to populate edit modal');
-        }
+        console.error('Error in handleRemoveClick:', error);
+        showError('Failed to initiate delete');
     }
 }
 
 function clearAddFields() {
+    const addIdField = document.getElementById('add-id-field');
+    const addInitialBirdCount = document.getElementById('initial_bird_count');
     if (addIdField) addIdField.value = '';
     if (addInitialBirdCount) addInitialBirdCount.value = '';
 }
 
 function clearEditFields() {
+    const editIdField = document.getElementById('edit-id-field');
+    const editInitialBirdCountField = document.getElementById('edit-initial_bird_count');
+    const editCurrentBirdCount = document.getElementById('edit-current_bird_count');
     if (editIdField) editIdField.value = '';
     if (editInitialBirdCountField) editInitialBirdCountField.value = '';
     if (editCurrentBirdCount) editCurrentBirdCount.value = '';
@@ -648,8 +581,8 @@ function clearEditFields() {
 
 function deleteMultiple() {
     const ids_array = [];
-    const checkboxes = document.querySelectorAll('.chk-child:checked');
-    
+    const checkboxes = document.querySelectorAll('.chk-child.id:checked');
+
     checkboxes.forEach(checkbox => {
         const id = checkbox.getAttribute('data-id');
         if (id && !isNaN(parseInt(id))) {
@@ -658,33 +591,25 @@ function deleteMultiple() {
             console.warn('Skipping invalid ID:', id);
         }
     });
-    
+
     if (ids_array.length === 0) {
-        if (ensureSwal()) {
-            Swal.fire({
-                title: 'Please select at least one valid checkbox',
-                confirmButtonClass: 'btn btn-info',
-                buttonsStyling: false,
-                showCloseButton: true
-            });
-        } else {
-            alert('Please select at least one checkbox');
-        }
+        showError('Please select at least one valid checkbox');
         return;
     }
-    
+
     const confirmAction = () => {
         if (!ensureAxios()) return;
-        
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
         if (!csrfToken) {
             console.error('CSRF token not found');
+            showError('CSRF token missing. Please refresh the page.');
             return;
         }
-        
+
         Promise.all(ids_array.map(id => {
             return axios.delete(`/flocks/${id}`, {
-                headers: { 'X-CSRF-TOKEN': csrfToken.content }
+                headers: { 'X-CSRF-TOKEN': csrfToken }
             }).catch(error => {
                 console.error(`Error deleting flock ${id}:`, error);
                 return { error, id };
@@ -703,7 +628,7 @@ function deleteMultiple() {
                 } else {
                     if (flockList) {
                         const item = flockList.items.find(i => {
-                            const itemId = i._values.id || i.elm.querySelector('.chk-child')?.getAttribute('data-id');
+                            const itemId = i._values.id || i.elm.querySelector('.chk-child.id')?.getAttribute('data-id');
                             return itemId === id;
                         });
                         if (item) {
@@ -712,29 +637,19 @@ function deleteMultiple() {
                     }
                 }
             });
-            
+
             if (flockList) {
                 flockList.reIndex();
                 flockList.update();
             }
-            
+
             updateFlockChart();
             updateStats(null, null);
-            
-            if (ensureSwal()) {
-                Swal.fire({
-                    title: hasErrors ? 'Partial Success' : 'Deleted!',
-                    text: hasErrors ? 'Some flocks could not be deleted.' : 'Flocks deleted successfully.',
-                    icon: hasErrors ? 'warning' : 'success',
-                    confirmButtonClass: 'btn btn-info w-xs mt-2',
-                    buttonsStyling: false
-                });
-            } else {
-                alert(hasErrors ? 'Some flocks could not be deleted.' : 'Flocks deleted successfully!');
-            }
+
+            showSuccess(hasErrors ? 'Some flocks could not be deleted.' : 'Flocks deleted successfully!');
         });
     };
-    
+
     if (ensureSwal()) {
         Swal.fire({
             title: 'Are you sure?',
@@ -758,154 +673,274 @@ function deleteMultiple() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing...');
+    console.log('Chart.js available:', typeof Chart !== 'undefined');
+
+    const flockListContainer = document.getElementById('flockList');
+    const flockRowTemplate = document.getElementById('flockRowTemplate');
+    if (!flockListContainer || !flockRowTemplate) {
+        console.error('Required elements missing:', {
+            flockList: !!flockListContainer,
+            flockRowTemplate: !!flockRowTemplate
+        });
+        return;
+    }
+
+    if (!initializeList()) {
+        console.error('Failed to initialize List.js');
+        console.warn('Attaching event listeners manually as fallback');
+        refreshCallbacks();
+        ischeckboxcheck();
+        updateFlockChart(); // Call updateFlockChart even if List.js fails
+        return;
+    }
+
+    const flockChartCanvas = document.getElementById('flockChart');
+    if (flockChartCanvas) {
+        try {
+            console.log('Initializing flockChart');
+            window.flockChart = new Chart(flockChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: ['0-100', '101-200', '201-500', '501+'],
+                    datasets: [{
+                        label: 'Number of Flocks',
+                        data: [],
+                        backgroundColor: '#0d6efd',
+                        borderColor: '#0d6efd',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Number of Flocks' } },
+                        x: { title: { display: true, text: 'Initial Bird Count Range' } }
+                    },
+                    plugins: {
+                        legend: { display: true },
+                        title: { display: true, text: 'Flock Distribution by Initial Bird Count' }
+                    }
+                }
+            });
+            console.log('flockChart initialized successfully');
+        } catch (error) {
+            console.error('Error initializing flockChart:', error);
+        }
+    } else {
+        console.error('flockChart canvas not found');
+    }
+
+    const weekChartCanvas = document.getElementById('weekChart');
+    if (weekChartCanvas) {
+        try {
+            console.log('Initializing weekChart');
+            window.weekChart = new Chart(weekChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        label: 'Daily Entries per Week',
+                        data: [0],
+                        backgroundColor: '#36A2EB',
+                        borderColor: '#36A2EB',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Number of Daily Entries' } },
+                        x: { title: { display: true, text: 'Week' } }
+                    },
+                    plugins: {
+                        legend: { display: true },
+                        title: { display: true, text: 'Week Entries for Selected Flock' }
+                    }
+                }
+            });
+            console.log('weekChart initialized successfully');
+        } catch (error) {
+            console.error('Error initializing weekChart:', error);
+        }
+    } else {
+        console.error('weekChart canvas not found');
+    }
+
+    if (typeof Choices !== 'undefined') {
+        const birdCountSelect = document.getElementById('birdCountFilter');
+        if (birdCountSelect) {
+            birdCountFilterVal = new Choices(birdCountSelect, {
+                searchEnabled: true,
+                removeItemButton: true
+            });
+        }
+    } else {
+        console.warn('Choices.js not available');
+    }
+
+    const checkAll = document.getElementById('checkAll');
+    if (checkAll) {
+        checkAll.addEventListener('click', function () {
+            const checkboxes = document.querySelectorAll('.chk-child.id');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+                checkbox.closest('tr').classList.toggle('table-active', this.checked);
+            });
+            const removeActions = document.getElementById('remove-actions');
+            if (removeActions) {
+                removeActions.classList.toggle('d-none', !this.checked);
+            }
+        });
+    }
+
     const addForm = document.getElementById('add-flock-form');
     if (addForm) {
         addForm.addEventListener('submit', e => {
             e.preventDefault();
-            
+
             const errorMsg = document.getElementById('add-error-msg');
             if (errorMsg) errorMsg.classList.add('d-none');
-            
+
+            const addInitialBirdCount = document.getElementById('initial_bird_count');
             if (!addInitialBirdCount || !addInitialBirdCount.value || parseInt(addInitialBirdCount.value) < 0) {
                 if (errorMsg) {
-                    errorMsg.innerText = 'Please enter a valid initial bird count';
+                    errorMsg.textContent = 'Please enter a valid initial bird count';
                     errorMsg.classList.remove('d-none');
                     setTimeout(() => errorMsg.classList.add('d-none'), 3000);
                 }
                 return;
             }
-            
+
             if (!ensureAxios()) return;
-            
-            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
             if (!csrfToken) {
                 console.error('CSRF token not found');
+                showError('CSRF token missing. Please refresh the page.');
                 return;
             }
-            
+
             axios.post('/flocks', {
                 initial_bird_count: addInitialBirdCount.value,
                 current_bird_count: addInitialBirdCount.value,
-                _token: csrfToken.content
-            }).then(response => {
+                _token: csrfToken
+            })
+            .then(response => {
                 console.log('Add response:', response.data);
-                
+
                 const newFlock = {
                     id: response.data.id.toString(),
                     initial_bird_count: response.data.initial_bird_count.toString(),
                     current_bird_count: response.data.current_bird_count.toString(),
                     created_at: formatDate(response.data.created_at)
                 };
-                
+
                 if (flockList) {
                     const existingItem = flockList.items.find(i => {
-                        const id = i._values.id || i.elm.querySelector('.chk-child')?.getAttribute('data-id');
+                        const id = i._values.id || i.elm.querySelector('.chk-child.id')?.getAttribute('data-id');
                         return id === newFlock.id;
                     });
-                    
+
                     if (existingItem) {
                         console.warn('Removing existing item with ID:', newFlock.id);
                         flockList.remove('id', newFlock.id);
                     }
-                    
+
                     flockList.add(newFlock);
                     flockList.reIndex();
                     flockList.update();
                 }
-                
+
                 updateFlockChart();
-                
+
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addFlockModal'));
                 if (modal) modal.hide();
-                
-                if (ensureSwal()) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Flock added successfully!',
-                        showConfirmButton: false,
-                        timer: 1500,
-                        showCloseButton: true
-                    });
-                } else {
-                    alert('Flock added successfully!');
-                }
-                
+
+                showSuccess('Flock added successfully!');
                 clearAddFields();
-            }).catch(error => {
+            })
+            .catch(error => {
                 console.error('Error adding flock:', error);
                 let message = error.response?.data?.message || 'Error adding flock';
                 if (error.response?.status === 422 && error.response.data.errors) {
                     message = Object.values(error.response.data.errors).flat().join(', ');
                 }
-                
+
                 if (errorMsg) {
-                    errorMsg.innerText = message;
+                    errorMsg.textContent = message;
                     errorMsg.classList.remove('d-none');
                     setTimeout(() => errorMsg.classList.add('d-none'), 3000);
                 }
             });
         });
     }
-    
+
     const editForm = document.getElementById('edit-flock-form');
     if (editForm) {
         editForm.addEventListener('submit', e => {
             e.preventDefault();
-            
+
             const errorMsg = document.getElementById('edit-error-msg');
             if (errorMsg) errorMsg.classList.add('d-none');
-            
+
+            const editInitialBirdCountField = document.getElementById('edit-initial_bird_count');
+            const editCurrentBirdCount = document.getElementById('edit-current_bird_count');
+            const editIdField = document.getElementById('edit-id-field');
+
             if (!editInitialBirdCountField || !editInitialBirdCountField.value || parseInt(editInitialBirdCountField.value) < 0) {
                 if (errorMsg) {
-                    errorMsg.innerText = 'Please enter a valid initial bird count';
+                    errorMsg.textContent = 'Please enter a valid initial bird count';
                     errorMsg.classList.remove('d-none');
                     setTimeout(() => errorMsg.classList.add('d-none'), 3000);
                 }
                 return;
             }
-            
+
             if (!editCurrentBirdCount || !editCurrentBirdCount.value || parseInt(editCurrentBirdCount.value) < 0) {
                 if (errorMsg) {
-                    errorMsg.innerText = 'Please enter a valid current bird count';
+                    errorMsg.textContent = 'Please enter a valid current bird count';
                     errorMsg.classList.remove('d-none');
                     setTimeout(() => errorMsg.classList.add('d-none'), 3000);
                 }
                 return;
             }
-            
+
             const itemId = editIdField.value;
             if (!itemId || isNaN(parseInt(itemId))) {
                 console.error('Invalid item ID for edit:', itemId);
                 if (errorMsg) {
-                    errorMsg.innerText = 'Invalid flock ID';
+                    errorMsg.textContent = 'Invalid flock ID';
                     errorMsg.classList.remove('d-none');
                     setTimeout(() => errorMsg.classList.add('d-none'), 3000);
                 }
                 return;
             }
-            
+
             if (!ensureAxios()) return;
-            
-            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
             if (!csrfToken) {
                 console.error('CSRF token not found');
+                showError('CSRF token missing. Please refresh the page.');
                 return;
             }
-            
+
             axios.put(`/flocks/${itemId}`, {
                 initial_bird_count: editInitialBirdCountField.value,
                 current_bird_count: editCurrentBirdCount.value,
-                _token: csrfToken.content
-            }).then(response => {
+                _token: csrfToken
+            })
+            .then(response => {
                 console.log('Update response:', response.data);
-                
+
                 if (flockList) {
                     const item = flockList.items.find(i => {
-                        const id = i._values.id || i.elm.querySelector('.chk-child')?.getAttribute('data-id');
+                        const id = i._values.id || i.elm.querySelector('.chk-child.id')?.getAttribute('data-id');
                         return id === itemId;
                     });
-                    
+
                     if (item) {
                         item.values({
                             id: response.data.id.toString(),
@@ -913,11 +948,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             current_bird_count: response.data.current_bird_count.toString(),
                             created_at: formatDate(response.data.created_at)
                         });
-                        
-                        const checkbox = item.elm.querySelector('.chk-child');
+
+                        const checkbox = item.elm.querySelector('.chk-child.id');
                         const link = item.elm.querySelector('a');
                         if (checkbox) checkbox.setAttribute('data-id', response.data.id);
-                        if (link) link.href = `/flocks/${response.data.id}`;
+                        if (link) link.href = `/flocks/${response.data.id}/week-entries`;
                     } else {
                         console.warn('List.js item not found, updating DOM manually');
                         const tr = document.querySelector(`[data-id="${itemId}"]`)?.closest('tr');
@@ -925,41 +960,31 @@ document.addEventListener('DOMContentLoaded', function() {
                             const initialCell = tr.querySelector('.initial_bird_count');
                             const currentCell = tr.querySelector('.current_bird_count');
                             const createdCell = tr.querySelector('.created_at');
-                            const checkbox = tr.querySelector('.chk-child');
+                            const checkbox = tr.querySelector('.chk-child.id');
                             const link = tr.querySelector('a');
-                            
-                            if (initialCell) initialCell.innerText = response.data.initial_bird_count;
-                            if (currentCell) currentCell.innerText = response.data.current_bird_count;
-                            if (createdCell) createdCell.innerText = formatDate(response.data.created_at);
+
+                            if (initialCell) initialCell.textContent = response.data.initial_bird_count;
+                            if (currentCell) currentCell.textContent = response.data.current_bird_count;
+                            if (createdCell) createdCell.textContent = formatDate(response.data.created_at);
                             if (checkbox) checkbox.setAttribute('data-id', response.data.id);
-                            if (link) link.href = `/flocks/${response.data.id}`;
+                            if (link) link.href = `/flocks/${response.data.id}/week-entries`;
                         }
                     }
-                    
+
                     flockList.reIndex();
                     flockList.update();
                 }
-                
+
                 updateFlockChart();
                 updateStats(null, null);
-                
+
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editFlockModal'));
                 if (modal) modal.hide();
-                
-                if (ensureSwal()) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Flock updated successfully!',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        showCloseButton: true
-                    });
-                } else {
-                    alert('Flock updated successfully!');
-                }
-                
+
+                showSuccess('Flock updated successfully!');
                 clearEditFields();
-            }).catch(error => {
+            })
+            .catch(error => {
                 console.error('Error updating flock:', error);
                 let message = error.response?.data?.message || 'Error updating flock';
                 if (error.response?.status === 404) {
@@ -967,45 +992,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.warn('Removing stale row for ID:', itemId);
                     const tr = document.querySelector(`[data-id="${itemId}"]`)?.closest('tr');
                     if (tr) tr.remove();
-                    flockList.reIndex();
-                    flockList.update();
+                    if (flockList) {
+                        flockList.reIndex();
+                        flockList.update();
+                    }
                 }
                 if (errorMsg) {
-                    errorMsg.innerText = message;
+                    errorMsg.textContent = message;
                     errorMsg.classList.remove('d-none');
                     setTimeout(() => errorMsg.classList.add('d-none'), 3000);
                 }
             });
         });
     }
-    
+
     const addModal = document.getElementById('addFlockModal');
     if (addModal) {
         addModal.addEventListener('show.bs.modal', () => {
             console.log('Opening addFlockModal...');
             const modalLabel = document.getElementById('addModalLabel');
             const addBtn = document.getElementById('add-btn');
-            if (modalLabel) modalLabel.innerText = 'Add Flock';
-            if (addBtn) addBtn.innerText = 'Add Flock';
+            if (modalLabel) modalLabel.textContent = 'Add Flock';
+            if (addBtn) addBtn.textContent = 'Add Flock';
         });
         addModal.addEventListener('hidden.bs.modal', () => {
             console.log('addFlockModal closed, clearing fields...');
             clearAddFields();
         });
     }
-    
+
     const editModal = document.getElementById('editFlockModal');
     if (editModal) {
         editModal.addEventListener('show.bs.modal', () => {
             console.log('Opening editFlockModal...');
             const modalLabel = document.getElementById('editModalLabel');
             const updateBtn = document.getElementById('update-btn');
-            if (modalLabel) modalLabel.innerText = 'Edit Flock';
-            if (updateBtn) updateBtn.innerText = 'Update';
+            if (modalLabel) modalLabel.textContent = 'Edit Flock';
+            if (updateBtn) updateBtn.textContent = 'Update';
         });
         editModal.addEventListener('hidden.bs.modal', () => {
             console.log('editFlockModal closed, clearing fields...');
             clearEditFields();
         });
     }
+
+    refreshCallbacks();
+    ischeckboxcheck();
+    updateFlockChart();
+    updateStats(null, null);
 });

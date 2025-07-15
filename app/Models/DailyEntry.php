@@ -13,6 +13,7 @@ class DailyEntry extends Model
         'total_egg_in_farm', 'drugs', 'reorder_feeds'
     ];
 
+    
     public function weekEntry()
     {
         return $this->belongsTo(WeekEntry::class);

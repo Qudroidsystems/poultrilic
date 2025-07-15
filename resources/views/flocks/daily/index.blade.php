@@ -479,7 +479,7 @@
                 }
             });
         </script>
-        <script src="{{ asset('js/daily-list.init.js') }}"></script>
+        {{-- <script src="{{ asset('js/daily-list.init.js') }}"></script> --}}
     </div>
 </div>
 @endsection

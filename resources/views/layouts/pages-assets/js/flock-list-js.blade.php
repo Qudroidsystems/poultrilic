@@ -16,7 +16,7 @@
 
 <!-- User list init js (load after list.js and dependencies) -->
 <script src="{{ asset('theme/layouts/assets/js/pages/flock-list.init.js') }}"></script>
-<script src="{{ asset('theme/layouts/assets/js/pages/chart-list.init.js') }}"></script>
+{{-- <script src="{{ asset('theme/layouts/assets/js/pages/chart-list.init.js') }}"></script> --}}
 <!-- App js -->
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 

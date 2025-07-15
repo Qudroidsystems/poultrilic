@@ -21,6 +21,8 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    //Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
 
     Route::resource('roles', RoleController::class);
     Route::resource('users', UserController::class);
@@ -62,4 +64,6 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/create', [DailyEntryController::class, 'create'])->name('daily-entries.create');
     Route::get('/{id}', [DailyEntryController::class, 'show'])->name('daily-entries.show');
 });
+
+    
 });

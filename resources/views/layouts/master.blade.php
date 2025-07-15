@@ -4,7 +4,7 @@
 <head>
 
     <meta charset="utf-8">
-    <title>{{ $pagetitle }} | Vite-ESchool</title>
+    <title>{{ $pagetitle }} | Poultrilic</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="school management software" name="description">
     <meta content="" name="author">
@@ -24,7 +24,7 @@
         .pagination-wrap .active .page-link { background-color: #007bff; color: white; }
         .pagination-wrap .disabled .page-link { pointer-events: none; opacity: 0.5; }
     </style>
- 
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     @if (Route::is('dashboard'))
           @include('layouts.pages-assets.css.users-list-css')
     @endif
@@ -677,11 +677,11 @@
           <div class="container-fluid">
               <div class="row">
                   <div class="col-sm-6">
-                      <script>document.write(new Date().getFullYear())</script> © Topclass College.
+                      <script>document.write(new Date().getFullYear())</script> © primefarm.ng
                   </div>
                   <div class="col-sm-6">
                       <div class="text-sm-end d-none d-sm-block">
-                          Created by Qudroid Systems
+                          Powered by Qudroid Systems
                       </div>
                   </div>
               </div>
