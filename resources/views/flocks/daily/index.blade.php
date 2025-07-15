@@ -103,6 +103,10 @@
                                                 <th scope="col">Daily Mortality</th>
                                                 <th scope="col">Current Birds</th>
                                                 <th scope="col">Daily Egg Production</th>
+                                                <th scope="col">Daily Sold Eggs</th>
+                                                <th scope="col">Broken Eggs</th>
+                                                <th scope="col">Outstanding Eggs</th>
+                                                <th scope="col">Total Eggs in Farm</th>
                                                 <th scope="col">Created At</th>
                                                 <th scope="col">Action</th>
                                             </tr>
@@ -120,7 +124,21 @@
                                                     <td class="daily_feeds">{{ $entry->daily_feeds }}</td>
                                                     <td class="daily_mortality">{{ $entry->daily_mortality }}</td>
                                                     <td class="current_birds">{{ $entry->current_birds }}</td>
-                                                    <td class="daily_egg_production">{{ $entry->daily_egg_production }}</td>
+                                                    <td class="daily_egg_production">
+                                                        {{ floor($entry->daily_egg_production / 30) }} cr {{ $entry->daily_egg_production % 30 }} pcs ({{ $entry->daily_egg_production }} pieces)
+                                                    </td>
+                                                    <td class="daily_sold_egg">
+                                                        {{ floor($entry->daily_sold_egg / 30) }} cr {{ $entry->daily_sold_egg % 30 }} pcs ({{ $entry->daily_sold_egg }} pieces)
+                                                    </td>
+                                                    <td class="broken_egg">
+                                                        {{ floor($entry->broken_egg / 30) }} cr {{ $entry->broken_egg % 30 }} pcs ({{ $entry->broken_egg }} pieces)
+                                                    </td>
+                                                    <td class="outstanding_egg">
+                                                        {{ floor($entry->outstanding_egg / 30) }} cr {{ $entry->outstanding_egg % 30 }} pcs ({{ $entry->outstanding_egg }} pieces)
+                                                    </td>
+                                                    <td class="total_egg_in_farm">
+                                                        {{ floor($entry->total_egg_in_farm / 30) }} cr {{ $entry->total_egg_in_farm % 30 }} pcs ({{ $entry->total_egg_in_farm }} pieces)
+                                                    </td>
                                                     <td class="created_at">{{ $entry->created_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <div class="hstack gap-2">
@@ -135,7 +153,7 @@
                                                 </tr>
                                             @empty
                                                 <tr class="noresult">
-                                                    <td colspan="8" class="text-center">No daily entries found</td>
+                                                    <td colspan="11" class="text-center">No daily entries found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -149,11 +167,15 @@
                                                     <label class="form-check-label"></label>
                                                 </div>
                                             </td>
-                                            <td class="day_number">Day {day_number}</td>
+                                            <td class="day_number">{day_number}</td>
                                             <td class="daily_feeds">{daily_feeds}</td>
                                             <td class="daily_mortality">{daily_mortality}</td>
                                             <td class="current_birds">{current_birds}</td>
                                             <td class="daily_egg_production">{daily_egg_production}</td>
+                                            <td class="daily_sold_egg">{daily_sold_egg}</td>
+                                            <td class="broken_egg">{broken_egg}</td>
+                                            <td class="outstanding_egg">{outstanding_egg}</td>
+                                            <td class="total_egg_in_farm">{total_egg_in_farm}</td>
                                             <td class="created_at">{created_at}</td>
                                             <td>
                                                 <div class="hstack gap-2">
@@ -227,59 +249,68 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="daily_feeds" class="form-label">Daily Feeds (kg)</label>
-                                    <input type="number" id="daily_feeds" name="daily_feeds" class="form-control" required min="0" step="0.01">
+                                    <input type="number" id="daily_feeds" name="daily_feeds" class="form-control" placeholder="Enter daily feeds in kg" required min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
                                     <label for="available_feeds" class="form-label">Available Feeds (kg)</label>
-                                    <input type="number" id="available_feeds" name="available_feeds" class="form-control" required min="0" step="0.01">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="total_feeds_consumed" class="form-label">Total Feeds Consumed (kg)</label>
-                                    <input type="number" id="total_feeds_consumed" name="total_feeds_consumed" class="form-control" required min="0" step="0.01">
+                                    <input type="number" id="available_feeds" name="available_feeds" class="form-control" placeholder="Enter available feeds in kg" required min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
                                     <label for="daily_mortality" class="form-label">Daily Mortality</label>
-                                    <input type="number" id="daily_mortality" name="daily_mortality" class="form-control" required min="0">
+                                    <input type="number" id="daily_mortality" name="daily_mortality" class="form-control" placeholder="Enter number of deaths" required min="0">
                                 </div>
                                 <div class="mb-3">
                                     <label for="sick_bay" class="form-label">Sick Bay</label>
-                                    <input type="number" id="sick_bay" name="sick_bay" class="form-control" required min="0">
+                                    <input type="number" id="sick_bay" name="sick_bay" class="form-control" placeholder="Enter number of sick birds" required min="0">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="total_mortality" class="form-label">Total Mortality</label>
-                                    <input type="number" id="total_mortality" name="total_mortality" class="form-control" required min="0">
+                                    <label class="form-label">Daily Egg Production (1 crate = 30 eggs)</label>
+                                    <div class="row">
+                                        <div class="col">
+                                            <input type="number" id="daily_egg_production_crates" name="daily_egg_production_crates" class="form-control" placeholder="Crates" required min="0">
+                                        </div>
+                                        <div class="col">
+                                            <input type="number" id="daily_egg_production_pieces" name="daily_egg_production_pieces" class="form-control" placeholder="Pieces (0-29)" required min="0" max="29">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="daily_egg_production" class="form-label">Daily Egg Production</label>
-                                    <input type="number" id="daily_egg_production" name="daily_egg_production" class="form-control" required min="0">
+                                    <label class="form-label">Daily Sold Eggs (1 crate = 30 eggs)</label>
+                                    <div class="row">
+                                        <div class="col">
+                                            <input type="number" id="daily_sold_egg_crates" name="daily_sold_egg_crates" class="form-control" placeholder="Crates" required min="0">
+                                        </div>
+                                        <div class="col">
+                                            <input type="number" id="daily_sold_egg_pieces" name="daily_sold_egg_pieces" class="form-control" placeholder="Pieces (0-29)" required min="0" max="29">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="daily_sold_egg" class="form-label">Daily Sold Eggs</label>
-                                    <input type="number" id="daily_sold_egg" name="daily_sold_egg" class="form-control" required min="0">
+                                    <label class="form-label">Broken Eggs (1 crate = 30 eggs)</label>
+                                    <div class="row">
+                                        <div class="col">
+                                            <input type="number" id="broken_egg_crates" name="broken_egg_crates" class="form-control" placeholder="Crates" required min="0">
+                                        </div>
+                                        <div class="col">
+                                            <input type="number" id="broken_egg_pieces" name="broken_egg_pieces" class="form-control" placeholder="Pieces (0-29)" required min="0" max="29">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="total_sold_egg" class="form-label">Total Sold Eggs</label>
-                                    <input type="number" id="total_sold_egg" name="total_sold_egg" class="form-control" required min="0">
+                                    <label class="form-label">Drugs Administered</label>
+                                    <input type="text" id="drugs" name="drugs" class="form-control" placeholder="Enter drugs administered (optional)">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="broken_egg" class="form-label">Broken Eggs</label>
-                                    <input type="number" id="broken_egg" name="broken_egg" class="form-control" required min="0">
+                                    <label class="form-label">Reorder Feeds (kg)</label>
+                                    <input type="number" id="reorder_feeds" name="reorder_feeds" class="form-control" placeholder="Enter reorder feeds in kg (optional)" min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="outstanding_egg" class="form-label">Outstanding Eggs</label>
-                                    <input type="number" id="outstanding_egg" name="outstanding_egg" class="form-control" required min="0">
+                                    <label class="form-label">Total Eggs in Farm</label>
+                                    <p class="form-text">Calculated by system</p>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="total_egg_in_farm" class="form-label">Total Eggs in Farm</label>
-                                    <input type="number" id="total_egg_in_farm" name="total_egg_in_farm" class="form-control" required min="0">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="drugs" class="form-label">Drugs Administered</label>
-                                    <input type="text" id="drugs" name="drugs" class="form-control">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="reorder_feeds" class="form-label">Reorder Feeds (kg)</label>
-                                    <input type="number" id="reorder_feeds" name="reorder_feeds" class="form-control" min="0" step="0.01">
+                                    <label class="form-label">Outstanding Eggs</label>
+                                    <p class="form-text">Calculated by system</p>
                                 </div>
                                 <div class="alert alert-danger d-none" id="add-error-msg"></div>
                             </div>
@@ -316,59 +347,68 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit_daily_feeds" class="form-label">Daily Feeds (kg)</label>
-                                    <input type="number" id="edit_daily_feeds" name="daily_feeds" class="form-control" required min="0" step="0.01">
+                                    <input type="number" id="edit_daily_feeds" name="daily_feeds" class="form-control" placeholder="Enter daily feeds in kg" required min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit_available_feeds" class="form-label">Available Feeds (kg)</label>
-                                    <input type="number" id="edit_available_feeds" name="available_feeds" class="form-control" required min="0" step="0.01">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit_total_feeds_consumed" class="form-label">Total Feeds Consumed (kg)</label>
-                                    <input type="number" id="edit_total_feeds_consumed" name="total_feeds_consumed" class="form-control" required min="0" step="0.01">
+                                    <input type="number" id="edit_available_feeds" name="available_feeds" class="form-control" placeholder="Enter available feeds in kg" required min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit_daily_mortality" class="form-label">Daily Mortality</label>
-                                    <input type="number" id="edit_daily_mortality" name="daily_mortality" class="form-control" required min="0">
+                                    <input type="number" id="edit_daily_mortality" name="daily_mortality" class="form-control" placeholder="Enter number of deaths" required min="0">
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit_sick_bay" class="form-label">Sick Bay</label>
-                                    <input type="number" id="edit_sick_bay" name="sick_bay" class="form-control" required min="0">
+                                    <input type="number" id="edit_sick_bay" name="sick_bay" class="form-control" placeholder="Enter number of sick birds" required min="0">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_total_mortality" class="form-label">Total Mortality</label>
-                                    <input type="number" id="edit_total_mortality" name="total_mortality" class="form-control" required min="0">
+                                    <label class="form-label">Daily Egg Production (1 crate = 30 eggs)</label>
+                                    <div class="row">
+                                        <div class="col">
+                                            <input type="number" id="edit_daily_egg_production_crates" name="daily_egg_production_crates" class="form-control" placeholder="Crates" required min="0">
+                                        </div>
+                                        <div class="col">
+                                            <input type="number" id="edit_daily_egg_production_pieces" name="daily_egg_production_pieces" class="form-control" placeholder="Pieces (0-29)" required min="0" max="29">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_daily_egg_production" class="form-label">Daily Egg Production</label>
-                                    <input type="number" id="edit_daily_egg_production" name="daily_egg_production" class="form-control" required min="0">
+                                    <label class="form-label">Daily Sold Eggs (1 crate = 30 eggs)</label>
+                                    <div class="row">
+                                        <div class="col">
+                                            <input type="number" id="edit_daily_sold_egg_crates" name="daily_sold_egg_crates" class="form-control" placeholder="Crates" required min="0">
+                                        </div>
+                                        <div class="col">
+                                            <input type="number" id="edit_daily_sold_egg_pieces" name="daily_sold_egg_pieces" class="form-control" placeholder="Pieces (0-29)" required min="0" max="29">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_daily_sold_egg" class="form-label">Daily Sold Eggs</label>
-                                    <input type="number" id="edit_daily_sold_egg" name="daily_sold_egg" class="form-control" required min="0">
+                                    <label class="form-label">Broken Eggs (1 crate = 30 eggs)</label>
+                                    <div class="row">
+                                        <div class="col">
+                                            <input type="number" id="edit_broken_egg_crates" name="broken_egg_crates" class="form-control" placeholder="Crates" required min="0">
+                                        </div>
+                                        <div class="col">
+                                            <input type="number" id="edit_broken_egg_pieces" name="broken_egg_pieces" class="form-control" placeholder="Pieces (0-29)" required min="0" max="29">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_total_sold_egg" class="form-label">Total Sold Eggs</label>
-                                    <input type="number" id="edit_total_sold_egg" name="total_sold_egg" class="form-control" required min="0">
+                                    <label class="form-label">Drugs Administered</label>
+                                    <input type="text" id="edit_drugs" name="drugs" class="form-control" placeholder="Enter drugs administered (optional)">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_broken_egg" class="form-label">Broken Eggs</label>
-                                    <input type="number" id="edit_broken_egg" name="broken_egg" class="form-control" required min="0">
+                                    <label class="form-label">Reorder Feeds (kg)</label>
+                                    <input type="number" id="edit_reorder_feeds" name="reorder_feeds" class="form-control" placeholder="Enter reorder feeds in kg (optional)" min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_outstanding_egg" class="form-label">Outstanding Eggs</label>
-                                    <input type="number" id="edit_outstanding_egg" name="outstanding_egg" class="form-control" required min="0">
+                                    <label class="form-label">Total Eggs in Farm</label>
+                                    <p class="form-text" id="edit_total_egg_in_farm">Calculated by system</p>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_total_egg_in_farm" class="form-label">Total Eggs in Farm</label>
-                                    <input type="number" id="edit_total_egg_in_farm" name="total_egg_in_farm" class="form-control" required min="0">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit_drugs" class="form-label">Drugs Administered</label>
-                                    <input type="text" id="edit_drugs" name="drugs" class="form-control">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit_reorder_feeds" class="form-label">Reorder Feeds (kg)</label>
-                                    <input type="number" id="edit_reorder_feeds" name="reorder_feeds" class="form-control" min="0" step="0.01">
+                                    <label class="form-label">Outstanding Eggs</label>
+                                    <p class="form-text" id="edit_outstanding_egg">Calculated by system</p>
                                 </div>
                                 <div class="alert alert-danger d-none" id="edit-error-msg"></div>
                             </div>
@@ -411,6 +451,14 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
         <script>
             window.weekId = {{ $week->id }};
+            const CRATE_SIZE = 30;
+
+            // Helper function to convert between pieces and crates/pieces
+            function toCratesAndPieces(totalPieces) {
+                const crates = Math.floor(totalPieces / CRATE_SIZE);
+                const pieces = totalPieces % CRATE_SIZE;
+                return { crates, pieces, total: totalPieces };
+            }
 
             // Initialize Chart.js
             const ctx = document.getElementById('dailyChart').getContext('2d');
@@ -419,7 +467,7 @@
                 data: {
                     labels: @json($chartData['labels']),
                     datasets: [{
-                        label: 'Daily Egg Production',
+                        label: 'Daily Egg Production (Pieces)',
                         data: @json($chartData['daily_egg_production']),
                         backgroundColor: '#0d6efd',
                         borderColor: '#0d6efd',

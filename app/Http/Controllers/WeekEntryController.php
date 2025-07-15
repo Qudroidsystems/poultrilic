@@ -9,6 +9,15 @@ use Illuminate\Support\Facades\Log;
 
 class WeekEntryController extends Controller
 {
+
+    function __construct()
+    {
+         $this->middleware('permission:View weekly-entry|Create weekly-entry|Update weekly-entry|Delete weekly-entry', ['only' => ['index','store']]);
+         $this->middleware('permission:Create weekly-entry', ['only' => ['create','store']]);
+         $this->middleware('permission:Update weekly-entry', ['only' => ['edit','update']]);
+         $this->middleware('permission:Delete weekly-entry', ['only' => ['destroy']]);
+    }
+
     /**
      * Display a listing of week entries for a flock with pagination and filtering.
      */

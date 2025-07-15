@@ -9,6 +9,16 @@ use Illuminate\Support\Facades\Log;
 
 class DailyEntryController extends Controller
 {
+
+    function __construct()
+    {
+         $this->middleware('permission:View daily-entry|Create daily-entry|Update daily-entry|Delete daily-entry', ['only' => ['index','store']]);
+         $this->middleware('permission:Create daily-entry', ['only' => ['create','store']]);
+         $this->middleware('permission:Update daily-entry', ['only' => ['edit','update']]);
+         $this->middleware('permission:Delete daily-entry', ['only' => ['destroy']]);
+    }
+
+
     public function index(Request $request, $weekId)
     {
         try {
@@ -40,9 +50,17 @@ class DailyEntryController extends Controller
                             'id' => $entry->id,
                             'day_number' => "Day $entry->day_number",
                             'daily_feeds' => $entry->daily_feeds,
+                            'available_feeds' => $entry->available_feeds,
                             'daily_mortality' => $entry->daily_mortality,
+                            'sick_bay' => $entry->sick_bay,
                             'current_birds' => $entry->current_birds,
                             'daily_egg_production' => $entry->daily_egg_production,
+                            'daily_sold_egg' => $entry->daily_sold_egg,
+                            'broken_egg' => $entry->broken_egg,
+                            'outstanding_egg' => $entry->outstanding_egg,
+                            'total_egg_in_farm' => $entry->total_egg_in_farm,
+                            'drugs' => $entry->drugs,
+                            'reorder_feeds' => $entry->reorder_feeds,
                             'created_at' => $entry->created_at->format('Y-m-d'),
                         ];
                     })->toArray(),
@@ -71,7 +89,7 @@ class DailyEntryController extends Controller
     public function store(Request $request, $weekId)
     {
         try {
-           // $this->authorize('create daily-entry');
+            // $this->authorize('create daily-entry');
 
             Log::info('Store daily entry request', [
                 'week_id' => $weekId,
@@ -85,48 +103,64 @@ class DailyEntryController extends Controller
                 'day_number' => 'required|integer|between:1,7|unique:daily_entries,day_number,NULL,id,week_entry_id,' . $weekId,
                 'daily_feeds' => 'required|numeric|min:0',
                 'available_feeds' => 'required|numeric|min:0',
-                'total_feeds_consumed' => 'required|numeric|min:0',
                 'daily_mortality' => 'required|integer|min:0',
                 'sick_bay' => 'required|integer|min:0',
-                'total_mortality' => 'required|integer|min:0',
                 'daily_egg_production' => 'required|integer|min:0',
                 'daily_sold_egg' => 'required|integer|min:0',
-                'total_sold_egg' => 'required|integer|min:0',
                 'broken_egg' => 'required|integer|min:0',
-                'outstanding_egg' => 'required|integer|min:0',
-                'total_egg_in_farm' => 'required|integer|min:0',
                 'drugs' => 'nullable|string',
                 'reorder_feeds' => 'nullable|numeric|min:0',
             ]);
 
-            $lastBirdCount = DailyEntry::where('week_entry_id', $weekId)
+            $previousEntry = DailyEntry::where('week_entry_id', $weekId)
                 ->orderByDesc('day_number')
-                ->first()
-                ?->current_birds ?? $flock->current_bird_count;
+                ->first();
 
-            $newCount = $lastBirdCount - $validated['daily_mortality'];
+            $lastBirdCount = $previousEntry ? $previousEntry->current_birds : $flock->current_bird_count;
+            $currentBirds = $lastBirdCount - $validated['daily_mortality'];
+
+            $totalFeedsConsumed = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '<=', $validated['day_number'])
+                ->sum('daily_feeds') + $validated['daily_feeds'];
+
+            $totalMortality = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '<=', $validated['day_number'])
+                ->sum('daily_mortality') + $validated['daily_mortality'];
+
+            $totalSoldEgg = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '<=', $validated['day_number'])
+                ->sum('daily_sold_egg') + $validated['daily_sold_egg'];
+
+            $totalEggInFarm = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '<=', $validated['day_number'])
+                ->sum(\DB::raw('daily_egg_production - daily_sold_egg - broken_egg')) 
+                + ($validated['daily_egg_production'] - $validated['daily_sold_egg'] - $validated['broken_egg']);
+
+            $previousTotalEggInFarm = $previousEntry ? $previousEntry->total_egg_in_farm : 0;
+            $outstandingEgg = $previousTotalEggInFarm + $validated['daily_egg_production'] 
+                - $validated['daily_sold_egg'] - $validated['broken_egg'];
 
             $entry = DailyEntry::create([
                 'week_entry_id' => $weekId,
                 'day_number' => $validated['day_number'],
                 'daily_feeds' => $validated['daily_feeds'],
                 'available_feeds' => $validated['available_feeds'],
-                'total_feeds_consumed' => $validated['total_feeds_consumed'],
+                'total_feeds_consumed' => $totalFeedsConsumed,
                 'daily_mortality' => $validated['daily_mortality'],
                 'sick_bay' => $validated['sick_bay'],
-                'total_mortality' => $validated['total_mortality'],
-                'current_birds' => $newCount,
+                'total_mortality' => $totalMortality,
+                'current_birds' => $currentBirds,
                 'daily_egg_production' => $validated['daily_egg_production'],
                 'daily_sold_egg' => $validated['daily_sold_egg'],
-                'total_sold_egg' => $validated['total_sold_egg'],
+                'total_sold_egg' => $totalSoldEgg,
                 'broken_egg' => $validated['broken_egg'],
-                'outstanding_egg' => $validated['outstanding_egg'],
-                'total_egg_in_farm' => $validated['total_egg_in_farm'],
+                'outstanding_egg' => max(0, $outstandingEgg),
+                'total_egg_in_farm' => max(0, $totalEggInFarm),
                 'drugs' => $validated['drugs'],
                 'reorder_feeds' => $validated['reorder_feeds'],
             ]);
 
-            $flock->update(['current_bird_count' => $newCount]);
+            $flock->update(['current_bird_count' => $currentBirds]);
 
             Log::info('Daily entry created', [
                 'entry_id' => $entry->id,
@@ -137,9 +171,17 @@ class DailyEntryController extends Controller
                 'id' => $entry->id,
                 'day_number' => "Day $entry->day_number",
                 'daily_feeds' => $entry->daily_feeds,
+                'available_feeds' => $entry->available_feeds,
                 'daily_mortality' => $entry->daily_mortality,
+                'sick_bay' => $entry->sick_bay,
                 'current_birds' => $entry->current_birds,
                 'daily_egg_production' => $entry->daily_egg_production,
+                'daily_sold_egg' => $entry->daily_sold_egg,
+                'broken_egg' => $entry->broken_egg,
+                'outstanding_egg' => $entry->outstanding_egg,
+                'total_egg_in_farm' => $entry->total_egg_in_farm,
+                'drugs' => $entry->drugs,
+                'reorder_feeds' => $entry->reorder_feeds,
                 'created_at' => $entry->created_at->format('Y-m-d'),
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -170,6 +212,47 @@ class DailyEntryController extends Controller
         }
     }
 
+    public function show($weekId, $id)
+    {
+        try {
+            // $this->authorize('view daily-entry');
+            $entry = DailyEntry::where('week_entry_id', $weekId)->findOrFail($id);
+            return response()->json([
+                'id' => $entry->id,
+                'day_number' => "Day $entry->day_number",
+                'daily_feeds' => $entry->daily_feeds,
+                'available_feeds' => $entry->available_feeds,
+                'daily_mortality' => $entry->daily_mortality,
+                'sick_bay' => $entry->sick_bay,
+                'current_birds' => $entry->current_birds,
+                'daily_egg_production' => $entry->daily_egg_production,
+                'daily_sold_egg' => $entry->daily_sold_egg,
+                'broken_egg' => $entry->broken_egg,
+                'outstanding_egg' => $entry->outstanding_egg,
+                'total_egg_in_farm' => $entry->total_egg_in_farm,
+                'drugs' => $entry->drugs,
+                'reorder_feeds' => $entry->reorder_feeds,
+                'created_at' => $entry->created_at->format('Y-m-d'),
+            ]);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            Log::error('Authorization error viewing daily entry: ' . $e->getMessage(), [
+                'week_id' => $weekId,
+                'entry_id' => $id,
+            ]);
+            return response()->json([
+                'message' => 'You are not authorized to view this daily entry',
+            ], 403);
+        } catch (\Exception $e) {
+            Log::error('Error viewing daily entry: ' . $e->getMessage(), [
+                'week_id' => $weekId,
+                'entry_id' => $id,
+            ]);
+            return response()->json([
+                'message' => 'Failed to retrieve daily entry: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function update(Request $request, $weekId, $id)
     {
         try {
@@ -188,50 +271,113 @@ class DailyEntryController extends Controller
                 'day_number' => 'required|integer|between:1,7|unique:daily_entries,day_number,' . $id . ',id,week_entry_id,' . $weekId,
                 'daily_feeds' => 'required|numeric|min:0',
                 'available_feeds' => 'required|numeric|min:0',
-                'total_feeds_consumed' => 'required|numeric|min:0',
                 'daily_mortality' => 'required|integer|min:0',
                 'sick_bay' => 'required|integer|min:0',
-                'total_mortality' => 'required|integer|min:0',
                 'daily_egg_production' => 'required|integer|min:0',
                 'daily_sold_egg' => 'required|integer|min:0',
-                'total_sold_egg' => 'required|integer|min:0',
                 'broken_egg' => 'required|integer|min:0',
-                'outstanding_egg' => 'required|integer|min:0',
-                'total_egg_in_farm' => 'required|integer|min:0',
                 'drugs' => 'nullable|string',
                 'reorder_feeds' => 'nullable|numeric|min:0',
             ]);
 
             $entry = DailyEntry::where('week_entry_id', $weekId)->findOrFail($id);
 
-            $lastBirdCount = DailyEntry::where('week_entry_id', $weekId)
+            $previousEntry = DailyEntry::where('week_entry_id', $weekId)
                 ->where('day_number', '<', $validated['day_number'])
                 ->orderByDesc('day_number')
-                ->first()
-                ?->current_birds ?? $flock->current_bird_count;
+                ->first();
 
-            $newCount = $lastBirdCount - $validated['daily_mortality'];
+            $lastBirdCount = $previousEntry ? $previousEntry->current_birds : $flock->current_bird_count;
+            $currentBirds = $lastBirdCount - $validated['daily_mortality'];
+
+            $totalFeedsConsumed = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '<=', $validated['day_number'])
+                ->where('id', '!=', $id)
+                ->sum('daily_feeds') + $validated['daily_feeds'];
+
+            $totalMortality = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '<=', $validated['day_number'])
+                ->where('id', '!=', $id)
+                ->sum('daily_mortality') + $validated['daily_mortality'];
+
+            $totalSoldEgg = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '<=', $validated['day_number'])
+                ->where('id', '!=', $id)
+                ->sum('daily_sold_egg') + $validated['daily_sold_egg'];
+
+            $totalEggInFarm = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '<=', $validated['day_number'])
+                ->where('id', '!=', $id)
+                ->sum(\DB::raw('daily_egg_production - daily_sold_egg - broken_egg')) 
+                + ($validated['daily_egg_production'] - $validated['daily_sold_egg'] - $validated['broken_egg']);
+
+            $previousTotalEggInFarm = $previousEntry ? $previousEntry->total_egg_in_farm : 0;
+            $outstandingEgg = $previousTotalEggInFarm + $validated['daily_egg_production'] 
+                - $validated['daily_sold_egg'] - $validated['broken_egg'];
 
             $entry->update([
                 'day_number' => $validated['day_number'],
                 'daily_feeds' => $validated['daily_feeds'],
                 'available_feeds' => $validated['available_feeds'],
-                'total_feeds_consumed' => $validated['total_feeds_consumed'],
+                'total_feeds_consumed' => $totalFeedsConsumed,
                 'daily_mortality' => $validated['daily_mortality'],
                 'sick_bay' => $validated['sick_bay'],
-                'total_mortality' => $validated['total_mortality'],
-                'current_birds' => $newCount,
+                'total_mortality' => $totalMortality,
+                'current_birds' => $currentBirds,
                 'daily_egg_production' => $validated['daily_egg_production'],
                 'daily_sold_egg' => $validated['daily_sold_egg'],
-                'total_sold_egg' => $validated['total_sold_egg'],
+                'total_sold_egg' => $totalSoldEgg,
                 'broken_egg' => $validated['broken_egg'],
-                'outstanding_egg' => $validated['outstanding_egg'],
-                'total_egg_in_farm' => $validated['total_egg_in_farm'],
+                'outstanding_egg' => max(0, $outstandingEgg),
+                'total_egg_in_farm' => max(0, $totalEggInFarm),
                 'drugs' => $validated['drugs'],
                 'reorder_feeds' => $validated['reorder_feeds'],
             ]);
 
-            $flock->update(['current_bird_count' => $newCount]);
+            $subsequentEntries = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '>', $validated['day_number'])
+                ->orderBy('day_number')
+                ->get();
+
+            $previousBirdCount = $currentBirds;
+            $previousTotalEggInFarm = $totalEggInFarm;
+
+            foreach ($subsequentEntries as $subsequentEntry) {
+                $newCurrentBirds = $previousBirdCount - $subsequentEntry->daily_mortality;
+                $newTotalFeedsConsumed = DailyEntry::where('week_entry_id', $weekId)
+                    ->where('day_number', '<=', $subsequentEntry->day_number)
+                    ->where('id', '!=', $subsequentEntry->id)
+                    ->sum('daily_feeds') + $subsequentEntry->daily_feeds;
+                $newTotalMortality = DailyEntry::where('week_entry_id', $weekId)
+                    ->where('day_number', '<=', $subsequentEntry->day_number)
+                    ->where('id', '!=', $subsequentEntry->id)
+                    ->sum('daily_mortality') + $subsequentEntry->daily_mortality;
+                $newTotalSoldEgg = DailyEntry::where('week_entry_id', $weekId)
+                    ->where('day_number', '<=', $subsequentEntry->day_number)
+                    ->where('id', '!=', $subsequentEntry->id)
+                    ->sum('daily_sold_egg') + $subsequentEntry->daily_sold_egg;
+                $newTotalEggInFarm = DailyEntry::where('week_entry_id', $weekId)
+                    ->where('day_number', '<=', $subsequentEntry->day_number)
+                    ->where('id', '!=', $subsequentEntry->id)
+                    ->sum(\DB::raw('daily_egg_production - daily_sold_egg - broken_egg')) 
+                    + ($subsequentEntry->daily_egg_production - $subsequentEntry->daily_sold_egg - $subsequentEntry->broken_egg);
+                $newOutstandingEgg = $previousTotalEggInFarm + $subsequentEntry->daily_egg_production 
+                    - $subsequentEntry->daily_sold_egg - $subsequentEntry->broken_egg;
+
+                $subsequentEntry->update([
+                    'total_feeds_consumed' => $newTotalFeedsConsumed,
+                    'total_mortality' => $newTotalMortality,
+                    'current_birds' => $newCurrentBirds,
+                    'total_sold_egg' => $newTotalSoldEgg,
+                    'outstanding_egg' => max(0, $newOutstandingEgg),
+                    'total_egg_in_farm' => max(0, $newTotalEggInFarm),
+                ]);
+
+                $previousBirdCount = $newCurrentBirds;
+                $previousTotalEggInFarm = $newTotalEggInFarm;
+            }
+
+            $flock->update(['current_bird_count' => $currentBirds]);
 
             Log::info('Daily entry updated', [
                 'entry_id' => $entry->id,
@@ -242,9 +388,17 @@ class DailyEntryController extends Controller
                 'id' => $entry->id,
                 'day_number' => "Day $entry->day_number",
                 'daily_feeds' => $entry->daily_feeds,
+                'available_feeds' => $entry->available_feeds,
                 'daily_mortality' => $entry->daily_mortality,
+                'sick_bay' => $entry->sick_bay,
                 'current_birds' => $entry->current_birds,
                 'daily_egg_production' => $entry->daily_egg_production,
+                'daily_sold_egg' => $entry->daily_sold_egg,
+                'broken_egg' => $entry->broken_egg,
+                'outstanding_egg' => $entry->outstanding_egg,
+                'total_egg_in_farm' => $entry->total_egg_in_farm,
+                'drugs' => $entry->drugs,
+                'reorder_feeds' => $entry->reorder_feeds,
                 'created_at' => $entry->created_at->format('Y-m-d'),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -289,8 +443,58 @@ class DailyEntryController extends Controller
 
             $entry->delete();
 
-            $lastEntry = DailyEntry::where('week_entry_id,', $weekId)->orderBy('day_number', 'desc')->first();
-            $newCount = $lastEntry ? $lastEntry->current_birds : $flock->current_bird_count;
+            $subsequentEntries = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '>', $entry->day_number)
+                ->orderBy('day_number')
+                ->get();
+
+            $previousEntry = DailyEntry::where('week_entry_id', $weekId)
+                ->where('day_number', '<', $entry->day_number)
+                ->orderByDesc('day_number')
+                ->first();
+
+            $previousBirdCount = $previousEntry ? $previousEntry->current_birds : $flock->current_bird_count;
+            $previousTotalEggInFarm = $previousEntry ? $previousEntry->total_egg_in_farm : 0;
+
+            foreach ($subsequentEntries as $subsequentEntry) {
+                $newCurrentBirds = $previousBirdCount - $subsequentEntry->daily_mortality;
+                $newTotalFeedsConsumed = DailyEntry::where('week_entry_id', $weekId)
+                    ->where('day_number', '<=', $subsequentEntry->day_number)
+                    ->where('id', '!=', $subsequentEntry->id)
+                    ->sum('daily_feeds') + $subsequentEntry->daily_feeds;
+                $newTotalMortality = DailyEntry::where('week_entry_id', $weekId)
+                    ->where('day_number', '<=', $subsequentEntry->day_number)
+                    ->where('id', '!=', $subsequentEntry->id)
+                    ->sum('daily_mortality') + $subsequentEntry->daily_mortality;
+                $newTotalSoldEgg = DailyEntry::where('week_entry_id', $weekId)
+                    ->where('day_number', '<=', $subsequentEntry->day_number)
+                    ->where('id', '!=', $subsequentEntry->id)
+                    ->sum('daily_sold_egg') + $subsequentEntry->daily_sold_egg;
+                $newTotalEggInFarm = DailyEntry::where('week_entry_id', $weekId)
+                    ->where('day_number', '<=', $subsequentEntry->day_number)
+                    ->where('id', '!=', $subsequentEntry->id)
+                    ->sum(\DB::raw('daily_egg_production - daily_sold_egg - broken_egg')) 
+                    + ($subsequentEntry->daily_egg_production - $subsequentEntry->daily_sold_egg - $subsequentEntry->broken_egg);
+                $newOutstandingEgg = $previousTotalEggInFarm + $subsequentEntry->daily_egg_production 
+                    - $subsequentEntry->daily_sold_egg - $subsequentEntry->broken_egg;
+
+                $subsequentEntry->update([
+                    'total_feeds_consumed' => $newTotalFeedsConsumed,
+                    'total_mortality' => $newTotalMortality,
+                    'current_birds' => $newCurrentBirds,
+                    'total_sold_egg' => $newTotalSoldEgg,
+                    'outstanding_egg' => max(0, $newOutstandingEgg),
+                    'total_egg_in_farm' => max(0, $newTotalEggInFarm),
+                ]);
+
+                $previousBirdCount = $newCurrentBirds;
+                $previousTotalEggInFarm = $newTotalEggInFarm;
+            }
+
+            $lastEntry = DailyEntry::where('week_entry_id', $weekId)
+                ->orderBy('day_number', 'desc')
+                ->first();
+            $newCount = $lastEntry ? $lastEntry->current_birds : $flock->initial_bird_count;
             $flock->update(['current_bird_count' => $newCount]);
 
             Log::info('Daily entry deleted', [
@@ -316,4 +520,3 @@ class DailyEntryController extends Controller
         }
     }
 }
-?>
