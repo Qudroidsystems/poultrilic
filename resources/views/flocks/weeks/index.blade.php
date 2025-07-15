@@ -163,19 +163,7 @@
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
                                         <div class="pagination-wrap hstack gap-2 justify-content-center">
-                                            <a class="page-item pagination-prev {{ $weekEntries->onFirstPage() ? 'disabled' : '' }}" href="{{ $weekEntries->previousPageUrl() }}">
-                                                <i class="mdi mdi-chevron-left align-middle"></i>
-                                            </a>
-                                            <ul class="pagination listjs-pagination mb-0">
-                                                @foreach ($weekEntries->links()->elements[0] as $page => $url)
-                                                    <li class="page-item {{ $weekEntries->currentPage() == $page ? 'active' : '' }}">
-                                                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                            <a class="page-item pagination-next {{ $weekEntries->hasMorePages() ? '' : 'disabled' }}" href="{{ $weekEntries->nextPageUrl() }}">
-                                                <i class="mdi mdi-chevron-right align-middle"></i>
-                                            </a>
+                                            {{ $weekEntries->links() }}
                                         </div>
                                     </div>
                                 </div>
@@ -184,12 +172,48 @@
                     </div>
                 </div>
 
-                <!-- Chart -->
-                <div class="row">
-                    <div class="col-lg-12">
+                <!-- Charts and Statistics -->
+                <div class="row mt-4">
+                    <div class="col-lg-6">
                         <div class="card">
                             <div class="card-body">
+                                <h5 class="card-title">Week Entries Chart</h5>
                                 <canvas id="weekChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Daily Entries Chart</h5>
+                                <canvas id="dailyEntryChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-body" id="week-stats">
+                                <p class="text-muted">Select a week to view statistics.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-body" id="all-weeks-stats">
+                                @if (isset($allWeeksStats))
+                                    <h5 class="card-title">All Weeks Statistics</h5>
+                                    <p>Total Daily Entries: {{ $allWeeksStats['total_daily_entries'] }}</p>
+                                    <p>Total Egg Production: {{ $allWeeksStats['total_egg_production'] }} eggs</p>
+                                    <p>Total Mortality: {{ $allWeeksStats['total_mortality'] }} birds</p>
+                                    <p>Total Feeds Consumed: {{ $allWeeksStats['total_feeds_consumed'] }} kg</p>
+                                    <p>Average Daily Egg Production: {{ number_format($allWeeksStats['avg_daily_egg_production'], 2) }} eggs</p>
+                                    <p>Average Daily Mortality: {{ number_format($allWeeksStats['avg_daily_mortality'], 2) }} birds</p>
+                                    <p>Average Daily Feeds: {{ number_format($allWeeksStats['avg_daily_feeds'], 2) }} kg</p>
+                                @else
+                                    <p class="text-muted">No statistics available.</p>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -287,7 +311,7 @@
         <script>
             window.flockId = {{ $flock->id }};
 
-            // Initialize Chart.js
+            // Initialize Week Chart
             const ctx = document.getElementById('weekChart').getContext('2d');
             window.weekChart = new Chart(ctx, {
                 type: 'bar',
@@ -302,11 +326,18 @@
                     }]
                 },
                 options: {
-                    scales: { y: { beginAtZero: true } }
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Number of Daily Entries' } },
+                        x: { title: { display: true, text: 'Week' } }
+                    },
+                    plugins: {
+                        legend: { display: true },
+                        title: { display: true, text: 'Week Entries Overview' }
+                    }
                 }
             });
         </script>
-    
     </div>
 </div>
 @endsection

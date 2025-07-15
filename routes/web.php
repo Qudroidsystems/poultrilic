@@ -44,14 +44,13 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::resource('flocks', FlockController::class);
 
-    Route::prefix('flocks/{flockId}/weeks')->name('week-entries.')->group(function () {
-        Route::get('/', [WeekEntryController::class, 'index'])->name('index');
-        Route::get('/create', [WeekEntryController::class, 'create'])->name('create');
-        Route::post('/', [WeekEntryController::class, 'store'])->name('store');
-        Route::post('/{weekId}', [WeekEntryController::class, 'update'])->name('update');
-        Route::delete('/{weekId}', [WeekEntryController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-destroy', [WeekEntryController::class, 'bulkDestroy'])->name('bulk-destroy');
-        Route::get('/{weekId}/daily-entries', [WeekEntryController::class, 'getDailyEntries'])->name('daily-entries');
+    Route::prefix('flocks/{flock_id}')->group(function () {
+        Route::get('weeks', [WeekEntryController::class, 'index'])->name('week-entries.index');
+        Route::get('weeks/create', [WeekEntryController::class, 'create'])->name('week-entries.create');
+        Route::post('weeks', [WeekEntryController::class, 'store'])->name('week-entries.store');
+        Route::put('weeks/{week_id}', [WeekEntryController::class, 'update'])->name('week-entries.update');
+        Route::delete('weeks/{week_id}', [WeekEntryController::class, 'destroy'])->name('week-entries.delete');
+        Route::delete('weeks/bulk', [WeekEntryController::class, 'bulkDestroy'])->name('week-entries.bulk-delete');
     });
 
     // Use resource routing for daily-entries to include all standard CRUD routes

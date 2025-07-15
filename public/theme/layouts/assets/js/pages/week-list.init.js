@@ -28,22 +28,22 @@ document.addEventListener('DOMContentLoaded', function () {
                     {
                         label: 'Daily Egg Production',
                         data: [],
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: '#36A2EB',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
                         fill: true,
                     },
                     {
                         label: 'Daily Mortality',
                         data: [],
-                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderColor: '#FF6384',
                         backgroundColor: 'rgba(255, 99, 132, 0.2)',
                         fill: true,
                     },
                     {
                         label: 'Daily Feeds (kg)',
                         data: [],
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: '#FFCE56',
+                        backgroundColor: 'rgba(255, 206, 86, 0.2)',
                         fill: true,
                     },
                 ],
@@ -51,13 +51,8 @@ document.addEventListener('DOMContentLoaded', function () {
             options: {
                 responsive: true,
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Value' },
-                    },
-                    x: {
-                        title: { display: true, text: 'Day' },
-                    },
+                    y: { beginAtZero: true, title: { display: true, text: 'Value' } },
+                    x: { title: { display: true, text: 'Day' } },
                 },
                 plugins: {
                     legend: { display: true },
@@ -72,35 +67,39 @@ document.addEventListener('DOMContentLoaded', function () {
         const weekStatsContainer = document.getElementById('week-stats');
         if (weekStatsContainer && weekStats) {
             weekStatsContainer.innerHTML = `
-                <h5>Selected Week Statistics</h5>
+                <h5 class="card-title">Selected Week Statistics</h5>
                 <p>Total Egg Production: ${weekStats.total_egg_production} eggs</p>
                 <p>Total Mortality: ${weekStats.total_mortality} birds</p>
                 <p>Total Feeds Consumed: ${weekStats.total_feeds_consumed} kg</p>
-                <p>Avg Daily Egg Production: ${weekStats.avg_daily_egg_production.toFixed(2)} eggs</p>
-                <p>Avg Daily Mortality: ${weekStats.avg_daily_mortality.toFixed(2)} birds</p>
-                <p>Avg Daily Feeds: ${weekStats.avg_daily_feeds.toFixed(2)} kg</p>
+                <p>Average Daily Egg Production: ${weekStats.avg_daily_egg_production.toFixed(2)} eggs</p>
+                <p>Average Daily Mortality: ${weekStats.avg_daily_mortality.toFixed(2)} birds</p>
+                <p>Average Daily Feeds: ${weekStats.avg_daily_feeds.toFixed(2)} kg</p>
             `;
+        } else if (weekStatsContainer) {
+            weekStatsContainer.innerHTML = '<p class="text-muted">Select a week to view statistics.</p>';
         }
+
         const allWeeksStatsContainer = document.getElementById('all-weeks-stats');
         if (allWeeksStatsContainer && allWeeksStats) {
             allWeeksStatsContainer.innerHTML = `
-                <h5>All Weeks Statistics</h5>
+                <h5 class="card-title">All Weeks Statistics</h5>
                 <p>Total Daily Entries: ${allWeeksStats.total_daily_entries}</p>
                 <p>Total Egg Production: ${allWeeksStats.total_egg_production} eggs</p>
                 <p>Total Mortality: ${allWeeksStats.total_mortality} birds</p>
                 <p>Total Feeds Consumed: ${allWeeksStats.total_feeds_consumed} kg</p>
-                <p>Avg Daily Egg Production: ${allWeeksStats.avg_daily_egg_production.toFixed(2)} eggs</p>
-                <p>Avg Daily Mortality: ${allWeeksStats.avg_daily_mortality.toFixed(2)} birds</p>
-                <p>Avg Daily Feeds: ${allWeeksStats.avg_daily_feeds.toFixed(2)} kg</p>
+                <p>Average Daily Egg Production: ${allWeeksStats.avg_daily_egg_production.toFixed(2)} eggs</p>
+                <p>Average Daily Mortality: ${allWeeksStats.avg_daily_mortality.toFixed(2)} birds</p>
+                <p>Average Daily Feeds: ${allWeeksStats.avg_daily_feeds.toFixed(2)} kg</p>
             `;
         }
     }
 
     // Filter Data
-    window.filterData = function () {
+    window.filterData = function (url = null) {
         const search = document.getElementById('searchWeek')?.value || '';
         const weekFilter = document.getElementById('weekFilter')?.value || 'all';
-        fetch(`/flocks/${window.flockId}/weeks?search=${encodeURIComponent(search)}&week_filter=${encodeURIComponent(weekFilter)}`, {
+        const fetchUrl = url || `/flocks/${window.flockId}/weeks?search=${encodeURIComponent(search)}&week_filter=${encodeURIComponent(weekFilter)}`;
+        fetch(fetchUrl, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
@@ -124,13 +123,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             updateStats(null, data.allWeeksStats);
             bindPagination();
+            bindRowActions(); // Rebind event listeners for new rows
         })
         .catch(error => {
             console.error('Error filtering data:', error);
             let errorMsg = 'Failed to load weeks';
             try {
                 const err = JSON.parse(error.message);
-                errorMsg = err.status === 403 ? 'You are not authorized to view weeks' : err.message;
+                errorMsg = err.status === 403 ? 'You are not authorized to view weeks' : err.error || err.message;
             } catch (e) {
                 errorMsg = 'An unexpected error occurred. Please try again.';
             }
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const err = JSON.parse(error.message);
                 errorMsg = err.status === 403 ? 'You are not authorized to view daily entries' :
-                           err.status === 404 ? 'Week not found' : err.message;
+                           err.status === 404 ? 'Week not found' : err.error || err.message;
             } catch (e) {
                 errorMsg = 'An unexpected error occurred. Please try again.';
             }
@@ -180,14 +180,57 @@ document.addEventListener('DOMContentLoaded', function () {
     // Bind Pagination
     function bindPagination() {
         document.querySelectorAll('#pagination-element .page-link').forEach(link => {
-            link.addEventListener('click', e => {
-                e.preventDefault();
-                const href = link.getAttribute('href');
-                if (href && href !== '#') {
-                    window.filterData(href);
-                }
-            });
+            link.removeEventListener('click', handlePaginationClick); // Prevent duplicate listeners
+            link.addEventListener('click', handlePaginationClick);
         });
+    }
+
+    function handlePaginationClick(e) {
+        e.preventDefault();
+        const href = e.target.closest('.page-link').getAttribute('href');
+        if (href && href !== '#') {
+            window.filterData(href);
+        }
+    }
+
+    // Bind Row Actions (Edit, Delete, Select)
+    function bindRowActions() {
+        document.querySelectorAll('.edit-item-btn').forEach(button => {
+            button.removeEventListener('click', handleEditClick);
+            button.addEventListener('click', handleEditClick);
+        });
+        document.querySelectorAll('.remove-item-btn').forEach(button => {
+            button.removeEventListener('click', handleDeleteClick);
+            button.addEventListener('click', handleDeleteClick);
+        });
+        document.querySelectorAll('tr').forEach(row => {
+            row.removeEventListener('click', handleRowClick);
+            row.addEventListener('click', handleRowClick);
+        });
+    }
+
+    function handleEditClick(e) {
+        const weekId = e.target.closest('tr').querySelector('.chk-child').value;
+        const weekName = e.target.closest('tr').querySelector('.week_name').textContent;
+        document.getElementById('edit-id-field').value = weekId;
+        document.getElementById('edit_week_number').value = weekName.replace('Week ', '');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('editWeekModal')).show();
+    }
+
+    function handleDeleteClick(e) {
+        const weekId = e.target.closest('tr').querySelector('.chk-child').value;
+        document.getElementById('delete-record').dataset.weekId = weekId;
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteRecordModal')).show();
+    }
+
+    function handleRowClick(e) {
+        if (e.target.closest('.edit-item-btn, .remove-item-btn, .chk-child, .btn-subtle-primary')) {
+            return;
+        }
+        const weekId = e.target.closest('tr').querySelector('.chk-child').value;
+        document.querySelectorAll('tr').forEach(row => row.classList.remove('table-active'));
+        e.target.closest('tr').classList.add('table-active');
+        fetchDailyEntries(weekId);
     }
 
     // Add Week
@@ -195,6 +238,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (addForm) {
         addForm.addEventListener('submit', function (e) {
             e.preventDefault();
+            const errorMsg = document.getElementById('add-error-msg');
+            errorMsg.classList.add('d-none');
             const formData = new FormData(this);
             fetch(`/flocks/${window.flockId}/weeks`, {
                 method: 'POST',
@@ -209,54 +254,41 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!response.ok) {
                     return response.json().then(err => { throw new Error(JSON.stringify({ status: response.status, ...err })); });
                 }
-                return response.json().then(data => ({ status: response.status, data }));
+                return response.json();
             })
-            .then(({ status, data }) => {
-                if (status === 201 && data.id) {
-                    weekList.add(data);
-                    bootstrap.Modal.getInstance(document.getElementById('addWeekModal')).hide();
-                    window.filterData();
-                    alert('Week added successfully');
-                    addForm.reset();
-                    document.getElementById('add-error-msg').classList.add('d-none');
-                } else {
-                    throw new Error(data.message || 'Failed to add week');
-                }
+            .then(data => {
+                weekList.add(data);
+                bootstrap.Modal.getInstance(document.getElementById('addWeekModal')).hide();
+                window.filterData();
+                alert('Week added successfully');
+                addForm.reset();
             })
             .catch(error => {
                 console.error('Error adding week:', error);
-                let errorMsg = 'Failed to add week';
+                let errorMsgText = 'Failed to add week';
                 try {
                     const err = JSON.parse(error.message);
-                    errorMsg = err.status === 403 ? 'You are not authorized to create weeks' :
-                               err.status === 422 ? Object.values(err.errors).flat().join(', ') : err.message;
+                    errorMsgText = err.status === 403 ? 'You are not authorized to create weeks' :
+                                   err.status === 422 ? Object.values(err.errors).flat().join(', ') : err.message;
                 } catch (e) {
-                    errorMsg = 'An unexpected error occurred. Please try again.';
+                    errorMsgText = 'An unexpected error occurred. Please try again.';
                 }
-                document.getElementById('add-error-msg').textContent = errorMsg;
-                document.getElementById('add-error-msg').classList.remove('d-none');
+                errorMsg.textContent = errorMsgText;
+                errorMsg.classList.remove('d-none');
             });
         });
     }
 
     // Edit Week
-    document.addEventListener('click', function (e) {
-        if (e.target.closest('.edit-item-btn')) {
-            const weekId = e.target.closest('tr').querySelector('.chk-child').value;
-            const weekName = e.target.closest('tr').querySelector('.week_name').textContent;
-            document.getElementById('edit-id-field').value = weekId;
-            document.getElementById('edit_week_number').value = weekName.replace('Week ', '');
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('editWeekModal')).show();
-        }
-    });
-
     const editForm = document.getElementById('edit-week-form');
     if (editForm) {
         editForm.addEventListener('submit', function (e) {
             e.preventDefault();
             const weekId = document.getElementById('edit-id-field').value;
+            const errorMsg = document.getElementById('edit-error-msg');
+            errorMsg.classList.add('d-none');
             const formData = new FormData(this);
-            formData.append('_method', 'PUT'); // Laravel requires _method for PUT requests
+            formData.append('_method', 'PUT');
             fetch(`/flocks/${window.flockId}/weeks/${weekId}`, {
                 method: 'POST',
                 body: formData,
@@ -270,46 +302,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!response.ok) {
                     return response.json().then(err => { throw new Error(JSON.stringify({ status: response.status, ...err })); });
                 }
-                return response.json().then(data => ({ status: response.status, data }));
+                return response.json();
             })
-            .then(({ status, data }) => {
-                if (status === 200 && data.id) {
-                    weekList.remove('id', data.id);
-                    weekList.add(data);
-                    bootstrap.Modal.getInstance(document.getElementById('editWeekModal')).hide();
-                    window.filterData();
-                    alert('Week updated successfully');
-                    document.getElementById('edit-error-msg').classList.add('d-none');
-                } else {
-                    throw new Error(data.message || 'Failed to update week');
-                }
+            .then(data => {
+                weekList.remove('id', data.id);
+                weekList.add(data);
+                bootstrap.Modal.getInstance(document.getElementById('editWeekModal')).hide();
+                window.filterData();
+                alert('Week updated successfully');
             })
             .catch(error => {
                 console.error('Error updating week:', error);
-                let errorMsg = 'Failed to update week';
+                let errorMsgText = 'Failed to update week';
                 try {
                     const err = JSON.parse(error.message);
-                    errorMsg = err.status === 403 ? 'You are not authorized to update weeks' :
-                               err.status === 422 ? Object.values(err.errors).flat().join(', ') :
-                               err.status === 404 ? 'Week not found' : err.message;
+                    errorMsgText = err.status === 403 ? 'You are not authorized to update weeks' :
+                                   err.status === 422 ? Object.values(err.errors).flat().join(', ') :
+                                   err.status === 404 ? 'Week not found' : err.message;
                 } catch (e) {
-                    errorMsg = 'An unexpected error occurred. Please try again.';
+                    errorMsgText = 'An unexpected error occurred. Please try again.';
                 }
-                document.getElementById('edit-error-msg').textContent = errorMsg;
-                document.getElementById('edit-error-msg').classList.remove('d-none');
+                errorMsg.textContent = errorMsgText;
+                errorMsg.classList.remove('d-none');
             });
         });
     }
 
     // Delete Week
-    document.addEventListener('click', function (e) {
-        if (e.target.closest('.remove-item-btn')) {
-            const weekId = e.target.closest('tr').querySelector('.chk-child').value;
-            document.getElementById('delete-record').dataset.weekId = weekId;
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteRecordModal')).show();
-        }
-    });
-
     const deleteButton = document.getElementById('delete-record');
     if (deleteButton) {
         deleteButton.addEventListener('click', function () {
@@ -378,6 +397,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             selectedIds.forEach(id => weekList.remove('id', id));
             document.getElementById('remove-actions').classList.add('d-none');
+            document.getElementById('checkAll').checked = false;
             window.filterData();
             alert(data.message);
         })
@@ -412,13 +432,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Select Week for Daily Entries
-    document.addEventListener('click', function (e) {
-        if (e.target.closest('tr') && !e.target.closest('.edit-item-btn') && !e.target.closest('.remove-item-btn') && !e.target.closest('.chk-child')) {
-            const weekId = e.target.closest('tr').querySelector('.chk-child').value;
-            document.querySelectorAll('tr').forEach(row => row.classList.remove('table-active'));
-            e.target.closest('tr').classList.add('table-active');
-            fetchDailyEntries(weekId);
-        }
-    });
+    // Initialize bindings
+    bindRowActions();
+    bindPagination();
 });

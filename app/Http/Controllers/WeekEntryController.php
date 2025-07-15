@@ -40,13 +40,11 @@ class WeekEntryController extends Controller
 
             $weekEntries = $query->latest()->paginate(100);
 
-            // Chart data for weeks
             $chartData = [
                 'labels' => $weekEntries->pluck('week_name')->toArray(),
                 'daily_entries_counts' => $weekEntries->pluck('daily_entries_count')->toArray(),
             ];
 
-            // Aggregate statistics for all weeks
             $allWeeksStats = [
                 'total_daily_entries' => $flock->weekEntries()->withCount('dailyEntries')->get()->sum('daily_entries_count'),
                 'total_egg_production' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
@@ -56,11 +54,11 @@ class WeekEntryController extends Controller
                 'total_feeds_consumed' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
                     ->sum('daily_entries.daily_feeds'),
                 'avg_daily_egg_production' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
-                    ->avg('daily_entries.daily_egg_production'),
+                    ->avg('daily_entries.daily_egg_production') ?? 0,
                 'avg_daily_mortality' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
-                    ->avg('daily_entries.daily_mortality'),
+                    ->avg('daily_entries.daily_mortality') ?? 0,
                 'avg_daily_feeds' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
-                    ->avg('daily_entries.daily_feeds'),
+                    ->avg('daily_entries.daily_feeds') ?? 0,
             ];
 
             if ($request->ajax()) {
@@ -93,6 +91,7 @@ class WeekEntryController extends Controller
     public function getDailyEntries(Request $request, $flockId, $weekId)
     {
         try {
+            $this->authorize('view weekly-entry'); // Ensure user has permission
             $week = WeekEntry::where('flock_id', $flockId)->with('dailyEntries')->findOrFail($weekId);
 
             $dailyEntries = $week->dailyEntries()->latest()->get();
@@ -126,6 +125,12 @@ class WeekEntryController extends Controller
                 'dailyChartData' => $dailyChartData,
                 'weekStats' => $weekStats,
             ]);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            Log::error('Authorization error fetching daily entries: ' . $e->getMessage(), [
+                'flock_id' => $flockId,
+                'week_id' => $weekId,
+            ]);
+            return response()->json(['error' => 'You are not authorized to view daily entries'], 403);
         } catch (\Exception $e) {
             Log::error('Error fetching daily entries: ' . $e->getMessage(), [
                 'flock_id' => $flockId,
@@ -140,11 +145,6 @@ class WeekEntryController extends Controller
         try {
             $this->authorize('create weekly-entry');
 
-            Log::info('Store week entry request', [
-                'flock_id' => $flockId,
-                'request_data' => $request->all(),
-            ]);
-
             $validated = $request->validate([
                 'week_number' => 'required|integer|min:1|unique:week_entries,week_number,NULL,id,flock_id,' . $flockId,
             ]);
@@ -153,11 +153,6 @@ class WeekEntryController extends Controller
             $lastWeek = $flock->weekEntries()->latest()->first();
 
             if ($lastWeek && $lastWeek->dailyEntries()->count() < 7) {
-                Log::warning('Previous week incomplete', [
-                    'flock_id' => $flockId,
-                    'last_week_id' => $lastWeek->id,
-                    'daily_entries_count' => $lastWeek->dailyEntries()->count(),
-                ]);
                 return response()->json([
                     'message' => 'Previous week is not complete. Please complete 7 daily entries first.'
                 ], 422);
@@ -167,11 +162,6 @@ class WeekEntryController extends Controller
                 'flock_id' => $flock->id,
                 'week_name' => 'Week ' . $validated['week_number'],
                 'week_number' => $validated['week_number'],
-            ]);
-
-            Log::info('Week entry created', [
-                'week_id' => $week->id,
-                'week_name' => $week->week_name,
             ]);
 
             return response()->json([
@@ -200,7 +190,6 @@ class WeekEntryController extends Controller
             Log::error('Error storing week entry: ' . $e->getMessage(), [
                 'flock_id' => $flockId,
                 'request_data' => $request->all(),
-                'trace' => $e->getTraceAsString(),
             ]);
             return response()->json([
                 'message' => 'Failed to store week entry: ' . $e->getMessage(),
@@ -255,11 +244,6 @@ class WeekEntryController extends Controller
                 'week_number' => $validated['week_number'],
             ]);
 
-            Log::info('Week entry updated', [
-                'week_id' => $week->id,
-                'week_name' => $week->week_name,
-            ]);
-
             return response()->json([
                 'id' => $week->id,
                 'week_name' => $week->week_name,
@@ -303,11 +287,6 @@ class WeekEntryController extends Controller
             $week = WeekEntry::where('flock_id', $flockId)->findOrFail($weekId);
             $week->delete();
 
-            Log::info('Week entry deleted', [
-                'flock_id' => $flockId,
-                'week_id' => $weekId,
-            ]);
-
             return response()->json(['message' => 'Week deleted successfully']);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             Log::error('Authorization error deleting week entry: ' . $e->getMessage(), [
@@ -335,11 +314,6 @@ class WeekEntryController extends Controller
 
             $validated = $request->validate(['week_ids' => 'required|array']);
             WeekEntry::where('flock_id', $flockId)->whereIn('id', $validated['week_ids'])->delete();
-
-            Log::info('Bulk week entries deleted', [
-                'flock_id' => $flockId,
-                'week_ids' => $validated['week_ids'],
-            ]);
 
             return response()->json(['message' => 'Weeks deleted successfully']);
         } catch (\Illuminate\Validation\ValidationException $e) {
