@@ -1,9 +1,76 @@
+// Global variables
 const perPage = 5;
 let editlist = false;
 let birdCountFilterVal = null;
+let flockList = null;
 
-let flockList;
+// Utility functions
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    return dateStr.split('T')[0];
+}
 
+function showError(message) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: message,
+            confirmButtonText: 'OK'
+        });
+    } else {
+        alert(message);
+    }
+}
+
+function showSuccess(message) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'success',
+            title: message,
+            showConfirmButton: false,
+            timer: 2000,
+            showCloseButton: true
+        });
+    } else {
+        alert(message);
+    }
+}
+
+function ensureAxios() {
+    if (typeof axios === 'undefined') {
+        console.error('Axios is not defined');
+        showError('Axios library is missing');
+        return false;
+    }
+    return true;
+}
+
+function ensureSwal() {
+    if (typeof Swal === 'undefined') {
+        console.warn('SweetAlert2 not available, using alert');
+        return false;
+    }
+    return true;
+}
+
+function clearAddFields() {
+    const addIdField = document.getElementById('add-id-field');
+    const addInitialBirdCount = document.getElementById('initial_bird_count');
+    if (addIdField) addIdField.value = '';
+    if (addInitialBirdCount) addInitialBirdCount.value = '';
+}
+
+function clearEditFields() {
+    const editIdField = document.getElementById('edit-id-field');
+    const editInitialBirdCountField = document.getElementById('edit-initial_bird_count');
+    const editCurrentBirdCount = document.getElementById('edit-current_bird_count');
+    if (editIdField) editIdField.value = '';
+    if (editInitialBirdCountField) editInitialBirdCountField.value = '';
+    if (editCurrentBirdCount) editCurrentBirdCount.value = '';
+}
+
+// Initialize List.js for flock table
 function initializeList() {
     try {
         const flockListContainer = document.getElementById('flockList');
@@ -59,11 +126,7 @@ function initializeList() {
     }
 }
 
-function formatDate(dateStr) {
-    if (!dateStr) return '';
-    return dateStr.split('T')[0];
-}
-
+// Update flock distribution chart
 function updateFlockChart() {
     if (!window.flockChart) {
         console.warn('Flock chart instance not found');
@@ -84,7 +147,7 @@ function updateFlockChart() {
             });
         } else {
             console.warn('flockList or flockList.items not available, using DOM fallback');
-            const rows = document.querySelectorAll('tbody.list tr.list');
+            const rows = document.querySelectorAll('tbody.list tr:not(.noresult)');
             rows.forEach(row => {
                 const countCell = row.querySelector('.initial_bird_count');
                 if (countCell) {
@@ -107,6 +170,7 @@ function updateFlockChart() {
     }
 }
 
+// Update week entries chart
 function updateWeekChart(data) {
     if (!window.weekChart) {
         console.warn('Week chart instance not found');
@@ -133,19 +197,20 @@ function updateWeekChart(data) {
     }
 }
 
+// Update statistics display
 function updateStats(flockStats, allFlocksStats) {
     const flockStatsContainer = document.getElementById('flock-stats');
     if (flockStatsContainer && flockStats) {
         flockStatsContainer.innerHTML = `
             <h5 class="card-title">Selected Flock Statistics</h5>
-            <p>Total Weeks: ${flockStats.total_weeks}</p>
-            <p>Total Daily Entries: ${flockStats.total_daily_entries}</p>
-            <p>Total Egg Production: ${flockStats.total_egg_production} eggs</p>
-            <p>Total Mortality: ${flockStats.total_mortality} birds</p>
-            <p>Total Feeds Consumed: ${flockStats.total_feeds_consumed} kg</p>
-            <p>Average Daily Egg Production: ${flockStats.avg_daily_egg_production.toFixed(2)} eggs</p>
-            <p>Average Daily Mortality: ${flockStats.avg_daily_mortality.toFixed(2)} birds</p>
-            <p>Average Daily Feeds: ${flockStats.avg_daily_feeds.toFixed(2)} kg</p>
+            <p>Total Weeks: ${flockStats.total_weeks || 0}</p>
+            <p>Total Daily Entries: ${flockStats.total_daily_entries || 0}</p>
+            <p>Total Egg Production: ${flockStats.total_egg_production || 0} eggs</p>
+            <p>Total Mortality: ${flockStats.total_mortality || 0} birds</p>
+            <p>Total Feeds Consumed: ${flockStats.total_feeds_consumed || 0} kg</p>
+            <p>Average Daily Egg Production: ${(flockStats.avg_daily_egg_production || 0).toFixed(2)} eggs</p>
+            <p>Average Daily Mortality: ${(flockStats.avg_daily_mortality || 0).toFixed(2)} birds</p>
+            <p>Average Daily Feeds: ${(flockStats.avg_daily_feeds || 0).toFixed(2)} kg</p>
         `;
     } else if (flockStatsContainer) {
         flockStatsContainer.innerHTML = '<p class="text-muted">Select a flock to view statistics.</p>';
@@ -155,68 +220,26 @@ function updateStats(flockStats, allFlocksStats) {
     if (allFlocksStatsContainer && allFlocksStats) {
         allFlocksStatsContainer.innerHTML = `
             <h5 class="card-title">All Flocks Statistics</h5>
-            <p>Total Flocks: ${allFlocksStats.total_flocks}</p>
-            <p>Total Initial Bird Count: ${allFlocksStats.total_initial_bird_count}</p>
-            <p>Total Current Bird Count: ${allFlocksStats.total_current_bird_count}</p>
-            <p>Average Initial Bird Count: ${allFlocksStats.avg_initial_bird_count.toFixed(2)}</p>
-            <p>Average Current Bird Count: ${allFlocksStats.avg_current_bird_count.toFixed(2)}</p>
-            <p>Total Weeks: ${allFlocksStats.total_weeks}</p>
-            <p>Total Daily Entries: ${allFlocksStats.total_daily_entries}</p>
-            <p>Total Egg Production: ${allFlocksStats.total_egg_production} eggs</p>
-            <p>Total Mortality: ${allFlocksStats.total_mortality} birds</p>
-            <p>Total Feeds Consumed: ${allFlocksStats.total_feeds_consumed} kg</p>
+            <p>Total Flocks: ${allFlocksStats.total_flocks || 0}</p>
+            <p>Total Initial Bird Count: ${allFlocksStats.total_initial_bird_count || 0}</p>
+            <p>Total Current Bird Count: ${allFlocksStats.total_current_bird_count || 0}</p>
+            <p>Average Initial Bird Count: ${(allFlocksStats.avg_initial_bird_count || 0).toFixed(2)}</p>
+            <p>Average Current Bird Count: ${(allFlocksStats.avg_current_bird_count || 0).toFixed(2)}</p>
+            <p>Total Weeks: ${allFlocksStats.total_weeks || 0}</p>
+            <p>Total Daily Entries: ${allFlocksStats.total_daily_entries || 0}</p>
+            <p>Total Egg Production: ${allFlocksStats.total_egg_production || 0} eggs</p>
+            <p>Total Mortality: ${allFlocksStats.total_mortality || 0} birds</p>
+            <p>Total Feeds Consumed: ${allFlocksStats.total_feeds_consumed || 0} kg</p>
         `;
     }
 }
 
-function showError(message) {
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: message,
-            confirmButtonText: 'OK'
-        });
-    } else {
-        alert(message);
-    }
-}
-
-function showSuccess(message) {
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            icon: 'success',
-            title: message,
-            showConfirmButton: false,
-            timer: 2000,
-            showCloseButton: true
-        });
-    } else {
-        alert(message);
-    }
-}
-
-function ensureAxios() {
-    if (typeof axios === 'undefined') {
-        console.error('Axios is not defined');
-        showError('Axios library is missing');
-        return false;
-    }
-    return true;
-}
-
-function ensureSwal() {
-    if (typeof Swal === 'undefined') {
-        console.warn('SweetAlert2 not available, using alert');
-        return false;
-    }
-    return true;
-}
-
+// Filter data based on search and bird count
 function filterData(url = null) {
     const search = document.getElementById('searchFlock')?.value || '';
     const birdCountFilter = document.getElementById('birdCountFilter')?.value || 'all';
     const fetchUrl = url || `/flocks?search=${encodeURIComponent(search)}&bird_count_filter=${encodeURIComponent(birdCountFilter)}`;
+
     fetch(fetchUrl, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -234,8 +257,14 @@ function filterData(url = null) {
             flockList.clear();
             flockList.add(data.flocks);
         }
-        document.getElementById('pagination-element').innerHTML = data.pagination;
-        document.querySelector('.badge.bg-dark-subtle').textContent = data.total;
+        const paginationElement = document.getElementById('pagination-element');
+        if (paginationElement) {
+            paginationElement.innerHTML = data.pagination || '';
+        }
+        const totalBadge = document.querySelector('.badge.bg-dark-subtle');
+        if (totalBadge) {
+            totalBadge.textContent = data.total || 0;
+        }
         updateFlockChart();
         updateStats(null, data.allFlocksStats);
         bindPagination();
@@ -254,6 +283,7 @@ function filterData(url = null) {
     });
 }
 
+// Bind pagination links
 function bindPagination() {
     document.querySelectorAll('#pagination-element .page-link').forEach(link => {
         link.removeEventListener('click', handlePaginationClick);
@@ -265,10 +295,11 @@ function handlePaginationClick(e) {
     e.preventDefault();
     const href = e.target.closest('.page-link').getAttribute('href');
     if (href && href !== '#') {
-        window.filterData(href);
+        filterData(href);
     }
 }
 
+// Fetch week entries for a flock
 function fetchWeekEntries(flockId) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
     if (!csrfToken) {
@@ -307,6 +338,7 @@ function fetchWeekEntries(flockId) {
     });
 }
 
+// Handle checkbox changes
 function ischeckboxcheck() {
     const checkboxes = document.querySelectorAll('.chk-child.id');
     checkboxes.forEach(checkbox => {
@@ -332,6 +364,7 @@ function handleCheckboxChange(e) {
     }
 }
 
+// Refresh event listeners
 function refreshCallbacks() {
     console.log('Refreshing callbacks...');
     const removeButtons = document.querySelectorAll('.remove-item-btn');
@@ -365,16 +398,20 @@ function refreshCallbacks() {
     });
 }
 
+// Handle row click for fetching week entries
 function handleRowClick(e) {
     if (e.target.closest('.edit-item-btn, .remove-item-btn, .chk-child, .btn-subtle-primary')) {
         return;
     }
-    const flockId = e.target.closest('tr').querySelector('.chk-child.id').value;
+    const checkbox = e.target.closest('tr').querySelector('.chk-child.id');
+    if (!checkbox) return;
+    const flockId = checkbox.value;
     document.querySelectorAll('tr').forEach(row => row.classList.remove('table-active'));
     e.target.closest('tr').classList.add('table-active');
     fetchWeekEntries(flockId);
 }
 
+// Handle edit button click
 function handleEditClick(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -399,11 +436,12 @@ function handleEditClick(e) {
         if (!itemId || isNaN(parseInt(itemId))) {
             console.error('Invalid item ID:', itemId);
             showError('Cannot edit flock with invalid ID');
-            tr.remove();
             if (flockList) {
+                flockList.remove('id', itemId);
                 flockList.reIndex();
                 flockList.update();
             }
+            tr.remove();
             return;
         }
 
@@ -445,6 +483,7 @@ function handleEditClick(e) {
     }
 }
 
+// Handle delete button click
 function handleRemoveClick(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -469,11 +508,12 @@ function handleRemoveClick(e) {
         if (!itemId || isNaN(parseInt(itemId))) {
             console.error('Invalid item ID:', itemId);
             showError('Cannot delete flock with invalid ID');
-            tr.remove();
             if (flockList) {
+                flockList.remove('id', itemId);
                 flockList.reIndex();
                 flockList.update();
             }
+            tr.remove();
             return;
         }
 
@@ -521,6 +561,9 @@ function handleRemoveClick(e) {
 
                     flockList.reIndex();
                     flockList.update();
+                } else {
+                    console.warn('flockList not initialized, removing DOM row');
+                    tr.remove();
                 }
 
                 updateFlockChart();
@@ -540,11 +583,12 @@ function handleRemoveClick(e) {
                 if (error.response?.status === 404) {
                     message = `Flock ID ${itemId} not found`;
                     console.warn('Removing stale row for ID:', itemId);
-                    tr.remove();
                     if (flockList) {
+                        flockList.remove('id', itemId);
                         flockList.reIndex();
                         flockList.update();
                     }
+                    tr.remove();
                 }
 
                 showError(message);
@@ -563,22 +607,7 @@ function handleRemoveClick(e) {
     }
 }
 
-function clearAddFields() {
-    const addIdField = document.getElementById('add-id-field');
-    const addInitialBirdCount = document.getElementById('initial_bird_count');
-    if (addIdField) addIdField.value = '';
-    if (addInitialBirdCount) addInitialBirdCount.value = '';
-}
-
-function clearEditFields() {
-    const editIdField = document.getElementById('edit-id-field');
-    const editInitialBirdCountField = document.getElementById('edit-initial_bird_count');
-    const editCurrentBirdCount = document.getElementById('edit-current_bird_count');
-    if (editIdField) editIdField.value = '';
-    if (editInitialBirdCountField) editInitialBirdCountField.value = '';
-    if (editCurrentBirdCount) editCurrentBirdCount.value = '';
-}
-
+// Handle multiple deletions
 function deleteMultiple() {
     const ids_array = [];
     const checkboxes = document.querySelectorAll('.chk-child.id:checked');
@@ -593,7 +622,7 @@ function deleteMultiple() {
     });
 
     if (ids_array.length === 0) {
-        showError('Please select at least one valid checkbox');
+        showError('No flocks selected for deletion');
         return;
     }
 
@@ -624,6 +653,9 @@ function deleteMultiple() {
                         console.warn(`Flock ${id} not found, removing row`);
                         const tr = document.querySelector(`[data-id="${id}"]`)?.closest('tr');
                         if (tr) tr.remove();
+                        if (flockList) {
+                            flockList.remove('id', id);
+                        }
                     }
                 } else {
                     if (flockList) {
@@ -634,6 +666,10 @@ function deleteMultiple() {
                         if (item) {
                             flockList.remove('id', id);
                         }
+                    } else {
+                        console.warn('flockList not initialized, removing DOM row');
+                        const tr = document.querySelector(`[data-id="${id}"]`)?.closest('tr');
+                        if (tr) tr.remove();
                     }
                 }
             });
@@ -673,29 +709,24 @@ function deleteMultiple() {
     }
 }
 
+// Main initialization
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing...');
     console.log('Chart.js available:', typeof Chart !== 'undefined');
+    console.log('Axios available:', typeof axios !== 'undefined');
+    console.log('List.js available:', typeof List !== 'undefined');
+    console.log('Choices.js available:', typeof Choices !== 'undefined');
 
-    const flockListContainer = document.getElementById('flockList');
-    const flockRowTemplate = document.getElementById('flockRowTemplate');
-    if (!flockListContainer || !flockRowTemplate) {
-        console.error('Required elements missing:', {
-            flockList: !!flockListContainer,
-            flockRowTemplate: !!flockRowTemplate
-        });
-        return;
-    }
-
+    // Initialize List.js
     if (!initializeList()) {
         console.error('Failed to initialize List.js');
         console.warn('Attaching event listeners manually as fallback');
         refreshCallbacks();
         ischeckboxcheck();
-        updateFlockChart(); // Call updateFlockChart even if List.js fails
-        return;
+        updateFlockChart();
     }
 
+    // Initialize flock chart
     const flockChartCanvas = document.getElementById('flockChart');
     if (flockChartCanvas) {
         try {
@@ -732,6 +763,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('flockChart canvas not found');
     }
 
+    // Initialize week chart
     const weekChartCanvas = document.getElementById('weekChart');
     if (weekChartCanvas) {
         try {
@@ -768,6 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('weekChart canvas not found');
     }
 
+    // Initialize Choices.js for bird count filter
     if (typeof Choices !== 'undefined') {
         const birdCountSelect = document.getElementById('birdCountFilter');
         if (birdCountSelect) {
@@ -780,6 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Choices.js not available');
     }
 
+    // Handle check all checkbox
     const checkAll = document.getElementById('checkAll');
     if (checkAll) {
         checkAll.addEventListener('click', function () {
@@ -795,15 +829,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Handle add flock form submission
     const addForm = document.getElementById('add-flock-form');
     if (addForm) {
         addForm.addEventListener('submit', e => {
             e.preventDefault();
+            console.log('Add form submitted');
 
             const errorMsg = document.getElementById('add-error-msg');
+            const addInitialBirdCount = document.getElementById('initial_bird_count');
             if (errorMsg) errorMsg.classList.add('d-none');
 
-            const addInitialBirdCount = document.getElementById('initial_bird_count');
             if (!addInitialBirdCount || !addInitialBirdCount.value || parseInt(addInitialBirdCount.value) < 0) {
                 if (errorMsg) {
                     errorMsg.textContent = 'Please enter a valid initial bird count';
@@ -822,11 +858,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            axios.post('/flocks', {
-                initial_bird_count: addInitialBirdCount.value,
-                current_bird_count: addInitialBirdCount.value,
+            const payload = {
+                initial_bird_count: parseInt(addInitialBirdCount.value),
+                current_bird_count: parseInt(addInitialBirdCount.value),
                 _token: csrfToken
-            })
+            };
+            console.log('Sending payload:', payload);
+
+            axios.post('/flocks', payload)
             .then(response => {
                 console.log('Add response:', response.data);
 
@@ -851,23 +890,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     flockList.add(newFlock);
                     flockList.reIndex();
                     flockList.update();
+                } else {
+                    console.warn('flockList not initialized, appending manually');
+                    const tbody = document.querySelector('tbody.list');
+                    if (tbody) {
+                        const template = document.getElementById('flockRowTemplate').innerHTML;
+                        const html = template
+                            .replace('{id}', newFlock.id)
+                            .replace('{initial_bird_count}', newFlock.initial_bird_count)
+                            .replace('{current_bird_count}', newFlock.current_bird_count)
+                            .replace('{created_at}', newFlock.created_at);
+                        tbody.insertAdjacentHTML('beforeend', html);
+                    }
                 }
 
                 updateFlockChart();
+                updateStats(null, null);
 
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addFlockModal'));
                 if (modal) modal.hide();
 
                 showSuccess('Flock added successfully!');
                 clearAddFields();
+                refreshCallbacks();
+                ischeckboxcheck();
             })
             .catch(error => {
                 console.error('Error adding flock:', error);
                 let message = error.response?.data?.message || 'Error adding flock';
                 if (error.response?.status === 422 && error.response.data.errors) {
                     message = Object.values(error.response.data.errors).flat().join(', ');
+                } else if (error.response?.status === 403) {
+                    message = 'You are not authorized to create flocks';
                 }
-
                 if (errorMsg) {
                     errorMsg.textContent = message;
                     errorMsg.classList.remove('d-none');
@@ -877,10 +932,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Handle edit flock form submission
     const editForm = document.getElementById('edit-flock-form');
     if (editForm) {
         editForm.addEventListener('submit', e => {
             e.preventDefault();
+            console.log('Edit form submitted');
 
             const errorMsg = document.getElementById('edit-error-msg');
             if (errorMsg) errorMsg.classList.add('d-none');
@@ -927,11 +984,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            axios.put(`/flocks/${itemId}`, {
-                initial_bird_count: editInitialBirdCountField.value,
-                current_bird_count: editCurrentBirdCount.value,
+            const payload = {
+                initial_bird_count: parseInt(editInitialBirdCountField.value),
+                current_bird_count: parseInt(editCurrentBirdCount.value),
                 _token: csrfToken
-            })
+            };
+            console.log('Sending edit payload for ID:', itemId, payload);
+
+            axios.put(`/flocks/${itemId}`, payload)
             .then(response => {
                 console.log('Update response:', response.data);
 
@@ -973,6 +1033,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     flockList.reIndex();
                     flockList.update();
+                } else {
+                    console.warn('flockList not initialized, updating DOM manually');
+                    const tr = document.querySelector(`[data-id="${itemId}"]`)?.closest('tr');
+                    if (tr) {
+                        const initialCell = tr.querySelector('.initial_bird_count');
+                        const currentCell = tr.querySelector('.current_bird_count');
+                        const createdCell = tr.querySelector('.created_at');
+                        const checkbox = tr.querySelector('.chk-child.id');
+                        const link = tr.querySelector('a');
+
+                        if (initialCell) initialCell.textContent = response.data.initial_bird_count;
+                        if (currentCell) currentCell.textContent = response.data.current_bird_count;
+                        if (createdCell) createdCell.textContent = formatDate(response.data.created_at);
+                        if (checkbox) checkbox.setAttribute('data-id', response.data.id);
+                        if (link) link.href = `/flocks/${response.data.id}/week-entries`;
+                    }
                 }
 
                 updateFlockChart();
@@ -983,6 +1059,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 showSuccess('Flock updated successfully!');
                 clearEditFields();
+                refreshCallbacks();
+                ischeckboxcheck();
             })
             .catch(error => {
                 console.error('Error updating flock:', error);
@@ -993,6 +1071,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const tr = document.querySelector(`[data-id="${itemId}"]`)?.closest('tr');
                     if (tr) tr.remove();
                     if (flockList) {
+                        flockList.remove('id', itemId);
                         flockList.reIndex();
                         flockList.update();
                     }
@@ -1006,6 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Handle modal events
     const addModal = document.getElementById('addFlockModal');
     if (addModal) {
         addModal.addEventListener('show.bs.modal', () => {
@@ -1036,6 +1116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Initial setup
     refreshCallbacks();
     ischeckboxcheck();
     updateFlockChart();

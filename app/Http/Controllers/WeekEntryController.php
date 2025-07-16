@@ -6,6 +6,7 @@ use App\Models\Flock;
 use App\Models\WeekEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class WeekEntryController extends Controller
 {
@@ -91,7 +92,7 @@ class WeekEntryController extends Controller
     public function getDailyEntries(Request $request, $flockId, $weekId)
     {
         try {
-            $this->authorize('view weekly-entry'); // Ensure user has permission
+           
             $week = WeekEntry::where('flock_id', $flockId)->with('dailyEntries')->findOrFail($weekId);
 
             $dailyEntries = $week->dailyEntries()->latest()->get();
@@ -140,68 +141,71 @@ class WeekEntryController extends Controller
         }
     }
 
-    public function store(Request $request, $flockId)
-    {
-        try {
-            $this->authorize('create weekly-entry');
+  public function store(Request $request, $flockId)
+{
+    try {
+        $validated = $request->validate([
+            'week_number' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::unique('week_entries', 'week_name')->where(function ($query) use ($flockId, $request) {
+                    return $query->where('flock_id', $flockId)
+                                ->where('week_name', 'Week ' . $request->input('week_number'));
+                }),
+            ],
+        ]);
 
-            $validated = $request->validate([
-                'week_number' => 'required|integer|min:1|unique:week_entries,week_number,NULL,id,flock_id,' . $flockId,
-            ]);
+        $flock = Flock::findOrFail($flockId);
+        $lastWeek = $flock->weekEntries()->latest()->first();
 
-            $flock = Flock::findOrFail($flockId);
-            $lastWeek = $flock->weekEntries()->latest()->first();
-
-            if ($lastWeek && $lastWeek->dailyEntries()->count() < 7) {
-                return response()->json([
-                    'message' => 'Previous week is not complete. Please complete 7 daily entries first.'
-                ], 422);
-            }
-
-            $week = WeekEntry::create([
-                'flock_id' => $flock->id,
-                'week_name' => 'Week ' . $validated['week_number'],
-                'week_number' => $validated['week_number'],
-            ]);
-
+        if ($lastWeek && $lastWeek->dailyEntries()->count() < 7) {
             return response()->json([
-                'id' => $week->id,
-                'week_name' => $week->week_name,
-                'daily_entries_count' => $week->dailyEntries()->count(),
-                'created_at' => $week->created_at->format('Y-m-d'),
-            ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation error storing week entry: ' . $e->getMessage(), [
-                'flock_id' => $flockId,
-                'errors' => $e->errors(),
-            ]);
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
+                'message' => 'Previous week is not complete. Please complete 7 daily entries first.'
             ], 422);
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            Log::error('Authorization error storing week entry: ' . $e->getMessage(), [
-                'flock_id' => $flockId,
-            ]);
-            return response()->json([
-                'message' => 'You are not authorized to create a week entry',
-            ], 403);
-        } catch (\Exception $e) {
-            Log::error('Error storing week entry: ' . $e->getMessage(), [
-                'flock_id' => $flockId,
-                'request_data' => $request->all(),
-            ]);
-            return response()->json([
-                'message' => 'Failed to store week entry: ' . $e->getMessage(),
-            ], 500);
         }
-    }
 
+        $week = WeekEntry::create([
+            'flock_id' => $flock->id,
+            'week_name' => 'Week ' . $validated['week_number'],
+        ]);
+
+        return response()->json([
+            'id' => $week->id,
+            'week_name' => $week->week_name,
+            'daily_entries_count' => $week->dailyEntries()->count(),
+            'created_at' => $week->created_at->format('Y-m-d'),
+        ], 201);
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Validation error storing week entry: ' . $e->getMessage(), [
+            'flock_id' => $flockId,
+            'errors' => $e->errors(),
+        ]);
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $e->errors(),
+        ], 422);
+    } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        Log::error('Authorization error storing week entry: ' . $e->getMessage(), [
+            'flock_id' => $flockId,
+        ]);
+        return response()->json([
+            'message' => 'You are not authorized to create a week entry',
+        ], 403);
+    } catch (\Exception $e) {
+        Log::error('Error storing week entry: ' . $e->getMessage(), [
+            'flock_id' => $flockId,
+            'request_data' => $request->all(),
+        ]);
+        return response()->json([
+            'message' => 'Failed to store week entry: ' . $e->getMessage(),
+        ], 500);
+    }
+}
     public function create($flockId)
     {
         try {
-            $this->authorize('create weekly-entry');
-
+           
             $flock = Flock::findOrFail($flockId);
             $lastWeek = $flock->weekEntries()->latest()->first();
 
@@ -229,60 +233,64 @@ class WeekEntryController extends Controller
         }
     }
 
-    public function update(Request $request, $flockId, $weekId)
-    {
-        try {
-            $this->authorize('update weekly-entry');
+  public function update(Request $request, $flockId, $weekId)
+{
+    try {
+        $validated = $request->validate([
+            'week_number' => [
+                'required',
+                'integer',
+                'min:1',
+                Rule::unique('week_entries', 'week_name')->where(function ($query) use ($flockId, $request) {
+                    return $query->where('flock_id', $flockId)
+                                ->where('week_name', 'Week ' . $request->input('week_number'));
+                })->ignore($weekId),
+            ],
+        ]);
 
-            $validated = $request->validate([
-                'week_number' => 'required|integer|min:1|unique:week_entries,week_number,' . $weekId . ',id,flock_id,' . $flockId,
-            ]);
+        $week = WeekEntry::where('flock_id', $flockId)->findOrFail($weekId);
+        $week->update([
+            'week_name' => 'Week ' . $validated['week_number'],
+        ]);
 
-            $week = WeekEntry::where('flock_id', $flockId)->findOrFail($weekId);
-            $week->update([
-                'week_name' => 'Week ' . $validated['week_number'],
-                'week_number' => $validated['week_number'],
-            ]);
-
-            return response()->json([
-                'id' => $week->id,
-                'week_name' => $week->week_name,
-                'daily_entries_count' => $week->dailyEntries()->count(),
-                'created_at' => $week->created_at->format('Y-m-d'),
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation error updating week entry: ' . $e->getMessage(), [
-                'flock_id' => $flockId,
-                'week_id' => $weekId,
-                'errors' => $e->errors(),
-            ]);
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            Log::error('Authorization error updating week entry: ' . $e->getMessage(), [
-                'flock_id' => $flockId,
-                'week_id' => $weekId,
-            ]);
-            return response()->json([
-                'message' => 'You are not authorized to update this week entry',
-            ], 403);
-        } catch (\Exception $e) {
-            Log::error('Error updating week entry: ' . $e->getMessage(), [
-                'flock_id' => $flockId,
-                'week_id' => $weekId,
-            ]);
-            return response()->json([
-                'message' => 'Failed to update week entry: ' . $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'id' => $week->id,
+            'week_name' => $week->week_name,
+            'daily_entries_count' => $week->dailyEntries()->count(),
+            'created_at' => $week->created_at->format('Y-m-d'),
+        ]);
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Validation error updating week entry: ' . $e->getMessage(), [
+            'flock_id' => $flockId,
+            'week_id' => $weekId,
+            'errors' => $e->errors(),
+        ]);
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $e->errors(),
+        ], 422);
+    } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+        Log::error('Authorization error updating week entry: ' . $e->getMessage(), [
+            'flock_id' => $flockId,
+            'week_id' => $weekId,
+        ]);
+        return response()->json([
+            'message' => 'You are not authorized to update this week entry',
+        ], 403);
+    } catch (\Exception $e) {
+        Log::error('Error updating week entry: ' . $e->getMessage(), [
+            'flock_id' => $flockId,
+            'week_id' => $weekId,
+        ]);
+        return response()->json([
+            'message' => 'Failed to update week entry: ' . $e->getMessage(),
+        ], 500);
     }
-
+}
     public function destroy($flockId, $weekId)
     {
         try {
-            $this->authorize('delete weekly-entry');
+            
 
             $week = WeekEntry::where('flock_id', $flockId)->findOrFail($weekId);
             $week->delete();
@@ -310,7 +318,7 @@ class WeekEntryController extends Controller
     public function bulkDestroy(Request $request, $flockId)
     {
         try {
-            $this->authorize('delete weekly-entry');
+            
 
             $validated = $request->validate(['week_ids' => 'required|array']);
             WeekEntry::where('flock_id', $flockId)->whereIn('id', $validated['week_ids'])->delete();

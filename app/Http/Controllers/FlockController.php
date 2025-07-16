@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DailyEntry;
 use App\Models\Flock;
 use App\Models\WeekEntry;
-use App\Models\DailyEntry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FlockController extends Controller
 {
@@ -77,22 +78,32 @@ class FlockController extends Controller
 
         return view('flocks.flocks.index', compact('pagetitle','flocks', 'allFlocksStats'));
     }
-
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'initial_bird_count' => 'required|integer|min:0',
-            'current_bird_count' => 'required|integer|min:0'
-        ]);
+        try {
+            Log::info('Store request received', $request->all());
 
-        $flock = Flock::create($validated);
+            $validated = $request->validate([
+                'initial_bird_count' => 'required|integer|min:0',
+                'current_bird_count' => 'required|integer|min:0'
+            ]);
 
-        return response()->json([
-            'id' => $flock->id,
-            'initial_bird_count' => $flock->initial_bird_count,
-            'current_bird_count' => $flock->current_bird_count,
-            'created_at' => $flock->created_at->toIso8601String()
-        ], 201);
+            Log::info('Validated data', $validated);
+
+            $flock = Flock::create($validated);
+
+            Log::info('Flock created', ['id' => $flock->id]);
+
+            return response()->json([
+                'id' => $flock->id,
+                'initial_bird_count' => $flock->initial_bird_count,
+                'current_bird_count' => $flock->current_bird_count,
+                'created_at' => $flock->created_at->toIso8601String()
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Error creating flock: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to create flock: ' . $e->getMessage()], 500);
+        }
     }
 
     public function update(Request $request, Flock $flock)
