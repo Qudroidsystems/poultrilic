@@ -18,5 +18,12 @@ class Flock extends Model
     {
         return $this->hasMany(WeekEntry::class, 'flock_id');
     }
+
+    // Dynamic accessor for total mortality
+    public function getTotalMortalityAttribute()
+    {
+        return $this->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
+            ->sum('daily_entries.daily_mortality');
+    }
 }
 

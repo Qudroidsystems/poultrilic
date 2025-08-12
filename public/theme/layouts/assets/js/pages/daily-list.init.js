@@ -35,6 +35,26 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Update outstanding egg display
+    function updateOutstandingEgg(modalPrefix) {
+        const productionCrates = parseInt(document.getElementById(`${modalPrefix}_daily_egg_production_crates`)?.value) || 0;
+        const productionPieces = parseInt(document.getElementById(`${modalPrefix}_daily_egg_production_pieces`)?.value) || 0;
+        const soldCrates = parseInt(document.getElementById(`${modalPrefix}_daily_sold_egg_crates`)?.value) || 0;
+        const soldPieces = parseInt(document.getElementById(`${modalPrefix}_daily_sold_egg_pieces`)?.value) || 0;
+        const brokenCrates = parseInt(document.getElementById(`${modalPrefix}_broken_egg_crates`)?.value) || 0;
+        const brokenPieces = parseInt(document.getElementById(`${modalPrefix}_broken_egg_pieces`)?.value) || 0;
+
+        const production = productionCrates * CRATE_SIZE + productionPieces;
+        const sold = soldCrates * CRATE_SIZE + soldPieces;
+        const broken = brokenCrates * CRATE_SIZE + brokenPieces;
+        const outstanding = production - sold - broken;
+
+        const outstandingDisplay = document.getElementById(`${modalPrefix}_outstanding_egg`);
+        if (outstandingDisplay) {
+            outstandingDisplay.textContent = `${toCratesAndPieces(outstanding).crates} cr ${toCratesAndPieces(outstanding).pieces} pcs (${outstanding} pieces)`;
+        }
+    }
+
     // Filter Data
     window.filterData = function (url = null) {
         console.log('filterData:', { url });
@@ -127,6 +147,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add Entry
     const addForm = document.getElementById('add-daily-form');
     if (addForm) {
+        // Add input event listeners for dynamic outstanding egg calculation
+        ['daily_egg_production_crates', 'daily_egg_production_pieces', 'daily_sold_egg_crates', 
+         'daily_sold_egg_pieces', 'broken_egg_crates', 'broken_egg_pieces'].forEach(field => {
+            const element = document.getElementById(`add_${field}`);
+            if (element) {
+                element.addEventListener('input', () => updateOutstandingEgg('add'));
+            }
+        });
+
         addForm.addEventListener('submit', function (e) {
             e.preventDefault();
             console.log('Add modal: Submit');
@@ -140,29 +169,52 @@ document.addEventListener('DOMContentLoaded', function () {
             const brokenEggCrates = parseInt(formData.get('broken_egg_crates')) || 0;
             const brokenEggPieces = parseInt(formData.get('broken_egg_pieces')) || 0;
 
+            if (isNaN(dailyEggProductionCrates) || isNaN(dailyEggProductionPieces) ||
+                isNaN(dailySoldEggCrates) || isNaN(dailySoldEggPieces) ||
+                isNaN(brokenEggCrates) || isNaN(brokenEggPieces)) {
+                displayError('add-error-msg', 'Invalid input for egg fields. Please enter valid numbers.');
+                return;
+            }
+
             if (dailyEggProductionPieces > 29 || dailySoldEggPieces > 29 || brokenEggPieces > 29) {
                 displayError('add-error-msg', 'Pieces must be between 0 and 29');
                 return;
             }
 
-            formData.set('daily_egg_production', dailyEggProductionCrates * CRATE_SIZE + dailyEggProductionPieces);
-            formData.set('daily_sold_egg', dailySoldEggCrates * CRATE_SIZE + dailySoldEggPieces);
-            formData.set('broken_egg', brokenEggCrates * CRATE_SIZE + brokenEggPieces);
-            formData.delete('daily_egg_production_crates');
-            formData.delete('daily_egg_production_pieces');
-            formData.delete('daily_sold_egg_crates');
-            formData.delete('daily_sold_egg_pieces');
-            formData.delete('broken_egg_crates');
-            formData.delete('broken_egg_pieces');
+            const dailyEggProduction = dailyEggProductionCrates * CRATE_SIZE + dailyEggProductionPieces;
+            const dailySoldEgg = dailySoldEggCrates * CRATE_SIZE + dailySoldEggPieces;
+            const brokenEgg = brokenEggCrates * CRATE_SIZE + brokenEggPieces;
+
+            if (dailySoldEgg + brokenEgg > dailyEggProduction) {
+                displayError('add-error-msg', 'The sum of sold and broken eggs cannot exceed daily egg production.');
+                return;
+            }
+
+            const payload = {
+                _token: formData.get('_token'),
+                day_number: parseInt(formData.get('day_number')) || 0,
+                daily_feeds: parseFloat(formData.get('daily_feeds')) || 0,
+                available_feeds: parseFloat(formData.get('available_feeds')) || 0,
+                daily_mortality: parseInt(formData.get('daily_mortality')) || 0,
+                sick_bay: parseInt(formData.get('sick_bay')) || 0,
+                daily_egg_production: dailyEggProduction,
+                daily_sold_egg: dailySoldEgg,
+                broken_egg: brokenEgg,
+                drugs: formData.get('drugs') || '',
+                reorder_feeds: parseFloat(formData.get('reorder_feeds')) || 0
+            };
+
+            console.log('Add Payload:', payload);
 
             fetch(`/daily-entries/${window.weekId}`, {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 },
-                body: formData
+                body: JSON.stringify(payload)
             })
             .then(response => {
                 if (!response.ok) {
@@ -177,6 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('Daily entry added successfully');
                 addForm.reset();
                 clearError('add-error-msg');
+                document.getElementById('add_outstanding_egg').textContent = '0 cr 0 pcs (0 pieces)';
             })
             .catch(error => {
                 console.error('Add error:', error);
@@ -217,26 +270,40 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(data => {
                 console.log('Edit modal: Data fetched', data);
-                document.getElementById('edit-id-field').value = data.id;
-                document.getElementById('edit_day_number').value = data.day_number.replace('Day ', '');
-                document.getElementById('edit_daily_feeds').value = data.daily_feeds;
+                const editForm = document.getElementById('edit-daily-form');
+                if (!editForm) {
+                    console.error('Edit form not found');
+                    return;
+                }
+                document.getElementById('edit-id-field').value = data.id || '';
+                document.getElementById('edit_day_number').value = data.day_number.replace('Day ', '') || '';
+                document.getElementById('edit_daily_feeds').value = data.daily_feeds || 0;
                 document.getElementById('edit_available_feeds').value = data.available_feeds || 0;
-                document.getElementById('edit_daily_mortality').value = data.daily_mortality;
+                document.getElementById('edit_daily_mortality').value = data.daily_mortality || 0;
                 document.getElementById('edit_sick_bay').value = data.sick_bay || 0;
-                const dailyEggProduction = toCratesAndPieces(data.daily_egg_production);
+                const dailyEggProduction = toCratesAndPieces(data.daily_egg_production || 0);
                 document.getElementById('edit_daily_egg_production_crates').value = dailyEggProduction.crates;
                 document.getElementById('edit_daily_egg_production_pieces').value = dailyEggProduction.pieces;
-                const dailySoldEgg = toCratesAndPieces(data.daily_sold_egg);
+                const dailySoldEgg = toCratesAndPieces(data.daily_sold_egg || 0);
                 document.getElementById('edit_daily_sold_egg_crates').value = dailySoldEgg.crates;
                 document.getElementById('edit_daily_sold_egg_pieces').value = dailySoldEgg.pieces;
-                const brokenEgg = toCratesAndPieces(data.broken_egg);
+                const brokenEgg = toCratesAndPieces(data.broken_egg || 0);
                 document.getElementById('edit_broken_egg_crates').value = brokenEgg.crates;
                 document.getElementById('edit_broken_egg_pieces').value = brokenEgg.pieces;
                 document.getElementById('edit_drugs').value = data.drugs || '';
                 document.getElementById('edit_reorder_feeds').value = data.reorder_feeds || '';
-                document.getElementById('edit_total_egg_in_farm').textContent = `${toCratesAndPieces(data.total_egg_in_farm).crates} cr ${toCratesAndPieces(data.total_egg_in_farm).pieces} pcs (${data.total_egg_in_farm} pieces)`;
-                document.getElementById('edit_outstanding_egg').textContent = `${toCratesAndPieces(data.outstanding_egg).crates} cr ${toCratesAndPieces(data.outstanding_egg).pieces} pcs (${data.outstanding_egg} pieces)`;
+                document.getElementById('edit_outstanding_egg').textContent = `${toCratesAndPieces(data.outstanding_egg || 0).crates} cr ${toCratesAndPieces(data.outstanding_egg || 0).pieces} pcs (${data.outstanding_egg || 0} pieces)`;
+                document.getElementById('edit_total_egg_in_farm').textContent = `${toCratesAndPieces(data.total_egg_in_farm || 0).crates} cr ${toCratesAndPieces(data.total_egg_in_farm || 0).pieces} pcs (${data.total_egg_in_farm || 0} pieces)`;
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('editDailyModal')).show();
+
+                // Add input event listeners for dynamic outstanding egg calculation
+                ['daily_egg_production_crates', 'daily_egg_production_pieces', 'daily_sold_egg_crates', 
+                 'daily_sold_egg_pieces', 'broken_egg_crates', 'broken_egg_pieces'].forEach(field => {
+                    const element = document.getElementById(`edit_${field}`);
+                    if (element) {
+                        element.addEventListener('input', () => updateOutstandingEgg('edit'));
+                    }
+                });
             })
             .catch(error => {
                 console.error('Edit fetch error:', error);
@@ -270,29 +337,54 @@ document.addEventListener('DOMContentLoaded', function () {
             const brokenEggCrates = parseInt(formData.get('broken_egg_crates')) || 0;
             const brokenEggPieces = parseInt(formData.get('broken_egg_pieces')) || 0;
 
+            if (isNaN(dailyEggProductionCrates) || isNaN(dailyEggProductionPieces) ||
+                isNaN(dailySoldEggCrates) || isNaN(dailySoldEggPieces) ||
+                isNaN(brokenEggCrates) || isNaN(brokenEggPieces)) {
+                displayError('edit-error-msg', 'Invalid input for egg fields. Please enter valid numbers.');
+                return;
+            }
+
             if (dailyEggProductionPieces > 29 || dailySoldEggPieces > 29 || brokenEggPieces > 29) {
                 displayError('edit-error-msg', 'Pieces must be between 0 and 29');
                 return;
             }
 
-            formData.set('daily_egg_production', dailyEggProductionCrates * CRATE_SIZE + dailyEggProductionPieces);
-            formData.set('daily_sold_egg', dailySoldEggCrates * CRATE_SIZE + dailySoldEggPieces);
-            formData.set('broken_egg', brokenEggCrates * CRATE_SIZE + brokenEggPieces);
-            formData.delete('daily_egg_production_crates');
-            formData.delete('daily_egg_production_pieces');
-            formData.delete('daily_sold_egg_crates');
-            formData.delete('daily_sold_egg_pieces');
-            formData.delete('broken_egg_crates');
-            formData.delete('broken_egg_pieces');
+            const dailyEggProduction = dailyEggProductionCrates * CRATE_SIZE + dailyEggProductionPieces;
+            const dailySoldEgg = dailySoldEggCrates * CRATE_SIZE + dailySoldEggPieces;
+            const brokenEgg = brokenEggCrates * CRATE_SIZE + brokenEggPieces;
+
+            if (dailySoldEgg + brokenEgg > dailyEggProduction) {
+                displayError('edit-error-msg', 'The sum of sold and broken eggs cannot exceed daily egg production.');
+                return;
+            }
+
+            const payload = {
+                _token: formData.get('_token'),
+                _method: 'PUT',
+                id: parseInt(formData.get('id')),
+                day_number: parseInt(formData.get('day_number')) || 0,
+                daily_feeds: parseFloat(formData.get('daily_feeds')) || 0,
+                available_feeds: parseFloat(formData.get('available_feeds')) || 0,
+                daily_mortality: parseInt(formData.get('daily_mortality')) || 0,
+                sick_bay: parseInt(formData.get('sick_bay')) || 0,
+                daily_egg_production: dailyEggProduction,
+                daily_sold_egg: dailySoldEgg,
+                broken_egg: brokenEgg,
+                drugs: formData.get('drugs') || '',
+                reorder_feeds: parseFloat(formData.get('reorder_feeds')) || 0
+            };
+
+            console.log('Edit Payload:', payload);
 
             fetch(`/daily-entries/${window.weekId}/${entryId}`, {
-                method: 'PUT',
+                method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 },
-                body: formData
+                body: JSON.stringify(payload)
             })
             .then(response => {
                 if (!response.ok) {
@@ -329,130 +421,41 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('click', function (e) {
         if (e.target.closest('.remove-item-btn')) {
             console.log('Delete modal: Opening');
-            const entryId = e.target.closest('tr').querySelector('.chk-child').value;
-            const deleteButton = document.getElementById('delete-record');
-            if (deleteButton) {
-                deleteButton.dataset.entryId = entryId;
-                bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteRecordModal')).show();
-            } else {
-                console.error('Delete button not found');
-            }
-        }
-    });
-
-    // Delete Entry
-    const deleteButton = document.getElementById('delete-record');
-    if (deleteButton) {
-        deleteButton.addEventListener('click', function () {
-            console.log('Delete modal: Delete button clicked');
-            const entryId = this.dataset.entryId;
-            fetch(`/daily-entries/${window.weekId}/${entryId}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw new Error(JSON.stringify({ status: response.status, ...err })); });
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Delete modal: Success', data);
-                bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal')).hide();
-                window.filterData();
-                alert('Daily entry deleted successfully');
-            })
-            .catch(error => {
-                console.error('Delete error:', error);
-                let errorMsg = 'Failed to delete entry';
-                try {
-                    const err = JSON.parse(error.message);
-                    errorMsg = err.status === 403 ? 'You are not authorized to delete entries' :
-                               err.status === 404 ? 'Entry not found' : err.message;
-                } catch (e) {
-                    errorMsg = 'An unexpected error occurred. Please try again.';
-                }
-                alert(errorMsg);
-            });
-        });
-    } else {
-        console.warn('Delete button not found');
-    }
-
-    // Bulk Delete
-    window.deleteMultiple = function () {
-        const checkedIds = Array.from(document.querySelectorAll('.chk-child:checked')).map(cb => cb.value);
-        if (checkedIds.length === 0) {
-            alert('Please select at least one entry to delete.');
-            return;
-        }
-        if (!confirm(`Are you sure you want to delete ${checkedIds.length} entries?`)) {
-            return;
-        }
-        console.log('Bulk delete:', checkedIds);
-        Promise.all(checkedIds.map(id => 
-            fetch(`/daily-entries/${window.weekId}/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw new Error(JSON.stringify({ status: response.status, id, ...err })); });
-                }
-                return response.json();
-            })
-        ))
-        .then(() => {
-            console.log('Bulk delete: Success');
-            window.filterData();
-            alert('Selected entries deleted successfully');
-            document.getElementById('checkAll').checked = false;
-            document.getElementById('remove-actions').classList.add('d-none');
-        })
-        .catch(error => {
-            console.error('Bulk delete error:', error);
-            let errorMsg = 'Failed to delete some entries';
-            try {
-                const err = JSON.parse(error.message);
-                errorMsg = err.status === 403 ? 'You are not authorized to delete entries' :
-                           err.status === 404 ? `Entry ${err.id} not found` : err.message;
-            } catch (e) {
-                errorMsg = 'An unexpected error occurred. Please try again.';
-            }
-            alert(errorMsg);
-        });
-    };
-
-    // Check All
-    const checkAll = document.getElementById('checkAll');
-    if (checkAll) {
-        checkAll.addEventListener('change', function () {
-            document.querySelectorAll('.chk-child').forEach(cb => cb.checked = this.checked);
-            const removeActions = document.getElementById('remove-actions');
-            if (removeActions) {
-                removeActions.classList.toggle('d-none', !this.checked);
-            }
-            console.log('checkAll:', this.checked);
-        });
-    } else {
-        console.warn('checkAll not found');
-    }
-
-    // Toggle remove-actions visibility based on checked items
-    document.addEventListener('change', function (e) {
-        if (e.target.classList.contains('chk-child')) {
-            const checkedCount = document.querySelectorAll('.chk-child:checked').length;
-            const removeActions = document.getElementById('remove-actions');
-            if (removeActions) {
-                removeActions.classList.toggle('d-none', checkedCount === 0);
+            const row = e.target.closest('tr');
+            const entryId = row.querySelector('.chk-child').value;
+            const confirmDelete = confirm('Are you sure you want to delete this daily entry?');
+            if (confirmDelete) {
+                fetch(`/daily-entries/${window.weekId}/${entryId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(JSON.stringify({ status: response.status, ...err })); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Delete modal: Success', data);
+                    window.filterData();
+                    alert('Daily entry deleted successfully');
+                })
+                .catch(error => {
+                    console.error('Delete error:', error);
+                    let errorMsg = 'Failed to delete entry';
+                    try {
+                        const err = JSON.parse(error.message);
+                        errorMsg = err.status === 403 ? 'You are not authorized to delete entries' :
+                                   err.status === 404 ? 'Entry not found' : err.message;
+                    } catch (e) {
+                        errorMsg = 'An unexpected error occurred. Please try again.';
+                    }
+                    alert(errorMsg);
+                });
             }
         }
     });

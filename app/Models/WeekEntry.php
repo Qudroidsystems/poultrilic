@@ -20,4 +20,10 @@ class WeekEntry extends Model
     {
         return $this->hasMany(DailyEntry::class);
     }
+
+        // Dynamic accessor for total_egg_in_farm
+    public function getTotalEggInFarmAttribute()
+    {
+        return $this->dailyEntries()->sum('outstanding_egg');
+    }
 }
