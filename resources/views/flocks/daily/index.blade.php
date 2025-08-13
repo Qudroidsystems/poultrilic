@@ -69,7 +69,7 @@
                                     </div>
                                     <div class="col-md-auto ms-auto">
                                         <div class="hstack gap-2">
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addDailyModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add Daily Entry</button>
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addDailyModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add Daily Entries</button>
                                             <button class="btn btn-outline-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
                                         </div>
                                     </div>
