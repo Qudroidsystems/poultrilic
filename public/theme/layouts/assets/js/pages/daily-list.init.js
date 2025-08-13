@@ -237,11 +237,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const dailySoldEggPieces = parseInt(formData.get('daily_sold_egg_pieces')) || 0;
             const brokenEggCrates = parseInt(formData.get('broken_egg_crates')) || 0;
             const brokenEggPieces = parseInt(formData.get('broken_egg_pieces')) || 0;
+            const dailyFeeds = parseFloat(formData.get('daily_feeds')) || 0;
+            const availableFeeds = parseFloat(formData.get('available_feeds')) || 0;
+            const reorderFeeds = parseFloat(formData.get('reorder_feeds')) || 0;
 
             if (isNaN(dailyEggProductionCrates) || isNaN(dailyEggProductionPieces) ||
                 isNaN(dailySoldEggCrates) || isNaN(dailySoldEggPieces) ||
-                isNaN(brokenEggCrates) || isNaN(brokenEggPieces)) {
-                displayError('add-error-msg', 'Invalid input for egg fields. Please enter valid numbers.');
+                isNaN(brokenEggCrates) || isNaN(brokenEggPieces) ||
+                isNaN(dailyFeeds) || isNaN(availableFeeds)) {
+                displayError('add-error-msg', 'Invalid input for fields. Please enter valid numbers.');
                 return;
             }
 
@@ -262,8 +266,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const payload = {
                 _token: formData.get('_token'),
                 day_number: parseInt(formData.get('day_number')) || 0,
-                daily_feeds: parseFloat(formData.get('daily_feeds')) || 0,
-                available_feeds: parseFloat(formData.get('available_feeds')) || 0,
+                daily_feeds: dailyFeeds,
+                available_feeds: availableFeeds,
                 daily_mortality: parseInt(formData.get('daily_mortality')) || 0,
                 sick_bay: parseInt(formData.get('sick_bay')) || 0,
                 daily_egg_production_crates: dailyEggProductionCrates,
@@ -273,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 broken_egg_crates: brokenEggCrates,
                 broken_egg_pieces: brokenEggPieces,
                 drugs: formData.get('drugs') || '',
-                reorder_feeds: parseFloat(formData.get('reorder_feeds')) || 0
+                reorder_feeds: reorderFeeds
             };
 
             console.log('Add Payload:', payload);
@@ -415,11 +419,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const dailySoldEggPieces = parseInt(formData.get('daily_sold_egg_pieces')) || 0;
             const brokenEggCrates = parseInt(formData.get('broken_egg_crates')) || 0;
             const brokenEggPieces = parseInt(formData.get('broken_egg_pieces')) || 0;
+            const dailyFeeds = parseFloat(formData.get('daily_feeds')) || 0;
+            const availableFeeds = parseFloat(formData.get('available_feeds')) || 0;
+            const reorderFeeds = parseFloat(formData.get('reorder_feeds')) || 0;
 
             if (isNaN(dailyEggProductionCrates) || isNaN(dailyEggProductionPieces) ||
                 isNaN(dailySoldEggCrates) || isNaN(dailySoldEggPieces) ||
-                isNaN(brokenEggCrates) || isNaN(brokenEggPieces)) {
-                displayError('edit-error-msg', 'Invalid input for egg fields. Please enter valid numbers.');
+                isNaN(brokenEggCrates) || isNaN(brokenEggPieces) ||
+                isNaN(dailyFeeds) || isNaN(availableFeeds)) {
+                displayError('edit-error-msg', 'Invalid input for fields. Please enter valid numbers.');
                 return;
             }
 
@@ -442,8 +450,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 _method: 'PUT',
                 id: parseInt(formData.get('id')),
                 day_number: parseInt(formData.get('day_number')) || 0,
-                daily_feeds: parseFloat(formData.get('daily_feeds')) || 0,
-                available_feeds: parseFloat(formData.get('available_feeds')) || 0,
+                daily_feeds: dailyFeeds,
+                available_feeds: availableFeeds,
                 daily_mortality: parseInt(formData.get('daily_mortality')) || 0,
                 sick_bay: parseInt(formData.get('sick_bay')) || 0,
                 daily_egg_production_crates: dailyEggProductionCrates,
@@ -453,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 broken_egg_crates: brokenEggCrates,
                 broken_egg_pieces: brokenEggPieces,
                 drugs: formData.get('drugs') || '',
-                reorder_feeds: parseFloat(formData.get('reorder_feeds')) || 0
+                reorder_feeds: reorderFeeds
             };
 
             console.log('Edit Payload:', payload);
