@@ -5,7 +5,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
     if (!csrfToken) {
         console.error('CSRF token not found');
-        alert('CSRF token missing. Please refresh the page.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'CSRF token missing. Please refresh the page.'
+        });
         return;
     }
 
@@ -55,6 +59,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Fetch total_egg_in_farm for add modal
+    function fetchTotalEggInFarm(modalPrefix) {
+        fetch(`/daily-entries/${window.weekId}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(JSON.stringify({ status: response.status, ...err })); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            const totalEggInFarm = data.total_egg_in_farm || 0;
+            const totalEggDisplay = document.getElementById(`${modalPrefix}_total_egg_in_farm`);
+            if (totalEggDisplay) {
+                totalEggDisplay.textContent = `${toCratesAndPieces(totalEggInFarm).crates} cr ${toCratesAndPieces(totalEggInFarm).pieces} pcs (${totalEggInFarm} pieces)`;
+            }
+        })
+        .catch(error => {
+            console.error('Fetch total_egg_in_farm error:', error);
+            displayError(`${modalPrefix}-error-msg`, 'Failed to load total egg in farm');
+        });
+    }
+
     // Filter Data
     window.filterData = function (url = null) {
         console.log('filterData:', { url });
@@ -80,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             tbody.innerHTML = data.dailyEntries.map(entry => `
-                <tr>
+                <tr key="${entry.id}">
                     <td><input type="checkbox" class="chk-child" value="${entry.id}" data-id="${entry.id}"></td>
                     <td class="day_number">${entry.day_number}</td>
                     <td class="daily_feeds">${entry.daily_feeds}</td>
@@ -93,12 +124,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td class="total_egg_in_farm">${toCratesAndPieces(entry.total_egg_in_farm).crates} cr ${toCratesAndPieces(entry.total_egg_in_farm).pieces} pcs (${entry.total_egg_in_farm} pieces)</td>
                     <td class="created_at">${entry.created_at}</td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-subtle-secondary edit-item-btn" data-id="${entry.id}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-subtle-danger remove-item-btn" data-id="${entry.id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <div class="hstack gap-2">
+                            <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit entry"><i class="ph-pencil"></i></button>
+                            <button type="button" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" title="Delete entry"><i class="ph-trash"></i></button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -113,18 +142,22 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             console.log('filterData: Updated');
             bindPagination();
+            updateDeleteButtonVisibility();
         })
         .catch(error => {
             console.error('filterData error:', error);
             let errorMsg = 'Failed to load data';
             try {
                 const err = JSON.parse(error.message);
-                errorMsg = err.status === 403 ? 'You are not authorized to view this data' : 
-                           err.errors ? Object.values(err.errors).flat().join(', ') : err.message;
+                errorMsg = err.status === 404 ? 'Entries not found' : err.message;
             } catch (e) {
                 errorMsg = 'An unexpected error occurred. Please try again.';
             }
-            alert(errorMsg);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: errorMsg
+            });
         });
     };
 
@@ -142,12 +175,48 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
-    bindPagination();
+
+    // Update Delete Button Visibility
+    function updateDeleteButtonVisibility() {
+        const checkboxes = document.querySelectorAll('.chk-child:checked');
+        const deleteButton = document.getElementById('remove-actions');
+        if (checkboxes.length > 0) {
+            deleteButton.classList.remove('d-none');
+        } else {
+            deleteButton.classList.add('d-none');
+        }
+    }
+
+    // Check All Checkbox
+    document.getElementById('checkAll')?.addEventListener('change', function () {
+        const checkboxes = document.querySelectorAll('.chk-child');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateDeleteButtonVisibility();
+    });
+
+    // Individual Checkbox Change
+    document.addEventListener('change', function (e) {
+        if (e.target.classList.contains('chk-child')) {
+            updateDeleteButtonVisibility();
+        }
+    });
+
+    // Add Modal Open
+    document.querySelector('[data-bs-target="#addDailyModal"]').addEventListener('click', () => {
+        console.log('Add modal: Opening');
+        const addForm = document.getElementById('add-daily-form');
+        if (addForm) {
+            addForm.reset();
+            document.getElementById('add_outstanding_egg').textContent = '0 cr 0 pcs (0 pieces)';
+            fetchTotalEggInFarm('add');
+        }
+    });
 
     // Add Entry
     const addForm = document.getElementById('add-daily-form');
     if (addForm) {
-        // Add input event listeners for dynamic outstanding egg calculation
         ['daily_egg_production_crates', 'daily_egg_production_pieces', 'daily_sold_egg_crates', 
          'daily_sold_egg_pieces', 'broken_egg_crates', 'broken_egg_pieces'].forEach(field => {
             const element = document.getElementById(`add_${field}`);
@@ -197,9 +266,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 available_feeds: parseFloat(formData.get('available_feeds')) || 0,
                 daily_mortality: parseInt(formData.get('daily_mortality')) || 0,
                 sick_bay: parseInt(formData.get('sick_bay')) || 0,
-                daily_egg_production: dailyEggProduction,
-                daily_sold_egg: dailySoldEgg,
-                broken_egg: brokenEgg,
+                daily_egg_production_crates: dailyEggProductionCrates,
+                daily_egg_production_pieces: dailyEggProductionPieces,
+                daily_sold_egg_crates: dailySoldEggCrates,
+                daily_sold_egg_pieces: dailySoldEggPieces,
+                broken_egg_crates: brokenEggCrates,
+                broken_egg_pieces: brokenEggPieces,
                 drugs: formData.get('drugs') || '',
                 reorder_feeds: parseFloat(formData.get('reorder_feeds')) || 0
             };
@@ -226,18 +298,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Add modal: Success', data);
                 bootstrap.Modal.getInstance(document.getElementById('addDailyModal')).hide();
                 window.filterData();
-                alert('Daily entry added successfully');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Daily entry added successfully'
+                });
                 addForm.reset();
                 clearError('add-error-msg');
                 document.getElementById('add_outstanding_egg').textContent = '0 cr 0 pcs (0 pieces)';
+                document.getElementById('add_total_egg_in_farm').textContent = '0 cr 0 pcs (0 pieces)';
             })
             .catch(error => {
                 console.error('Add error:', error);
                 let errorMsg = 'Failed to add entry';
                 try {
                     const err = JSON.parse(error.message);
-                    errorMsg = err.status === 403 ? 'You are not authorized to create entries' :
-                               err.status === 422 ? Object.values(err.errors).flat().join(', ') : err.message;
+                    errorMsg = err.status === 422 ? Object.values(err.errors).flat().join(', ') : err.message;
                 } catch (e) {
                     errorMsg = 'An unexpected error occurred. Please try again.';
                 }
@@ -276,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
                 document.getElementById('edit-id-field').value = data.id || '';
-                document.getElementById('edit_day_number').value = data.day_number.replace('Day ', '') || '';
+                document.getElementById('edit_day_number').value = data.day_number || '';
                 document.getElementById('edit_daily_feeds').value = data.daily_feeds || 0;
                 document.getElementById('edit_available_feeds').value = data.available_feeds || 0;
                 document.getElementById('edit_daily_mortality').value = data.daily_mortality || 0;
@@ -310,12 +386,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 let errorMsg = 'Failed to load entry data';
                 try {
                     const err = JSON.parse(error.message);
-                    errorMsg = err.status === 403 ? 'You are not authorized to view this entry' :
-                               err.status === 404 ? 'Entry not found' : err.message;
+                    errorMsg = err.status === 404 ? 'Entry not found' : err.message;
                 } catch (e) {
                     errorMsg = 'An unexpected error occurred. Please try again.';
                 }
-                alert(errorMsg);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: errorMsg
+                });
             });
         }
     });
@@ -367,9 +446,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 available_feeds: parseFloat(formData.get('available_feeds')) || 0,
                 daily_mortality: parseInt(formData.get('daily_mortality')) || 0,
                 sick_bay: parseInt(formData.get('sick_bay')) || 0,
-                daily_egg_production: dailyEggProduction,
-                daily_sold_egg: dailySoldEgg,
-                broken_egg: brokenEgg,
+                daily_egg_production_crates: dailyEggProductionCrates,
+                daily_egg_production_pieces: dailyEggProductionPieces,
+                daily_sold_egg_crates: dailySoldEggCrates,
+                daily_sold_egg_pieces: dailySoldEggPieces,
+                broken_egg_crates: brokenEggCrates,
+                broken_egg_pieces: brokenEggPieces,
                 drugs: formData.get('drugs') || '',
                 reorder_feeds: parseFloat(formData.get('reorder_feeds')) || 0
             };
@@ -396,7 +478,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Edit modal: Success', data);
                 bootstrap.Modal.getInstance(document.getElementById('editDailyModal')).hide();
                 window.filterData();
-                alert('Daily entry updated successfully');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Daily entry updated successfully'
+                });
                 clearError('edit-error-msg');
             })
             .catch(error => {
@@ -404,8 +490,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 let errorMsg = 'Failed to update entry';
                 try {
                     const err = JSON.parse(error.message);
-                    errorMsg = err.status === 403 ? 'You are not authorized to update entries' :
-                               err.status === 422 ? Object.values(err.errors).flat().join(', ') :
+                    errorMsg = err.status === 422 ? Object.values(err.errors).flat().join(', ') :
                                err.status === 404 ? 'Entry not found' : err.message;
                 } catch (e) {
                     errorMsg = 'An unexpected error occurred. Please try again.';
@@ -423,8 +508,12 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('Delete modal: Opening');
             const row = e.target.closest('tr');
             const entryId = row.querySelector('.chk-child').value;
-            const confirmDelete = confirm('Are you sure you want to delete this daily entry?');
-            if (confirmDelete) {
+            const deleteModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteRecordModal'));
+            const deleteButton = document.getElementById('delete-record');
+            
+            // Set up delete button click handler
+            const deleteHandler = () => {
+                console.log('Delete modal: Deleting entry', entryId);
                 fetch(`/daily-entries/${window.weekId}/${entryId}`, {
                     method: 'DELETE',
                     headers: {
@@ -441,22 +530,112 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(data => {
                     console.log('Delete modal: Success', data);
+                    deleteModal.hide();
                     window.filterData();
-                    alert('Daily entry deleted successfully');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Daily entry deleted successfully'
+                    });
                 })
                 .catch(error => {
                     console.error('Delete error:', error);
                     let errorMsg = 'Failed to delete entry';
                     try {
                         const err = JSON.parse(error.message);
-                        errorMsg = err.status === 403 ? 'You are not authorized to delete entries' :
-                                   err.status === 404 ? 'Entry not found' : err.message;
+                        errorMsg = err.status === 404 ? 'Entry not found' : err.message;
                     } catch (e) {
                         errorMsg = 'An unexpected error occurred. Please try again.';
                     }
-                    alert(errorMsg);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMsg
+                    });
                 });
-            }
+                // Remove the event listener after execution to prevent multiple bindings
+                deleteButton.removeEventListener('click', deleteHandler);
+            };
+
+            deleteButton.addEventListener('click', deleteHandler);
+            deleteModal.show();
         }
     });
+
+    // Multiple Delete
+    window.deleteMultiple = function () {
+        const checkboxes = document.querySelectorAll('.chk-child:checked');
+        const entryIds = Array.from(checkboxes).map(checkbox => checkbox.value);
+        if (entryIds.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Warning',
+                text: 'No entries selected for deletion.'
+            });
+            return;
+        }
+
+        console.log('Delete multiple: Selected entries', entryIds);
+        Swal.fire({
+            title: 'Are you sure?',
+            text: `You are about to delete ${entryIds.length} daily entr${entryIds.length > 1 ? 'ies' : 'y'}. This action cannot be undone.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, delete',
+            cancelButtonText: 'Cancel'
+        }).then(result => {
+            if (result.isConfirmed) {
+                const deletePromises = entryIds.map(entryId => 
+                    fetch(`/daily-entries/${window.weekId}/${entryId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => ({ success: false, error: err }));
+                        }
+                        return response.json().then(data => ({ success: true, data }));
+                    })
+                );
+
+                Promise.all(deletePromises)
+                    .then(results => {
+                        const errors = results.filter(result => !result.success).map(result => result.error);
+                        window.filterData();
+                        if (errors.length > 0) {
+                            console.error('Delete multiple errors:', errors);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: `Some entries could not be deleted: ${errors.map(err => err.message).join(', ')}`
+                            });
+                        } else {
+                            console.log('Delete multiple: Success');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success',
+                                text: `${entryIds.length} daily entr${entryIds.length > 1 ? 'ies' : 'y'} deleted successfully`
+                            });
+                            document.getElementById('checkAll').checked = false;
+                            updateDeleteButtonVisibility();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Delete multiple error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An unexpected error occurred while deleting entries. Please try again.'
+                        });
+                    });
+            }
+        });
+    };
+
+    // Initialize filter on page load
+    window.filterData();
 });

@@ -4,22 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyEntry;
 use App\Models\WeekEntry;
+use App\Models\Flock;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class DailyEntryController extends Controller
 {
-
-    function __construct()
-    {
-         $this->middleware('permission:View daily-entry|Create daily-entry|Update daily-entry|Delete daily-entry', ['only' => ['index','store']]);
-         $this->middleware('permission:Create daily-entry', ['only' => ['create','store']]);
-         $this->middleware('permission:Update daily-entry', ['only' => ['edit','update']]);
-         $this->middleware('permission:Delete daily-entry', ['only' => ['destroy']]);
-    }
-
-
     public function index(Request $request, $weekId)
     {
         try {
@@ -68,6 +59,7 @@ class DailyEntryController extends Controller
                     'pagination' => (string) $dailyEntries->links(),
                     'total' => $dailyEntries->total(),
                     'chartData' => $chartData,
+                    'total_egg_in_farm' => $week->dailyEntries()->sum('outstanding_egg')
                 ]);
             }
 
@@ -92,8 +84,6 @@ class DailyEntryController extends Controller
         try {
             Log::info('Starting store method', ['week_id' => $weekId, 'request_data' => $request->all()]);
 
-          
-
             $weekEntry = WeekEntry::findOrFail($weekId);
             $flock = $weekEntry->flock;
             if (!$flock) {
@@ -107,14 +97,21 @@ class DailyEntryController extends Controller
                 'available_feeds' => 'required|numeric|min:0',
                 'daily_mortality' => 'required|integer|min:0',
                 'sick_bay' => 'required|integer|min:0',
-                'daily_egg_production' => 'required|integer|min:0',
-                'daily_sold_egg' => 'required|integer|min:0',
-                'broken_egg' => 'required|integer|min:0',
+                'daily_egg_production_crates' => 'required|integer|min:0',
+                'daily_egg_production_pieces' => 'required|integer|min:0|max:29',
+                'daily_sold_egg_crates' => 'required|integer|min:0',
+                'daily_sold_egg_pieces' => 'required|integer|min:0|max:29',
+                'broken_egg_crates' => 'required|integer|min:0',
+                'broken_egg_pieces' => 'required|integer|min:0|max:29',
                 'drugs' => 'nullable|string',
                 'reorder_feeds' => 'nullable|numeric|min:0',
             ]);
 
-            $outstandingEgg = $validated['daily_egg_production'] - $validated['daily_sold_egg'] - $validated['broken_egg'];
+            $dailyEggProduction = $validated['daily_egg_production_crates'] * 30 + $validated['daily_egg_production_pieces'];
+            $dailySoldEgg = $validated['daily_sold_egg_crates'] * 30 + $validated['daily_sold_egg_pieces'];
+            $brokenEgg = $validated['broken_egg_crates'] * 30 + $validated['broken_egg_pieces'];
+            $outstandingEgg = $dailyEggProduction - $dailySoldEgg - $brokenEgg;
+
             if ($outstandingEgg < 0) {
                 return response()->json([
                     'message' => 'Validation failed',
@@ -144,11 +141,11 @@ class DailyEntryController extends Controller
                 'sick_bay' => $validated['sick_bay'],
                 'total_mortality' => $totalMortality,
                 'current_birds' => max(0, $flock->initial_bird_count - $totalMortality),
-                'daily_egg_production' => $validated['daily_egg_production'],
-                'daily_sold_egg' => $validated['daily_sold_egg'],
+                'daily_egg_production' => $dailyEggProduction,
+                'daily_sold_egg' => $dailySoldEgg,
                 'total_sold_egg' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
-                    ->sum('daily_entries.daily_sold_egg') + $validated['daily_sold_egg'],
-                'broken_egg' => $validated['broken_egg'],
+                    ->sum('daily_entries.daily_sold_egg') + $dailySoldEgg,
+                'broken_egg' => $brokenEgg,
                 'outstanding_egg' => $outstandingEgg,
                 'total_egg_in_farm' => $weekEntry->dailyEntries()->sum('outstanding_egg') + $outstandingEgg,
                 'drugs' => $validated['drugs'],
@@ -162,7 +159,8 @@ class DailyEntryController extends Controller
 
             return response()->json([
                 'message' => 'Daily entry created successfully',
-                'data' => $dailyEntry
+                'data' => $dailyEntry,
+                'total_egg_in_farm' => $dailyEntry->total_egg_in_farm
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -174,9 +172,6 @@ class DailyEntryController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
-        } catch (UnauthorizedException $e) {
-            Log::error('Authorization error creating daily entry: ' . $e->getMessage(), ['week_id' => $weekId]);
-            return response()->json(['message' => 'You are not authorized to create daily entries'], 403);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating daily entry: ' . $e->getMessage(), [
@@ -193,11 +188,10 @@ class DailyEntryController extends Controller
     public function show($weekId, $id)
     {
         try {
-         
             $entry = DailyEntry::where('week_entry_id', $weekId)->findOrFail($id);
             return response()->json([
                 'id' => $entry->id,
-                'day_number' => "Day $entry->day_number",
+                'day_number' => $entry->day_number,
                 'daily_feeds' => $entry->daily_feeds,
                 'available_feeds' => $entry->available_feeds,
                 'daily_mortality' => $entry->daily_mortality,
@@ -212,14 +206,6 @@ class DailyEntryController extends Controller
                 'reorder_feeds' => $entry->reorder_feeds,
                 'created_at' => $entry->created_at->format('Y-m-d'),
             ]);
-        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            Log::error('Authorization error viewing daily entry: ' . $e->getMessage(), [
-                'week_id' => $weekId,
-                'entry_id' => $id,
-            ]);
-            return response()->json([
-                'message' => 'You are not authorized to view this daily entry',
-            ], 403);
         } catch (\Exception $e) {
             Log::error('Error viewing daily entry: ' . $e->getMessage(), [
                 'week_id' => $weekId,
@@ -231,8 +217,7 @@ class DailyEntryController extends Controller
         }
     }
 
-  
-   public function update(Request $request, $weekId, $id)
+    public function update(Request $request, $weekId, $id)
     {
         try {
             Log::info('Starting update method', [
@@ -241,7 +226,6 @@ class DailyEntryController extends Controller
                 'request_data' => $request->all()
             ]);
 
-           
             $weekEntry = WeekEntry::findOrFail($weekId);
             $flock = $weekEntry->flock;
             if (!$flock) {
@@ -257,14 +241,21 @@ class DailyEntryController extends Controller
                 'available_feeds' => 'required|numeric|min:0',
                 'daily_mortality' => 'required|integer|min:0',
                 'sick_bay' => 'required|integer|min:0',
-                'daily_egg_production' => 'required|integer|min:0',
-                'daily_sold_egg' => 'required|integer|min:0',
-                'broken_egg' => 'required|integer|min:0',
+                'daily_egg_production_crates' => 'required|integer|min:0',
+                'daily_egg_production_pieces' => 'required|integer|min:0|max:29',
+                'daily_sold_egg_crates' => 'required|integer|min:0',
+                'daily_sold_egg_pieces' => 'required|integer|min:0|max:29',
+                'broken_egg_crates' => 'required|integer|min:0',
+                'broken_egg_pieces' => 'required|integer|min:0|max:29',
                 'drugs' => 'nullable|string',
                 'reorder_feeds' => 'nullable|numeric|min:0',
             ]);
 
-            $outstandingEgg = $validated['daily_egg_production'] - $validated['daily_sold_egg'] - $validated['broken_egg'];
+            $dailyEggProduction = $validated['daily_egg_production_crates'] * 30 + $validated['daily_egg_production_pieces'];
+            $dailySoldEgg = $validated['daily_sold_egg_crates'] * 30 + $validated['daily_sold_egg_pieces'];
+            $brokenEgg = $validated['broken_egg_crates'] * 30 + $validated['broken_egg_pieces'];
+            $outstandingEgg = $dailyEggProduction - $dailySoldEgg - $brokenEgg;
+
             if ($outstandingEgg < 0) {
                 return response()->json([
                     'message' => 'Validation failed',
@@ -294,11 +285,11 @@ class DailyEntryController extends Controller
                 'sick_bay' => $validated['sick_bay'],
                 'total_mortality' => $totalMortality,
                 'current_birds' => max(0, $flock->initial_bird_count - $totalMortality),
-                'daily_egg_production' => $validated['daily_egg_production'],
-                'daily_sold_egg' => $validated['daily_sold_egg'],
+                'daily_egg_production' => $dailyEggProduction,
+                'daily_sold_egg' => $dailySoldEgg,
                 'total_sold_egg' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
-                    ->where('daily_entries.id', '!=', $id)->sum('daily_entries.daily_sold_egg') + $validated['daily_sold_egg'],
-                'broken_egg' => $validated['broken_egg'],
+                    ->where('daily_entries.id', '!=', $id)->sum('daily_entries.daily_sold_egg') + $dailySoldEgg,
+                'broken_egg' => $brokenEgg,
                 'outstanding_egg' => $outstandingEgg,
                 'total_egg_in_farm' => $weekEntry->dailyEntries()->where('id', '!=', $id)->sum('outstanding_egg') + $outstandingEgg,
                 'drugs' => $validated['drugs'],
@@ -312,7 +303,8 @@ class DailyEntryController extends Controller
 
             return response()->json([
                 'message' => 'Daily entry updated successfully',
-                'data' => $dailyEntry
+                'data' => $dailyEntry,
+                'total_egg_in_farm' => $dailyEntry->total_egg_in_farm
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -325,9 +317,6 @@ class DailyEntryController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
-        } catch (UnauthorizedException $e) {
-            Log::error('Authorization error updating daily entry: ' . $e->getMessage(), ['week_id' => $weekId, 'entry_id' => $id]);
-            return response()->json(['message' => 'You are not authorized to update daily entries'], 403);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating daily entry: ' . $e->getMessage(), [
@@ -346,8 +335,6 @@ class DailyEntryController extends Controller
     {
         try {
             Log::info('Starting destroy method', ['week_id' => $weekId, 'entry_id' => $id]);
-
-           
 
             $weekEntry = WeekEntry::findOrFail($weekId);
             $flock = $weekEntry->flock;
@@ -371,9 +358,6 @@ class DailyEntryController extends Controller
 
             return response()->json(['message' => 'Daily entry deleted successfully'], 200);
 
-        } catch (UnauthorizedException $e) {
-            Log::error('Authorization error deleting daily entry: ' . $e->getMessage(), ['week_id' => $weekId, 'entry_id' => $id]);
-            return response()->json(['message' => 'You are not authorized to delete daily entries'], 403);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error deleting daily entry: ' . $e->getMessage(), [

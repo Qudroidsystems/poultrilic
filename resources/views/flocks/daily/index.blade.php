@@ -69,9 +69,7 @@
                                     </div>
                                     <div class="col-md-auto ms-auto">
                                         <div class="hstack gap-2">
-                                            @can('Create daily-entry')
-                                                <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addDailyModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add Daily Entry</button>
-                                            @endcan
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addDailyModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add Daily Entry</button>
                                             <button class="btn btn-outline-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
                                         </div>
                                     </div>
@@ -142,12 +140,8 @@
                                                     <td class="created_at">{{ $entry->created_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <div class="hstack gap-2">
-                                                            @can('Update daily-entry')
-                                                                <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit entry"><i class="ph-pencil"></i></button>
-                                                            @endcan
-                                                            @can('Delete daily-entry')
-                                                                <button type="button" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" title="Delete entry"><i class="ph-trash"></i></button>
-                                                            @endcan
+                                                            <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit entry"><i class="ph-pencil"></i></button>
+                                                            <button type="button" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" title="Delete entry"><i class="ph-trash"></i></button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -297,20 +291,20 @@
                                     </div>
                                 </div>
                                 <div class="mb-3">
+                                    <label class="form-label">Outstanding Eggs</label>
+                                    <p class="form-text" id="add_outstanding_egg">0 cr 0 pcs (0 pieces)</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Total Eggs in Farm</label>
+                                    <p class="form-text" id="add_total_egg_in_farm">0 cr 0 pcs (0 pieces)</p>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">Drugs Administered</label>
                                     <input type="text" id="drugs" name="drugs" class="form-control" placeholder="Enter drugs administered (optional)">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Reorder Feeds (kg)</label>
                                     <input type="number" id="reorder_feeds" name="reorder_feeds" class="form-control" placeholder="Enter reorder feeds in kg (optional)" min="0" step="0.01">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Total Eggs in Farm</label>
-                                    <p class="form-text">Calculated by system</p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Outstanding Eggs</label>
-                                    <p class="form-text">Calculated by system</p>
                                 </div>
                                 <div class="alert alert-danger d-none" id="add-error-msg"></div>
                             </div>
@@ -395,20 +389,20 @@
                                     </div>
                                 </div>
                                 <div class="mb-3">
+                                    <label class="form-label">Outstanding Eggs</label>
+                                    <p class="form-text" id="edit_outstanding_egg">0 cr 0 pcs (0 pieces)</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Total Eggs in Farm</label>
+                                    <p class="form-text" id="edit_total_egg_in_farm">0 cr 0 pcs (0 pieces)</p>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">Drugs Administered</label>
                                     <input type="text" id="edit_drugs" name="drugs" class="form-control" placeholder="Enter drugs administered (optional)">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Reorder Feeds (kg)</label>
                                     <input type="number" id="edit_reorder_feeds" name="reorder_feeds" class="form-control" placeholder="Enter reorder feeds in kg (optional)" min="0" step="0.01">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Total Eggs in Farm</label>
-                                    <p class="form-text" id="edit_total_egg_in_farm">Calculated by system</p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Outstanding Eggs</label>
-                                    <p class="form-text" id="edit_outstanding_egg">Calculated by system</p>
                                 </div>
                                 <div class="alert alert-danger d-none" id="edit-error-msg"></div>
                             </div>
@@ -449,6 +443,7 @@
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             window.weekId = {{ $week->id }};
             const CRATE_SIZE = 30;
