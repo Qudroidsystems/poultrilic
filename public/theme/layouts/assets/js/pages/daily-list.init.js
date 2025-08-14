@@ -15,11 +15,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const CRATE_SIZE = 30;
 
+    // Helper function to parse string egg format (e.g., "11 Cr 12PC") to total pieces
+    function parseEggString(eggString) {
+        if (!eggString || typeof eggString !== 'string' || !eggString.match(/\d+\s*Cr\s*\d+PC/)) {
+            return 0;
+        }
+        const match = eggString.match(/(\d+)\s*Cr\s*(\d+)PC/);
+        return match ? parseInt(match[1]) * CRATE_SIZE + parseInt(match[2]) : 0;
+    }
+
     // Helper function to format total pieces to crates and pieces
     function toCratesAndPieces(totalPieces) {
+        totalPieces = Math.max(0, parseInt(totalPieces) || 0);
         const crates = Math.floor(totalPieces / CRATE_SIZE);
         const pieces = totalPieces % CRATE_SIZE;
         return { crates, pieces, total: totalPieces };
+    }
+
+    // Helper function to format decimal numbers to 2 decimal places
+    function formatDecimal(value) {
+        return isNaN(value) || value === null ? '0.00' : Number(value).toFixed(2);
     }
 
     // Display error message
@@ -55,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const outstandingDisplay = document.getElementById(`${modalPrefix}_outstanding_egg`);
         if (outstandingDisplay) {
-            outstandingDisplay.textContent = `${toCratesAndPieces(outstanding).crates} cr ${toCratesAndPieces(outstanding).pieces} pcs (${outstanding} pieces)`;
+            outstandingDisplay.textContent = `${toCratesAndPieces(outstanding).crates} Cr ${toCratesAndPieces(outstanding).pieces}PC (${outstanding} pieces)`;
         }
     }
 
@@ -74,10 +89,10 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(data => {
-            const totalEggInFarm = data.total_egg_in_farm || 0;
+            const totalEggInFarm = parseEggString(data.total_egg_in_farm) || 0;
             const totalEggDisplay = document.getElementById(`${modalPrefix}_total_egg_in_farm`);
             if (totalEggDisplay) {
-                totalEggDisplay.textContent = `${toCratesAndPieces(totalEggInFarm).crates} cr ${toCratesAndPieces(totalEggInFarm).pieces} pcs (${totalEggInFarm} pieces)`;
+                totalEggDisplay.textContent = `${toCratesAndPieces(totalEggInFarm).crates} Cr ${toCratesAndPieces(totalEggInFarm).pieces}PC (${totalEggInFarm} pieces)`;
             }
         })
         .catch(error => {
@@ -105,6 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(data => {
+            console.log('filterData: Received data', data);
             const tbody = document.querySelector('#dailyTable tbody');
             if (!tbody) {
                 console.error('Table body not found');
@@ -117,11 +133,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td class="daily_feeds">${entry.daily_feeds}</td>
                     <td class="daily_mortality">${entry.daily_mortality}</td>
                     <td class="current_birds">${entry.current_birds}</td>
-                    <td class="daily_egg_production">${toCratesAndPieces(entry.daily_egg_production).crates} cr ${toCratesAndPieces(entry.daily_egg_production).pieces} pcs (${entry.daily_egg_production} pieces)</td>
-                    <td class="daily_sold_egg">${toCratesAndPieces(entry.daily_sold_egg).crates} cr ${toCratesAndPieces(entry.daily_sold_egg).pieces} pcs (${entry.daily_sold_egg} pieces)</td>
-                    <td class="broken_egg">${toCratesAndPieces(entry.broken_egg).crates} cr ${toCratesAndPieces(entry.broken_egg).pieces} pcs (${entry.broken_egg} pieces)</td>
-                    <td class="outstanding_egg">${toCratesAndPieces(entry.outstanding_egg).crates} cr ${toCratesAndPieces(entry.outstanding_egg).pieces} pcs (${entry.outstanding_egg} pieces)</td>
-                    <td class="total_egg_in_farm">${toCratesAndPieces(entry.total_egg_in_farm).crates} cr ${toCratesAndPieces(entry.total_egg_in_farm).pieces} pcs (${entry.total_egg_in_farm} pieces)</td>
+                    <td class="daily_egg_production">${entry.daily_egg_production}</td>
+                    <td class="daily_sold_egg">${entry.daily_sold_egg}</td>
+                    <td class="broken_egg">${entry.broken_egg}</td>
+                    <td class="outstanding_egg">${entry.outstanding_egg}</td>
+                    <td class="total_egg_in_farm">${entry.total_egg_in_farm}</td>
                     <td class="created_at">${entry.created_at}</td>
                     <td>
                         <div class="hstack gap-2">
@@ -137,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (window.dailyChart) {
                 window.dailyChart.data.labels = data.chartData.labels;
-                window.dailyChart.data.datasets[0].data = data.chartData.daily_egg_production;
+                window.dailyChart.data.datasets[0].data = data.dailyEntries.map(entry => parseEggString(entry.daily_egg_production));
                 window.dailyChart.update();
             }
             console.log('filterData: Updated');
@@ -209,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const addForm = document.getElementById('add-daily-form');
         if (addForm) {
             addForm.reset();
-            document.getElementById('add_outstanding_egg').textContent = '0 cr 0 pcs (0 pieces)';
+            document.getElementById('add_outstanding_egg').textContent = '0 Cr 0PC (0 pieces)';
             fetchTotalEggInFarm('add');
         }
     });
@@ -309,8 +325,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
                 addForm.reset();
                 clearError('add-error-msg');
-                document.getElementById('add_outstanding_egg').textContent = '0 cr 0 pcs (0 pieces)';
-                document.getElementById('add_total_egg_in_farm').textContent = '0 cr 0 pcs (0 pieces)';
+                document.getElementById('add_outstanding_egg').textContent = '0 Cr 0PC (0 pieces)';
+                document.getElementById('add_total_egg_in_farm').textContent = '0 Cr 0PC (0 pieces)';
             })
             .catch(error => {
                 console.error('Add error:', error);
@@ -357,23 +373,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 document.getElementById('edit-id-field').value = data.id || '';
                 document.getElementById('edit_day_number').value = data.day_number || '';
-                document.getElementById('edit_daily_feeds').value = data.daily_feeds || 0;
-                document.getElementById('edit_available_feeds').value = data.available_feeds || 0;
+                document.getElementById('edit_daily_feeds').value = formatDecimal(data.daily_feeds || 0);
+                document.getElementById('edit_available_feeds').value = formatDecimal(data.available_feeds || 0);
                 document.getElementById('edit_daily_mortality').value = data.daily_mortality || 0;
                 document.getElementById('edit_sick_bay').value = data.sick_bay || 0;
-                const dailyEggProduction = toCratesAndPieces(data.daily_egg_production || 0);
+                const dailyEggProduction = toCratesAndPieces(parseEggString(data.daily_egg_production) || 0);
                 document.getElementById('edit_daily_egg_production_crates').value = dailyEggProduction.crates;
                 document.getElementById('edit_daily_egg_production_pieces').value = dailyEggProduction.pieces;
-                const dailySoldEgg = toCratesAndPieces(data.daily_sold_egg || 0);
+                const dailySoldEgg = toCratesAndPieces(parseEggString(data.daily_sold_egg) || 0);
                 document.getElementById('edit_daily_sold_egg_crates').value = dailySoldEgg.crates;
                 document.getElementById('edit_daily_sold_egg_pieces').value = dailySoldEgg.pieces;
                 const brokenEgg = toCratesAndPieces(data.broken_egg || 0);
                 document.getElementById('edit_broken_egg_crates').value = brokenEgg.crates;
                 document.getElementById('edit_broken_egg_pieces').value = brokenEgg.pieces;
                 document.getElementById('edit_drugs').value = data.drugs || '';
-                document.getElementById('edit_reorder_feeds').value = data.reorder_feeds || '';
-                document.getElementById('edit_outstanding_egg').textContent = `${toCratesAndPieces(data.outstanding_egg || 0).crates} cr ${toCratesAndPieces(data.outstanding_egg || 0).pieces} pcs (${data.outstanding_egg || 0} pieces)`;
-                document.getElementById('edit_total_egg_in_farm').textContent = `${toCratesAndPieces(data.total_egg_in_farm || 0).crates} cr ${toCratesAndPieces(data.total_egg_in_farm || 0).pieces} pcs (${data.total_egg_in_farm || 0} pieces)`;
+                document.getElementById('edit_reorder_feeds').value = formatDecimal(data.reorder_feeds || 0);
+                document.getElementById('edit_outstanding_egg').textContent = data.outstanding_egg || '0 Cr 0PC (0 pieces)';
+                document.getElementById('edit_total_egg_in_farm').textContent = data.total_egg_in_farm || '0 Cr 0PC (0 pieces)';
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('editDailyModal')).show();
 
                 // Add input event listeners for dynamic outstanding egg calculation

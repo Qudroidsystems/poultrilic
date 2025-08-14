@@ -40,6 +40,25 @@
                 </div>
             @endif
 
+            @php
+                // Helper function to parse egg string (e.g., "11 Cr 12PC") to total pieces
+                function parseEggString($eggString) {
+                    if (!$eggString || !is_string($eggString)) {
+                        return 0;
+                    }
+                    $match = preg_match('/(\d+)\s*Cr\s*(\d+)PC/', $eggString, $matches);
+                    return $match ? (int)$matches[1] * 30 + (int)$matches[2] : 0;
+                }
+
+                // Helper function to format total pieces to crates and pieces
+                function formatEggString($totalPieces) {
+                    $totalPieces = max(0, (int)$totalPieces);
+                    $crates = floor($totalPieces / 30);
+                    $pieces = $totalPieces % 30;
+                    return "$crates cr $pieces pcs ($totalPieces pieces)";
+                }
+            @endphp
+
             <div id="dailyList">
                 <div class="row">
                     <div class="col-lg-12">
@@ -119,23 +138,23 @@
                                                         </div>
                                                     </td>
                                                     <td class="day_number">Day {{ $entry->day_number }}</td>
-                                                    <td class="daily_feeds">{{ $entry->daily_feeds }}</td>
+                                                    <td class="daily_feeds">{{ number_format($entry->daily_feeds, 2) }}</td>
                                                     <td class="daily_mortality">{{ $entry->daily_mortality }}</td>
                                                     <td class="current_birds">{{ $entry->current_birds }}</td>
                                                     <td class="daily_egg_production">
-                                                        {{ floor($entry->daily_egg_production / 30) }} cr {{ $entry->daily_egg_production % 30 }} pcs ({{ $entry->daily_egg_production }} pieces)
+                                                        {{ $entry->daily_egg_production ?: '0 cr 0 pcs' }} ({{ parseEggString($entry->daily_egg_production) }} pieces)
                                                     </td>
                                                     <td class="daily_sold_egg">
-                                                        {{ floor($entry->daily_sold_egg / 30) }} cr {{ $entry->daily_sold_egg % 30 }} pcs ({{ $entry->daily_sold_egg }} pieces)
+                                                        {{ $entry->daily_sold_egg ?: '0 cr 0 pcs' }} ({{ parseEggString($entry->daily_sold_egg) }} pieces)
                                                     </td>
                                                     <td class="broken_egg">
-                                                        {{ floor($entry->broken_egg / 30) }} cr {{ $entry->broken_egg % 30 }} pcs ({{ $entry->broken_egg }} pieces)
+                                                        {{ formatEggString($entry->broken_egg) }}
                                                     </td>
                                                     <td class="outstanding_egg">
-                                                        {{ floor($entry->outstanding_egg / 30) }} cr {{ $entry->outstanding_egg % 30 }} pcs ({{ $entry->outstanding_egg }} pieces)
+                                                        {{ $entry->outstanding_egg ?: '0 cr 0 pcs' }} ({{ parseEggString($entry->outstanding_egg) }} pieces)
                                                     </td>
                                                     <td class="total_egg_in_farm">
-                                                        {{ floor($entry->total_egg_in_farm / 30) }} cr {{ $entry->total_egg_in_farm % 30 }} pcs ({{ $entry->total_egg_in_farm }} pieces)
+                                                        {{ $entry->total_egg_in_farm ?: '0 cr 0 pcs' }} ({{ parseEggString($entry->total_egg_in_farm) }} pieces)
                                                     </td>
                                                     <td class="created_at">{{ $entry->created_at->format('Y-m-d') }}</td>
                                                     <td>
@@ -147,7 +166,7 @@
                                                 </tr>
                                             @empty
                                                 <tr class="noresult">
-                                                    <td colspan="11" class="text-center">No daily entries found</td>
+                                                    <td colspan="12" class="text-center">No daily entries found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -188,19 +207,7 @@
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
                                         <div class="pagination-wrap hstack gap-2 justify-content-center">
-                                            <a class="page-item pagination-prev {{ $dailyEntries->onFirstPage() ? 'disabled' : '' }}" href="{{ $dailyEntries->previousPageUrl() }}">
-                                                <i class="mdi mdi-chevron-left align-middle"></i>
-                                            </a>
-                                            <ul class="pagination listjs-pagination mb-0">
-                                                @foreach ($dailyEntries->links()->elements[0] as $page => $url)
-                                                    <li class="page-item {{ $dailyEntries->currentPage() == $page ? 'active' : '' }}">
-                                                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                            <a class="page-item pagination-next {{ $dailyEntries->hasMorePages() ? '' : 'disabled' }}" href="{{ $dailyEntries->nextPageUrl() }}">
-                                                <i class="mdi mdi-chevron-right align-middle"></i>
-                                            </a>
+                                            {!! $dailyEntries->links() !!}
                                         </div>
                                     </div>
                                 </div>
@@ -455,6 +462,15 @@
                 return { crates, pieces, total: totalPieces };
             }
 
+            // Helper function to parse egg string (e.g., "11 Cr 12PC") to total pieces
+            function parseEggString(eggString) {
+                if (!eggString || typeof eggString !== 'string') {
+                    return 0;
+                }
+                const match = eggString.match(/(\d+)\s*Cr\s*(\d+)PC/);
+                return match ? parseInt(match[1]) * CRATE_SIZE + parseInt(match[2]) : 0;
+            }
+
             // Initialize Chart.js
             const ctx = document.getElementById('dailyChart').getContext('2d');
             window.dailyChart = new Chart(ctx, {
@@ -474,7 +490,7 @@
                 }
             });
         </script>
-        {{-- <script src="{{ asset('js/daily-list.init.js') }}"></script> --}}
+        <script src="{{ asset('js/daily-list.init.js') }}"></script>
     </div>
 </div>
 @endsection

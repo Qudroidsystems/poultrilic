@@ -34,6 +34,7 @@ class DailyEntryController extends Controller
      */
     private function formatEggString($totalPieces)
     {
+        $totalPieces = max(0, (int)$totalPieces); // Ensure non-negative
         $crates = floor($totalPieces / 30);
         $pieces = $totalPieces % 30;
         return "{$crates} Cr {$pieces}PC";
@@ -83,18 +84,18 @@ class DailyEntryController extends Controller
                         return [
                             'id' => $entry->id,
                             'day_number' => "Day $entry->day_number",
-                            'daily_feeds' => $entry->daily_feeds,
-                            'available_feeds' => $entry->available_feeds,
+                            'daily_feeds' => number_format($entry->daily_feeds, 2),
+                            'available_feeds' => number_format($entry->available_feeds, 2),
                             'daily_mortality' => $entry->daily_mortality,
                             'sick_bay' => $entry->sick_bay,
                             'current_birds' => $entry->current_birds,
-                            'daily_egg_production' => $entry->daily_egg_production,
-                            'daily_sold_egg' => $entry->daily_sold_egg,
+                            'daily_egg_production' => $entry->daily_egg_production ?: '0 Cr 0PC',
+                            'daily_sold_egg' => $entry->daily_sold_egg ?: '0 Cr 0PC',
                             'broken_egg' => $this->formatEggString($entry->broken_egg),
-                            'outstanding_egg' => $entry->outstanding_egg,
-                            'total_egg_in_farm' => $entry->total_egg_in_farm,
+                            'outstanding_egg' => $entry->outstanding_egg ?: '0 Cr 0PC',
+                            'total_egg_in_farm' => $entry->total_egg_in_farm ?: '0 Cr 0PC',
                             'drugs' => $entry->drugs,
-                            'reorder_feeds' => $entry->reorder_feeds,
+                            'reorder_feeds' => $entry->reorder_feeds !== null ? number_format($entry->reorder_feeds, 2) : null,
                             'created_at' => $entry->created_at->format('Y-m-d'),
                         ];
                     })->toArray(),
@@ -219,7 +220,23 @@ class DailyEntryController extends Controller
 
             return response()->json([
                 'message' => 'Daily entry created successfully',
-                'data' => $entry,
+                'data' => [
+                    'id' => $entry->id,
+                    'day_number' => "Day $entry->day_number",
+                    'daily_feeds' => number_format($entry->daily_feeds, 2),
+                    'available_feeds' => number_format($entry->available_feeds, 2),
+                    'daily_mortality' => $entry->daily_mortality,
+                    'sick_bay' => $entry->sick_bay,
+                    'current_birds' => $entry->current_birds,
+                    'daily_egg_production' => $entry->daily_egg_production,
+                    'daily_sold_egg' => $entry->daily_sold_egg,
+                    'broken_egg' => $this->formatEggString($entry->broken_egg),
+                    'outstanding_egg' => $entry->outstanding_egg,
+                    'total_egg_in_farm' => $entry->total_egg_in_farm,
+                    'drugs' => $entry->drugs,
+                    'reorder_feeds' => $entry->reorder_feeds !== null ? number_format($entry->reorder_feeds, 2) : null,
+                    'created_at' => $entry->created_at->format('Y-m-d'),
+                ],
                 'total_egg_in_farm' => $entry->total_egg_in_farm,
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -258,18 +275,18 @@ class DailyEntryController extends Controller
             return response()->json([
                 'id' => $entry->id,
                 'day_number' => $entry->day_number,
-                'daily_feeds' => $entry->daily_feeds,
-                'available_feeds' => $entry->available_feeds,
+                'daily_feeds' => number_format($entry->daily_feeds, 2),
+                'available_feeds' => number_format($entry->available_feeds, 2),
                 'daily_mortality' => $entry->daily_mortality,
                 'sick_bay' => $entry->sick_bay,
                 'current_birds' => $entry->current_birds,
-                'daily_egg_production' => $entry->daily_egg_production,
-                'daily_sold_egg' => $entry->daily_sold_egg,
+                'daily_egg_production' => $entry->daily_egg_production ?: '0 Cr 0PC',
+                'daily_sold_egg' => $entry->daily_sold_egg ?: '0 Cr 0PC',
                 'broken_egg' => $this->formatEggString($entry->broken_egg),
-                'outstanding_egg' => $entry->outstanding_egg,
-                'total_egg_in_farm' => $entry->total_egg_in_farm,
+                'outstanding_egg' => $entry->outstanding_egg ?: '0 Cr 0PC',
+                'total_egg_in_farm' => $entry->total_egg_in_farm ?: '0 Cr 0PC',
                 'drugs' => $entry->drugs,
-                'reorder_feeds' => $entry->reorder_feeds,
+                'reorder_feeds' => $entry->reorder_feeds !== null ? number_format($entry->reorder_feeds, 2) : null,
                 'created_at' => $entry->created_at->format('Y-m-d'),
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -388,8 +405,8 @@ class DailyEntryController extends Controller
                 'data' => [
                     'id' => $dailyEntry->id,
                     'day_number' => "Day $dailyEntry->day_number",
-                    'daily_feeds' => $dailyEntry->daily_feeds,
-                    'available_feeds' => $dailyEntry->available_feeds,
+                    'daily_feeds' => number_format($dailyEntry->daily_feeds, 2),
+                    'available_feeds' => number_format($dailyEntry->available_feeds, 2),
                     'daily_mortality' => $dailyEntry->daily_mortality,
                     'sick_bay' => $dailyEntry->sick_bay,
                     'current_birds' => $dailyEntry->current_birds,
@@ -399,7 +416,7 @@ class DailyEntryController extends Controller
                     'outstanding_egg' => $dailyEntry->outstanding_egg,
                     'total_egg_in_farm' => $dailyEntry->total_egg_in_farm,
                     'drugs' => $dailyEntry->drugs,
-                    'reorder_feeds' => $dailyEntry->reorder_feeds,
+                    'reorder_feeds' => $dailyEntry->reorder_feeds !== null ? number_format($dailyEntry->reorder_feeds, 2) : null,
                     'created_at' => $dailyEntry->created_at->format('Y-m-d'),
                 ],
                 'total_egg_in_farm' => $dailyEntry->total_egg_in_farm,
