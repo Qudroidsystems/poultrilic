@@ -13,6 +13,18 @@ class DailyEntry extends Model
         'total_egg_in_farm', 'drugs', 'reorder_feeds'
     ];
 
+    protected $casts = [
+        'daily_feeds' => 'decimal:2',
+        'available_feeds' => 'decimal:2',
+        'reorder_feeds' => 'decimal:2',
+        'total_feeds_consumed' => 'integer',
+        'daily_mortality' => 'integer',
+        'sick_bay' => 'integer',
+        'total_mortality' => 'integer',
+        'current_birds' => 'integer',
+        'broken_egg' => 'integer',
+        'day_number' => 'integer',
+    ];
     
     public function weekEntry()
     {
