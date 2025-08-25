@@ -159,11 +159,11 @@ class WeekEntryController extends Controller
         $flock = Flock::findOrFail($flockId);
         $lastWeek = $flock->weekEntries()->latest()->first();
 
-        if ($lastWeek && $lastWeek->dailyEntries()->count() < 7) {
-            return response()->json([
-                'message' => 'Previous week is not complete. Please complete 7 daily entries first.'
-            ], 422);
-        }
+        // if ($lastWeek && $lastWeek->dailyEntries()->count() < 7) {
+        //     return response()->json([
+        //         'message' => 'Previous week is not complete. Please complete 7 daily entries first.'
+        //     ], 422);
+        // }
 
         $week = WeekEntry::create([
             'flock_id' => $flock->id,
@@ -209,11 +209,11 @@ class WeekEntryController extends Controller
             $flock = Flock::findOrFail($flockId);
             $lastWeek = $flock->weekEntries()->latest()->first();
 
-            if ($lastWeek && $lastWeek->dailyEntries()->count() < 7) {
-                return response()->json([
-                    'message' => 'You must complete all 7 days of the previous week before creating a new week.'
-                ], 422);
-            }
+            // if ($lastWeek && $lastWeek->dailyEntries()->count() < 7) {
+            //     return response()->json([
+            //         'message' => 'You must complete all 7 days of the previous week before creating a new week.'
+            //     ], 422);
+            // }
 
             return response()->json(['message' => 'Ready to create a new week']);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {

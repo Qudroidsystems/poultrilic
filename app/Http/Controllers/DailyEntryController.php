@@ -172,12 +172,12 @@ class DailyEntryController extends Controller
             $brokenEgg = $validated['broken_egg_crates'] * 30 + $validated['broken_egg_pieces'];
             $outstandingEgg = $dailyEggProduction - $dailySoldEgg - $brokenEgg;
 
-            if ($outstandingEgg < 0) {
-                return response()->json([
-                    'message' => 'Validation failed',
-                    'errors' => ['outstanding_egg' => ['The sum of sold and broken eggs cannot exceed daily egg production.']],
-                ], 422);
-            }
+            // if ($outstandingEgg < 0) {
+            //     return response()->json([
+            //         'message' => 'Validation failed',
+            //         'errors' => ['outstanding_egg' => ['The sum of sold and broken eggs cannot exceed daily egg production.']],
+            //     ], 422);
+            // }
 
             $totalMortality = $weekEntry->dailyEntries()->sum('daily_mortality') + $validated['daily_mortality'];
             // if ($totalMortality > $flock->initial_bird_count) {
