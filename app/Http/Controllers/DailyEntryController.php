@@ -180,12 +180,12 @@ class DailyEntryController extends Controller
             }
 
             $totalMortality = $weekEntry->dailyEntries()->sum('daily_mortality') + $validated['daily_mortality'];
-            if ($totalMortality > $flock->initial_bird_count) {
-                return response()->json([
-                    'message' => 'Validation failed',
-                    'errors' => ['daily_mortality' => ['Total mortality cannot exceed initial bird count.']],
-                ], 422);
-            }
+            // if ($totalMortality > $flock->initial_bird_count) {
+            //     return response()->json([
+            //         'message' => 'Validation failed',
+            //         'errors' => ['daily_mortality' => ['Total mortality cannot exceed initial bird count.']],
+            //     ], 422);
+            // }
 
             DB::beginTransaction();
 

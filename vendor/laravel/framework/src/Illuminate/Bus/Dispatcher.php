@@ -52,6 +52,13 @@ class Dispatcher implements QueueingDispatcher
     protected $queueResolver;
 
     /**
+     * Indicates if dispatching after response is disabled.
+     *
+     * @var bool
+     */
+    protected $allowsDispatchingAfterResponses = true;
+
+    /**
      * Create a new command dispatcher instance.
      *
      * @param  \Illuminate\Contracts\Container\Container  $container
@@ -143,7 +150,7 @@ class Dispatcher implements QueueingDispatcher
     /**
      * Create a new batch of queueable jobs.
      *
-     * @param  \Illuminate\Support\Collection|array|mixed  $jobs
+     * @param  \Illuminate\Support\Collection|mixed  $jobs
      * @return \Illuminate\Bus\PendingBatch
      */
     public function batch($jobs)
@@ -154,10 +161,10 @@ class Dispatcher implements QueueingDispatcher
     /**
      * Create a new chain of queueable jobs.
      *
-     * @param  \Illuminate\Support\Collection|array  $jobs
+     * @param  \Illuminate\Support\Collection|array|null  $jobs
      * @return \Illuminate\Foundation\Bus\PendingChain
      */
-    public function chain($jobs)
+    public function chain($jobs = null)
     {
         $jobs = Collection::wrap($jobs);
         $jobs = ChainedBatch::prepareNestedBatches($jobs);
@@ -180,7 +187,7 @@ class Dispatcher implements QueueingDispatcher
      * Retrieve the handler for a command.
      *
      * @param  mixed  $command
-     * @return bool|mixed
+     * @return mixed
      */
     public function getCommandHandler($command)
     {
@@ -252,6 +259,12 @@ class Dispatcher implements QueueingDispatcher
      */
     public function dispatchAfterResponse($command, $handler = null)
     {
+        if (! $this->allowsDispatchingAfterResponses) {
+            $this->dispatchSync($command);
+
+            return;
+        }
+
         $this->container->terminating(function () use ($command, $handler) {
             $this->dispatchSync($command, $handler);
         });
@@ -279,6 +292,30 @@ class Dispatcher implements QueueingDispatcher
     public function map(array $map)
     {
         $this->handlers = array_merge($this->handlers, $map);
+
+        return $this;
+    }
+
+    /**
+     * Allow dispatching after responses.
+     *
+     * @return $this
+     */
+    public function withDispatchingAfterResponses()
+    {
+        $this->allowsDispatchingAfterResponses = true;
+
+        return $this;
+    }
+
+    /**
+     * Disable dispatching after responses.
+     *
+     * @return $this
+     */
+    public function withoutDispatchingAfterResponses()
+    {
+        $this->allowsDispatchingAfterResponses = false;
 
         return $this;
     }

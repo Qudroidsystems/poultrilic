@@ -12,12 +12,9 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Enumerable;
 use Illuminate\Support\HigherOrderCollectionProxy;
-use InvalidArgumentException;
 use JsonSerializable;
-use Traversable;
 use UnexpectedValueException;
 use UnitEnum;
-use WeakMap;
 
 use function Illuminate\Support\enum_value;
 
@@ -511,8 +508,8 @@ trait EnumeratesValues
      * Partition the collection into two arrays using the given callback or key.
      *
      * @param  (callable(TValue, TKey): bool)|TValue|string  $key
-     * @param  TValue|string|null  $operator
-     * @param  TValue|null  $value
+     * @param  mixed  $operator
+     * @param  mixed  $value
      * @return static<int<0, 1>, static<TKey, TValue>>
      */
     public function partition($key, $operator = null, $value = null)
@@ -1059,17 +1056,9 @@ trait EnumeratesValues
      */
     protected function getArrayableItems($items)
     {
-        return match (true) {
-            is_array($items) => $items,
-            $items instanceof WeakMap => throw new InvalidArgumentException('Collections can not be created using instances of WeakMap.'),
-            $items instanceof Enumerable => $items->all(),
-            $items instanceof Arrayable => $items->toArray(),
-            $items instanceof Traversable => iterator_to_array($items),
-            $items instanceof Jsonable => json_decode($items->toJson(), true),
-            $items instanceof JsonSerializable => (array) $items->jsonSerialize(),
-            $items instanceof UnitEnum => [$items],
-            default => (array) $items,
-        };
+        return is_null($items) || is_scalar($items) || $items instanceof UnitEnum
+            ? Arr::wrap($items)
+            : Arr::from($items);
     }
 
     /**

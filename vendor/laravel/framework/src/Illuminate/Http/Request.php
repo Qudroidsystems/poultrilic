@@ -22,6 +22,9 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
  * @method array validate(array $rules, ...$params)
  * @method array validateWithBag(string $errorBag, array $rules, ...$params)
  * @method bool hasValidSignature(bool $absolute = true)
+ * @method bool hasValidRelativeSignature()
+ * @method bool hasValidSignatureWhileIgnoring($ignoreQuery = [], $absolute = true)
+ * @method bool hasValidRelativeSignatureWhileIgnoring($ignoreQuery = [])
  */
 class Request extends SymfonyRequest implements Arrayable, ArrayAccess
 {
@@ -417,7 +420,7 @@ class Request extends SymfonyRequest implements Arrayable, ArrayAccess
      *
      * @param  string|null  $key
      * @param  mixed  $default
-     * @return \Symfony\Component\HttpFoundation\InputBag|mixed
+     * @return ($key is null ? \Symfony\Component\HttpFoundation\InputBag : mixed)
      */
     public function json($key = null, $default = null)
     {
@@ -633,7 +636,7 @@ class Request extends SymfonyRequest implements Arrayable, ArrayAccess
      *
      * @param  string|null  $param
      * @param  mixed  $default
-     * @return \Illuminate\Routing\Route|object|string|null
+     * @return ($param is null ? \Illuminate\Routing\Route : object|string|null)
      */
     public function route($param = null, $default = null)
     {

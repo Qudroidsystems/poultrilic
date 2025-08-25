@@ -2,7 +2,7 @@
     <a href="https://spatie.be/open-source?utm_source=github&utm_medium=banner&utm_campaign=laravel-responsecache">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="https://spatie.be/packages/header/laravel-responsecache/html/dark.webp">
-        <img alt="Logo for laravel-responsecache" src=" https://spatie.be/packages/header/laravel-responsecache/html/light.webp" height="190">
+        <img alt="Logo for laravel-responsecache" src="https://spatie.be/packages/header/laravel-responsecache/html/light.webp">
       </picture>
     </a>
 
@@ -404,6 +404,8 @@ Route::group(function() {
 If the [cache driver you configured supports tags](https://laravel.com/docs/5.8/cache#cache-tags), you can specify a list of tags when applying the middleware.
 
 ```php
+use Spatie\ResponseCache\Middlewares\CacheResponse;
+
 // add a "foo" tag to this route with a 300 second lifetime
 Route::get('/test1', 'SnowflakeController@index')->middleware('cacheResponse:300,foo');
 
@@ -416,6 +418,9 @@ Route::group(function() {
 
    Route::get('/test4', 'YetAnotherSnowflakeController@index');
 })->middleware('cacheResponse:foo,bar');
+
+// or use the using method for convenience
+Route::get('/test5', 'SnowflakeController@index')->middleware(CacheResponse::using(300, 'foo', 'bar'));
 ```
 
 #### Clearing tagged content
@@ -455,11 +460,10 @@ This event is fired when a request passes through the `ResponseCache` middleware
 
 This event is fired when a request passes through the `ResponseCache` middleware but no cached response was found or returned.
 
-#### ClearingResponseCache and ClearedResponseCache
+#### ClearingResponseCache, ClearedResponseCache and ClearingResponseCacheFailed
 
-`Spatie\ResponseCache\Events\ClearingResponseCache`
-
-`Spatie\ResponseCache\Events\ClearedResponseCache`
+1. `Spatie\ResponseCache\Events\ClearingResponseCache`
+2. `Spatie\ResponseCache\Events\ClearedResponseCache` or `Spatie\ResponseCache\Events\ClearingResponseCacheFailed`
 
 These events are fired respectively when the `responsecache:clear` is started and finished.
 

@@ -194,6 +194,28 @@ class Repository
     }
 
     /**
+     * Retrieve all values except those with the given keys.
+     *
+     * @param  array<int, string>  $keys
+     * @return array<string, mixed>
+     */
+    public function except($keys)
+    {
+        return array_diff_key($this->data, array_flip($keys));
+    }
+
+    /**
+     * Retrieve all hidden values except those with the given keys.
+     *
+     * @param  array<int, string>  $keys
+     * @return array<string, mixed>
+     */
+    public function exceptHidden($keys)
+    {
+        return array_diff_key($this->hidden, array_flip($keys));
+    }
+
+    /**
      * Add a context value.
      *
      * @param  string|array<string, mixed>  $key
@@ -225,6 +247,42 @@ class Repository
         );
 
         return $this;
+    }
+
+    /**
+     * Add a context value if it does not exist yet, and return the value.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return mixed
+     */
+    public function remember($key, $value)
+    {
+        if ($this->has($key)) {
+            return $this->get($key);
+        }
+
+        return tap(value($value), function ($value) use ($key) {
+            $this->add($key, $value);
+        });
+    }
+
+    /**
+     * Add a hidden context value if it does not exist yet, and return the value.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return mixed
+     */
+    public function rememberHidden($key, #[\SensitiveParameter] $value)
+    {
+        if ($this->hasHidden($key)) {
+            return $this->getHidden($key);
+        }
+
+        return tap(value($value), function ($value) use ($key) {
+            $this->addHidden($key, $value);
+        });
     }
 
     /**
@@ -483,6 +541,8 @@ class Repository
      * @param  array<string, mixed>  $data
      * @param  array<string, mixed>  $hidden
      * @return mixed
+     *
+     * @throws \Throwable
      */
     public function scope(callable $callback, array $data = [], array $hidden = [])
     {
