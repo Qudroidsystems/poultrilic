@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Flock;
 use App\Models\WeekEntry;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 
 class WeekEntryController extends Controller
 {
