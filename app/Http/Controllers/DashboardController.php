@@ -185,7 +185,7 @@ class DashboardController extends Controller
         $totalEggProductionPieces = $productionData['pieces'];
         $totalEggProductionTotalPieces = $productionData['total_pieces'];
         
-        // Fix: Add the missing variable
+        // Fix: Add the missing variables
         $totalEggProduction = $totalEggProductionTotalPieces;
 
         // Feed calculations - convert to bags
@@ -203,6 +203,9 @@ class DashboardController extends Controller
         $totalEggsSoldCrates = $soldEggData['crates'];
         $totalEggsSoldPieces = $soldEggData['pieces'];
         $totalEggsSoldTotalPieces = $soldEggData['total_pieces'];
+        
+        // Fix: Add the missing variable - totalEggsSold is the same as totalEggsSoldTotalPieces
+        $totalEggsSold = $totalEggsSoldTotalPieces;
 
         // Production rate calculation
         $avgProductionRate = 0;
@@ -296,11 +299,12 @@ class DashboardController extends Controller
             'totalMortality',
             'totalFeedBags',
             'totalFeedKg',
-            'totalFeedConsumed', // Now included - this was missing
+            'totalFeedConsumed', // Now included
             'totalDrugUsage',
             'totalEggsSoldCrates',
             'totalEggsSoldPieces',
             'totalEggsSoldTotalPieces',
+            'totalEggsSold', // Now included - this was missing
             'totalRevenue',
             'avgProductionRate',
             'totalEggMortality',
