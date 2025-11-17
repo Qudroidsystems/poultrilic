@@ -19,46 +19,124 @@ class DashboardController extends Controller
         $this->middleware('permission:dashboard', ['only' => ['index', 'export']]);
     }
 
+    // Constants
+    const EGGS_PER_CRATE = 30;
+    const KG_PER_BAG = 50;
+
     /**
-     * Parse egg string format (e.g., "25 Cr 19PC") to total pieces
+     * Parse egg string format (e.g., "25 Cr 19PC") to total pieces and crates
      */
-    private function parseEggQuantity($eggString)
+    private function parseEggData($eggString)
     {
-        if (empty($eggString) || $eggString === '0 Cr 0PC') {
-            return 0;
+        if (empty($eggString) || $eggString === '0 Cr 0PC' || $eggString === '0 Cr 0PC') {
+            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
         }
 
         try {
-            // Handle formats like "25 Cr 19PC", "0 Cr 5PC", "25 Cr 0PC"
-            preg_match('/(\d+)\s*Cr\s*(\d+)PC/', $eggString, $matches);
-            
-            if (count($matches) === 3) {
-                $crates = (int)$matches[1];
-                $pieces = (int)$matches[2];
-                return ($crates * 30) + $pieces; // Assuming 30 eggs per crate
+            // Handle formats like "25 Cr 19PC", "0 Cr 5PC", "25 Cr 0PC", "4,985 CR"
+            if (strpos($eggString, ',') !== false) {
+                // Handle comma format like "4,985 CR"
+                preg_match('/([\d,]+)\s*CR?/', $eggString, $matches);
+                if (count($matches) === 2) {
+                    $crates = (int)str_replace(',', '', $matches[1]);
+                    return [
+                        'crates' => $crates,
+                        'pieces' => 0,
+                        'total_pieces' => $crates * self::EGGS_PER_CRATE
+                    ];
+                }
+            } else {
+                // Handle regular format "25 Cr 19PC"
+                preg_match('/(\d+)\s*Cr\s*(\d+)PC/', $eggString, $matches);
+                if (count($matches) === 3) {
+                    $crates = (int)$matches[1];
+                    $pieces = (int)$matches[2];
+                    return [
+                        'crates' => $crates,
+                        'pieces' => $pieces,
+                        'total_pieces' => ($crates * self::EGGS_PER_CRATE) + $pieces
+                    ];
+                }
+                
+                // Handle format with only crates "21CR"
+                preg_match('/(\d+)\s*CR/', $eggString, $matches);
+                if (count($matches) === 2) {
+                    $crates = (int)$matches[1];
+                    return [
+                        'crates' => $crates,
+                        'pieces' => 0,
+                        'total_pieces' => $crates * self::EGGS_PER_CRATE
+                    ];
+                }
             }
             
-            return 0;
+            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
         } catch (\Exception $e) {
-            return 0;
+            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
         }
     }
 
     /**
-     * Parse egg string to get crates only
+     * Convert kg to bags
      */
-    private function parseEggCrates($eggString)
+    private function kgToBags($kg)
     {
-        if (empty($eggString) || $eggString === '0 Cr 0PC') {
-            return 0;
+        return $kg / self::KG_PER_BAG;
+    }
+
+    /**
+     * Convert bags to kg
+     */
+    private function bagsToKg($bags)
+    {
+        return $bags * self::KG_PER_BAG;
+    }
+
+    /**
+     * Get total sold eggs from the most recent entry (cumulative total)
+     */
+    private function getTotalSoldEggs($dailyEntries)
+    {
+        if ($dailyEntries->count() === 0) {
+            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
         }
 
-        try {
-            preg_match('/(\d+)\s*Cr/', $eggString, $matches);
-            return count($matches) === 2 ? (int)$matches[1] : 0;
-        } catch (\Exception $e) {
-            return 0;
+        // Get the most recent entry which should have the cumulative total_sold_egg
+        $latestEntry = $dailyEntries->sortByDesc('created_at')->first();
+        
+        if ($latestEntry && $latestEntry->total_sold_egg) {
+            return $this->parseEggData($latestEntry->total_sold_egg);
         }
+
+        return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
+    }
+
+    /**
+     * Calculate total production from daily entries
+     */
+    private function calculateTotalProduction($dailyEntries)
+    {
+        $totalCrates = 0;
+        $totalPieces = 0;
+        $totalPiecesOnly = 0;
+
+        foreach ($dailyEntries as $entry) {
+            $eggData = $this->parseEggData($entry->daily_egg_production);
+            $totalCrates += $eggData['crates'];
+            $totalPieces += $eggData['pieces'];
+            $totalPiecesOnly += $eggData['total_pieces'];
+        }
+
+        // Convert excess pieces to crates
+        $extraCratesFromPieces = floor($totalPieces / self::EGGS_PER_CRATE);
+        $finalCrates = $totalCrates + $extraCratesFromPieces;
+        $finalPieces = $totalPieces % self::EGGS_PER_CRATE;
+
+        return [
+            'crates' => $finalCrates,
+            'pieces' => $finalPieces,
+            'total_pieces' => $totalPiecesOnly
+        ];
     }
 
     public function index(Request $request)
@@ -101,34 +179,35 @@ class DashboardController extends Controller
             $currentBirds = $latestEntry->current_birds ?? 0;
         }
 
-        // Egg production calculations
-        $totalEggProduction = $dailyEntries->sum(function($entry) {
-            return $this->parseEggQuantity($entry->daily_egg_production);
-        });
+        // Egg production calculations - in crates and pieces
+        $productionData = $this->calculateTotalProduction($dailyEntries);
+        $totalEggProductionCrates = $productionData['crates'];
+        $totalEggProductionPieces = $productionData['pieces'];
+        $totalEggProductionTotalPieces = $productionData['total_pieces'];
 
-        $totalEggProductionCrates = $dailyEntries->sum(function($entry) {
-            return $this->parseEggCrates($entry->daily_egg_production);
-        });
+        // Feed calculations - convert to bags
+        $totalFeedKg = $dailyEntries->sum('daily_feeds');
+        $totalFeedBags = $this->kgToBags($totalFeedKg);
 
         $totalMortality = $dailyEntries->sum('daily_mortality');
-        $totalFeedConsumed = $dailyEntries->sum('daily_feeds'); // Using daily_feeds, not total_feeds_consumed
         $totalEggMortality = $dailyEntries->sum('broken_egg');
 
-        // Egg sales calculations
-        $totalEggsSold = $dailyEntries->sum(function($entry) {
-            return $this->parseEggQuantity($entry->daily_sold_egg);
-        });
+        // CORRECTED: Get total sold eggs from cumulative total_sold_egg field of latest entry
+        $soldEggData = $this->getTotalSoldEggs($dailyEntries);
+        $totalEggsSoldCrates = $soldEggData['crates'];
+        $totalEggsSoldPieces = $soldEggData['pieces'];
+        $totalEggsSoldTotalPieces = $soldEggData['total_pieces'];
 
         // Production rate calculation
         $avgProductionRate = 0;
         if ($currentBirds > 0 && $dailyEntries->count() > 0) {
             $totalProductionDays = $dailyEntries->count();
-            $avgDailyProduction = $totalEggProduction / $totalProductionDays;
+            $avgDailyProduction = $totalEggProductionTotalPieces / $totalProductionDays;
             $avgProductionRate = ($avgDailyProduction / $currentBirds) * 100;
         }
 
         // Revenue calculation (assuming $0.05 per egg)
-        $totalRevenue = $totalEggsSold * 0.05;
+        $totalRevenue = $totalEggsSoldTotalPieces * 0.05;
 
         // Drug usage - count days with drugs administered
         $totalDrugUsage = $dailyEntries->where('drugs', '!=', 'Nil')
@@ -136,9 +215,9 @@ class DashboardController extends Controller
             ->whereNotNull('drugs')
             ->count();
 
-        // Flock Capital Analysis - FIXED: Added missing variables
+        // Flock Capital Analysis - using bags for feed cost
         $capitalInvestment = $totalBirds * 2; // $2 per bird
-        $feedCost = $totalFeedConsumed * 0.5; // $0.5 per kg
+        $feedCost = $totalFeedBags * 25; // $25 per bag (50kg)
         $drugCost = $totalDrugUsage * 10; // $10 per drug administration
         $laborCost = 1000; // Fixed for 30 days
         $operationalExpenses = $feedCost + $drugCost + $laborCost;
@@ -149,17 +228,23 @@ class DashboardController extends Controller
         $chartData = $dailyEntries->groupBy(function($entry) {
             return $entry->created_at->format('Y-W');
         })->map(function($weekEntries) {
+            $weekProduction = 0;
+            $weekSales = 0;
+            
+            foreach ($weekEntries as $entry) {
+                $productionData = $this->parseEggData($entry->daily_egg_production);
+                $salesData = $this->parseEggData($entry->daily_sold_egg);
+                $weekProduction += $productionData['total_pieces'];
+                $weekSales += $salesData['total_pieces'];
+            }
+
             return [
-                'feed' => $weekEntries->sum('daily_feeds'),
+                'feed_bags' => $this->kgToBags($weekEntries->sum('daily_feeds')),
                 'drugs' => $weekEntries->where('drugs', '!=', 'Nil')->where('drugs', '!=', '')->count(),
-                'eggs_produced' => $weekEntries->sum(function($entry) {
-                    return $this->parseEggQuantity($entry->daily_egg_production);
-                }),
-                'eggs_sold' => $weekEntries->sum(function($entry) {
-                    return $this->parseEggQuantity($entry->daily_sold_egg);
-                }),
+                'eggs_produced' => $weekProduction,
+                'eggs_sold' => $weekSales,
                 'production_rate' => $weekEntries->avg(function($entry) {
-                    $production = $this->parseEggQuantity($entry->daily_egg_production);
+                    $production = $this->parseEggData($entry->daily_egg_production)['total_pieces'];
                     return $entry->current_birds > 0 ? ($production / $entry->current_birds) * 100 : 0;
                 }),
                 'egg_mortality' => $weekEntries->sum('broken_egg'),
@@ -182,11 +267,11 @@ class DashboardController extends Controller
 
         foreach ($weeks as $week) {
             $data = $chartData[$week] ?? [
-                'feed' => 0, 'drugs' => 0, 'eggs_produced' => 0, 
+                'feed_bags' => 0, 'drugs' => 0, 'eggs_produced' => 0, 
                 'eggs_sold' => 0, 'production_rate' => 0, 'egg_mortality' => 0
             ];
             
-            $feedChartData[] = $data['feed'];
+            $feedChartData[] = $data['feed_bags'];
             $drugChartData[] = $data['drugs'];
             $eggProductionChartData[] = $data['eggs_produced'];
             $eggSoldChartData[] = $data['eggs_sold'];
@@ -198,12 +283,16 @@ class DashboardController extends Controller
             'pagetitle',
             'totalBirds',
             'currentBirds',
-            'totalEggProduction',
             'totalEggProductionCrates',
+            'totalEggProductionPieces',
+            'totalEggProductionTotalPieces',
             'totalMortality',
-            'totalFeedConsumed',
+            'totalFeedBags',
+            'totalFeedKg',
             'totalDrugUsage',
-            'totalEggsSold',
+            'totalEggsSoldCrates',
+            'totalEggsSoldPieces',
+            'totalEggsSoldTotalPieces',
             'totalRevenue',
             'avgProductionRate',
             'totalEggMortality',
@@ -222,7 +311,6 @@ class DashboardController extends Controller
             'eggSoldChartData',
             'productionRateChartData',
             'eggMortalityChartData',
-            // ADD THE MISSING VARIABLES:
             'feedCost',
             'drugCost',
             'laborCost'

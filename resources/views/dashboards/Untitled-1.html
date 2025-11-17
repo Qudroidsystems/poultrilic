@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ilemobayo Eliab Siji - CV</title>
+    <style>
+        .download-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #0066cc;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .download-btn:hover {
+            background: #0052a3;
+        }
+    </style>
+    <style>
+        @page {
+            margin: 0.75in;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 0.5in;
+            background: linear-gradient(135deg, #e8f4f8 0%, #d4e8e8 100%);
+        }
+        
+        .header {
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            color: #000;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        
+        .contact-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .contact-item {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #333;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 25px 0 15px 0;
+            color: #000;
+            letter-spacing: 0.5px;
+        }
+        
+        .content-text {
+            font-size: 13px;
+            text-align: justify;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+        
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+        
+        .skill-tag {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #333;
+        }
+        
+        .job-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 15px;
+            text-transform: uppercase;
+        }
+        
+        .company-info {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        li {
+            font-size: 13px;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .education-item {
+            margin-bottom: 20px;
+        }
+        
+        .education-title {
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        
+        .education-details {
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .references {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .reference-item {
+            flex: 1;
+        }
+        
+        .reference-name {
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .reference-contact {
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .email-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <button class="download-btn" onclick="downloadAsWord()">⬇️ Download as Word Document</button>
+    <a href="mailto:eliabsiji@gmail.com" class="email-button">📧 Email</a>
+    
+    <script>
+        function downloadAsWord() {
+            const content = document.documentElement.outerHTML;
+            const blob = new Blob(['\ufeff', content], {
+                type: 'application/msword'
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Ilemobayo_Eliab_Siji_CV.doc';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+    
+    <div class="header">
+        <h1>ILEMOBAYO ELIAB SIJI</h1>
+        <div class="subtitle">Software Developer | Python/Django & Node.js/NestJS Specialist</div>
+        
+        <div class="contact-info">
+            <div class="contact-item">📞 +234 9057522004</div>
+            <div class="contact-item">✉️ eliabsiji@gmail.com</div>
+            <div class="contact-item">📍 Ondo, Ondo State</div>
+            <div class="contact-item">🎂 1987-01-04</div>
+            <div class="contact-item">🇳🇬 Nigerian</div>
+        </div>
+    </div>
+    
+    <div class="section-title">PROFESSIONAL SUMMARY</div>
+    <div class="content-text">
+        Results-driven Software Developer with over 9 years of experience in full-stack web development, specializing in Php/Laravel, Python/Django and Node.js/NestJS frameworks for scalable backend solutions. Proven track record in leading development teams, architecting complex systems including cryptocurrency exchanges, logistics platforms, and enterprise management solutions. Expert in building RESTful APIs, implementing secure payment systems, and optimizing database performance with MySQL and PostgreSQL. Strong technical leader with experience mentoring development teams and delivering high-impact projects across fintech, education, and logistics sectors. Passionate about leveraging cutting-edge technologies to solve real-world problems and drive organizational growth.
+    </div>
+    
+    <div class="section-title">SKILLS</div>
+    <div class="skills-container">
+        <div class="skill-tag">API integration</div>
+        <div class="skill-tag">Machine learning</div>
+        <div class="skill-tag">Mobile app development</div>
+        <div class="skill-tag">Continuous integration</div>
+        <div class="skill-tag">Back end development</div>
+        <div class="skill-tag">Python</div>
+        <div class="skill-tag">Django</div>
+        <div class="skill-tag">Flask</div>
+        <div class="skill-tag">Node.js</div>
+        <div class="skill-tag">NestJS</div>
+        <div class="skill-tag">PHP</div>
+        <div class="skill-tag">Laravel</div>
+        <div class="skill-tag">MySQL</div>
+        <div class="skill-tag">PostgreSQL</div>
+        <div class="skill-tag">Database Design</div>
+        <div class="skill-tag">Database Optimization</div>
+        <div class="skill-tag">RESTful APIs</div>
+        <div class="skill-tag">GraphQL</div>
+        <div class="skill-tag">JWT</div>
+        <div class="skill-tag">OAuth Authentication</div>
+        <div class="skill-tag">HTML5</div>
+        <div class="skill-tag">CSS3</div>
+        <div class="skill-tag">JavaScript</div>
+        <div class="skill-tag">Responsive Design</div>
+        <div class="skill-tag">VS Code</div>
+        <div class="skill-tag">Git</div>
+        <div class="skill-tag">GitHub</div>
+        <div class="skill-tag">Docker</div>
+        <div class="skill-tag">Jupyter Notebook</div>
+        <div class="skill-tag">CI/CD Pipelines</div>
+        <div class="skill-tag">Server Management</div>
+        <div class="skill-tag">Web Deployment</div>
+        <div class="skill-tag">.NET MAUI Framework</div>
+        <div class="skill-tag">Pandas</div>
+        <div class="skill-tag">NumPy</div>
+        <div class="skill-tag">Matplotlib</div>
+        <div class="skill-tag">Data Analysis</div>
+        <div class="skill-tag">Blockchain/Crypto</div>
+        <div class="skill-tag">Payment Systems</div>
+        <div class="skill-tag">Fintech Solutions</div>
+    </div>
+    
+    <div class="section-title">EXPERIENCE</div>
+    
+    <div class="job-title">SOFTWARE ENGINEER/DEVELOPER, ondo, ondo</div>
+    <div class="company-info">Qudroid Systems, January 2025–Present</div>
+    <ul>
+        <li>Collaborated with other developers in the design of new features for existing systems.</li>
+        <li>Maintained and updated existing software applications.</li>
+        <li>Participated in code reviews to ensure high standards of quality assurance.</li>
+        <li>Analyzed customer requirements to determine optimal solutions.</li>
+        <li>Implemented bug fixes and feature enhancements as needed.</li>
+        <li>Developed user interfaces that are intuitive, responsive, and accessible across multiple platforms.</li>
+        <li>Developed code and design for software components in adherence with system requirements.</li>
+        <li>Developed unit tests to ensure code quality and facilitate future code maintenance.</li>
+    </ul>
+    
+    <div class="job-title">TECH LEAD, Abuja</div>
+    <div class="company-info">AlgoLog, January 2024–January 2025</div>
+    <ul>
+        <li>Lead a team of software developers in designing and implementing enterprise-grade logistics and supply chain management solutions, improving operational efficiency by 35%.</li>
+        <li>Spearheaded the development of Spacer, a comprehensive Space management platform built with NestJS.</li>
+        <li>Architected scalable backend infrastructure using NestJS and MySQL, reducing API response times by 40% through optimized query structures and caching strategies.</li>
+        <li>Implemented secure authentication systems and role-based access control (RBAC) for multi-tenant applications, ensuring data security compliance with industry standards.</li>
+        <li>Established CI/CD pipelines using Git and automated testing frameworks, reducing deployment errors by 60% and accelerating release cycles.</li>
+    </ul>
+    
+    <div class="job-title">LEAD SOFTWARE DEVELOPER (LARAVEL & DJANGO)</div>
+    <div class="company-info">Qudroid Systems, January 2021–January 2022</div>
+    <ul>
+        <li>Led the development of 8+ client-facing web applications using Django and Laravel frameworks, delivering scalable solutions for fintech, healthcare, and e-commerce sectors.</li>
+        <li>Developed a Cryptocurrency Exchange Platform with advanced trading features including real-time price updates, order matching engine, wallet management, and secure transaction processing using Django and WebSocket technology.</li>
+        <li>Built a Payment Audit Software for financial reconciliation, automating transaction verification processes and reducing manual audit time by 70% through intelligent anomaly detection.</li>
+        <li>Created a School Result Management System for educational institutions, enabling automated grade calculation, report card generation, and parent portal access for 5,000+ students.</li>
+        <li>Designed and implemented RESTful APIs consumed by mobile and web applications, improving data retrieval efficiency by 30% through query optimization and database indexing.</li>
+        <li>Integrated third-party payment gateways (Paystack, Flutterwave) and cryptocurrency APIs, ensuring secure and compliant financial transactions.</li>
+    </ul>
+    
+    <div class="job-title">LEAD WEB DEVELOPER (BACKEND)</div>
+    <div class="company-info">Help3 Organization, January 2019–January 2021</div>
+    <ul>
+        <li>Spearheaded backend development for humanitarian aid platforms using PHP and Python, handling complex business logic for applications serving 50,000+ users.</li>
+        <li>Developed custom Django modules for donation management, volunteer coordination, and impact reporting, enhancing platform engagement by 45%.</li>
+        <li>Optimized database schemas and queries in MySQL, reducing page load times by 25% and improving overall system performance.</li>
+        <li>Conducted comprehensive code reviews and implemented automated testing protocols, reducing production bugs by 40%.</li>
+    </ul>
+    
+    <div class="job-title">SYSTEM ANALYST, Minna</div>
+    <div class="company-info">Centre for Open and Distance Learning (CODEL), Federal University of Technology, Minna, January 2015–January 2018</div>
+    <ul>
+        <li>Analyzed, designed, and implemented a Journal Management System for Adeyemi College of Education, streamlining academic publication workflows for 200+ researchers.</li>
+        <li>Built database-driven systems using PHP and MySQL for academic staff management, supporting 500+ users with features including profile management and performance analytics.</li>
+        <li>Performed comprehensive requirement analysis and system design, creating detailed technical documentation and UML diagrams.</li>
+        <li>Provided technical support and end-user training, ensuring smooth system adoption and maintaining 99% uptime during peak academic periods.</li>
+    </ul>
+    
+    <div class="section-title">EDUCATION</div>
+    
+    <div class="education-item">
+        <div class="education-title">BACHELOR OF TECHNOLOGY (B.TECH) IN COMPUTER SCIENCE, Niger State</div>
+        <div class="education-details">Federal University of Technology, January 2014</div>
+    </div>
+    
+    <div class="education-item">
+        <div class="education-title">WEST AFRICAN SENIOR SCHOOL CERTIFICATE EXAMINATION (WASSCE), Odigbo L.G.A.</div>
+        <div class="education-details">Blessing Comprehensive College, January 2006</div>
+    </div>
+    
+    <div class="education-item">
+        <div class="education-title">NATIONAL YOUTH SERVICE CORPS (NYSC) – CERTIFICATE OF NATIONAL SERVICE</div>
+        <div class="education-details">Federal Republic of Nigeria, January 2015</div>
+    </div>
+    
+    <div class="section-title">CERTIFICATIONS</div>
+    <ul>
+        <li>Certificate of Proficiency in Java Programming Language, Choicetech Computer Institute (in collaboration with IEEE), 01/01/10</li>
+    </ul>
+    
+    <div class="section-title">REFERENCES</div>
+    <div class="references">
+        <div class="reference-item">
+            <div class="reference-name">PROF. (MRS.) ADESULU</div>
+            <div class="reference-contact">📞 +234 803 400 3560</div>
+        </div>
+        <div class="reference-item">
+            <div class="reference-name">MR. KOLEBAJE</div>
+            <div class="reference-contact">📞 +234 803 330 0818</div>
+        </div>
+    </div>
+    
+    <div class="section-title">LANGUAGES</div>
+    <ul>
+        <li>English (Fluent)</li>
+    </ul>
+    
+    <div class="section-title">KEY PROJECTS TECHNICAL ACHIEVEMENTS</div>
+    <ul>
+        <li><strong>E-commerce Mobile App (Gozak Supermarket).</strong> An E-commerce platform allowing customers to purchase goods at their convenience., Flutter, Laravel, MySQL</li>
+        <li><strong>Spacer - Logistics Management Platform.</strong> Comprehensive logistics solution handling real-time tracking, notification systems, and analytics dashboards., Python, Django, NestJS, PostgreSQL, Redis, WebSocket, Docker</li>
+        <li><strong>Cryptocurrency Exchange Platform.</strong> Full-featured crypto trading platform., Laravel Framework</li>
+        <li><strong>Journal Management System (Adeyemi College of Education).</strong> Academic publication management system facilitating manuscript submission, peer review workflow, and editorial decision tracking. Reduced publication processing time by 50% through streamlined digital workflows., Django, MySQL, HTML5, CSS3, JavaScript</li>
+        <li><strong>School Result Management System.</strong> Automated grade processing and report generation system supporting continuous assessment, exam scoring, and transcript generation. Enabled parent/student portal access for real-time grade viewing., Laravel Framework, MySQL, Bootstrap, PDF Generation Libraries</li>
+        <li><strong>Payment Audit Software.</strong> Financial reconciliation platform automating transaction verification across multiple payment channels. Machine learning-powered anomaly detection reduced manual audit completion time by 70%., Laravel Framework, MySQL</li>
+    </ul>
+</body>
+</html>

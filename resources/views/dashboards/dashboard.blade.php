@@ -138,6 +138,69 @@
                 </div>
             </div>
 
+            <!-- Egg Production Card -->
+            <div class="col-xxl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                <p class="fs-md text-muted mb-4">Total Egg Production</p>
+                                <h3 class="mb-0 mt-auto">
+                                    <span class="counter-value" data-target="{{ $totalEggProductionCrates }}">
+                                        {{ number_format($totalEggProductionCrates, 0) }}
+                                    </span> Cr
+                                    <span class="counter-value" data-target="{{ $totalEggProductionPieces }}">
+                                        {{ $totalEggProductionPieces }}
+                                    </span> Pc
+                                </h3>
+                                <small class="text-muted">{{ number_format($totalEggProductionTotalPieces, 0) }} total eggs</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feed Consumption Card -->
+            <div class="col-xxl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                <p class="fs-md text-muted mb-4">Feed Consumed</p>
+                                <h3 class="mb-0 mt-auto">
+                                    <span class="counter-value" data-target="{{ $totalFeedBags }}">
+                                        {{ number_format($totalFeedBags, 1) }}
+                                    </span> Bags
+                                </h3>
+                                <small class="text-muted">{{ number_format($totalFeedKg, 1) }} kg total</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eggs Sold Card -->
+            <div class="col-xxl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                <p class="fs-md text-muted mb-4">Eggs Sold</p>
+                                <h3 class="mb-0 mt-auto">
+                                    <span class="counter-value" data-target="{{ $totalEggsSoldCrates }}">
+                                        {{ number_format($totalEggsSoldCrates, 0) }}
+                                    </span> Cr
+                                    <span class="counter-value" data-target="{{ $totalEggsSoldPieces }}">
+                                        {{ $totalEggsSoldPieces }}
+                                    </span> Pc
+                                </h3>
+                                <small class="text-muted">{{ number_format($totalEggsSoldTotalPieces, 0) }} total eggs</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Second Row Metrics -->
             <div class="row">
                 <div class="col-xxl-3 col-md-6">
