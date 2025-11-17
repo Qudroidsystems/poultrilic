@@ -184,6 +184,9 @@ class DashboardController extends Controller
         $totalEggProductionCrates = $productionData['crates'];
         $totalEggProductionPieces = $productionData['pieces'];
         $totalEggProductionTotalPieces = $productionData['total_pieces'];
+        
+        // Fix: Add the missing variable
+        $totalEggProduction = $totalEggProductionTotalPieces;
 
         // Feed calculations - convert to bags
         $totalFeedKg = $dailyEntries->sum('daily_feeds');
@@ -283,6 +286,7 @@ class DashboardController extends Controller
             'pagetitle',
             'totalBirds',
             'currentBirds',
+            'totalEggProduction', // Now included
             'totalEggProductionCrates',
             'totalEggProductionPieces',
             'totalEggProductionTotalPieces',
