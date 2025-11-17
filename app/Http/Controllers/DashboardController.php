@@ -136,7 +136,7 @@ class DashboardController extends Controller
             ->whereNotNull('drugs')
             ->count();
 
-        // Flock Capital Analysis
+        // Flock Capital Analysis - FIXED: Added missing variables
         $capitalInvestment = $totalBirds * 2; // $2 per bird
         $feedCost = $totalFeedConsumed * 0.5; // $0.5 per kg
         $drugCost = $totalDrugUsage * 10; // $10 per drug administration
@@ -221,7 +221,11 @@ class DashboardController extends Controller
             'eggProductionChartData',
             'eggSoldChartData',
             'productionRateChartData',
-            'eggMortalityChartData'
+            'eggMortalityChartData',
+            // ADD THE MISSING VARIABLES:
+            'feedCost',
+            'drugCost',
+            'laborCost'
         ));
     }
 
