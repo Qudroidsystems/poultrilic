@@ -191,6 +191,9 @@ class DashboardController extends Controller
         // Feed calculations - convert to bags
         $totalFeedKg = $dailyEntries->sum('daily_feeds');
         $totalFeedBags = $this->kgToBags($totalFeedKg);
+        
+        // Fix: Add the missing variable - totalFeedConsumed is the same as totalFeedKg
+        $totalFeedConsumed = $totalFeedKg;
 
         $totalMortality = $dailyEntries->sum('daily_mortality');
         $totalEggMortality = $dailyEntries->sum('broken_egg');
@@ -293,6 +296,7 @@ class DashboardController extends Controller
             'totalMortality',
             'totalFeedBags',
             'totalFeedKg',
+            'totalFeedConsumed', // Now included - this was missing
             'totalDrugUsage',
             'totalEggsSoldCrates',
             'totalEggsSoldPieces',
