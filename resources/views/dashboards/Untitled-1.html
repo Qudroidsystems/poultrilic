@@ -3,366 +3,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ilemobayo Eliab Siji - CV</title>
-    <style>
-        .download-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: #0066cc;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 1000;
-        }
-        .download-btn:hover {
-            background: #0052a3;
-        }
-    </style>
+    <title>Ilemobayo Adenike Mercy - CV</title>
     <style>
         @page {
-            margin: 0.75in;
+            margin: 2cm;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Calibri', 'Arial', sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 8.5in;
+            max-width: 21cm;
             margin: 0 auto;
-            padding: 0.5in;
-            background: linear-gradient(135deg, #e8f4f8 0%, #d4e8e8 100%);
+            padding: 20px;
+            background: white;
         }
         
         .header {
-            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 3px solid #8b4789;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
         }
         
-        h1 {
-            font-size: 36px;
-            font-weight: bold;
-            margin: 0 0 5px 0;
-            color: #000;
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            color: #8b4789;
+            font-weight: 700;
             letter-spacing: 1px;
         }
         
-        .subtitle {
-            font-size: 14px;
+        .header .title {
+            font-size: 16px;
             color: #555;
-            margin-bottom: 20px;
+            margin: 8px 0;
+            font-weight: 600;
         }
         
         .contact-info {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 30px;
+            font-size: 11px;
+            color: #666;
+            margin-top: 10px;
+            line-height: 1.8;
         }
         
-        .contact-item {
-            background: rgba(255, 255, 255, 0.6);
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 13px;
-            color: #333;
+        .section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
         }
         
         .section-title {
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 700;
+            color: #8b4789;
             text-transform: uppercase;
-            margin: 25px 0 15px 0;
-            color: #000;
+            border-bottom: 2px solid #c084bc;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
             letter-spacing: 0.5px;
         }
         
-        .content-text {
-            font-size: 13px;
+        .summary {
+            font-size: 11.5px;
             text-align: justify;
-            margin-bottom: 20px;
             line-height: 1.7;
+            color: #444;
         }
         
-        .skills-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 25px;
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px 15px;
+            font-size: 11px;
         }
         
-        .skill-tag {
-            background: rgba(255, 255, 255, 0.7);
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 12px;
-            color: #333;
+        .skill-item {
+            padding: 5px 10px;
+            background: #f8f4f8;
+            border-left: 3px solid #c084bc;
+            font-size: 11px;
+        }
+        
+        .job {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        
+        .job-header {
+            margin-bottom: 8px;
         }
         
         .job-title {
-            font-weight: bold;
-            font-size: 14px;
-            margin-top: 15px;
-            text-transform: uppercase;
+            font-size: 13px;
+            font-weight: 700;
+            color: #8b4789;
+            margin: 0;
         }
         
-        .company-info {
-            font-size: 13px;
+        .company {
+            font-size: 12px;
             color: #555;
-            margin-bottom: 10px;
+            font-weight: 600;
+            margin: 3px 0;
         }
         
-        ul {
-            margin: 10px 0;
-            padding-left: 20px;
+        .date {
+            font-size: 11px;
+            color: #777;
+            font-style: italic;
         }
         
-        li {
-            font-size: 13px;
-            margin-bottom: 8px;
+        .job ul {
+            margin: 8px 0 0 20px;
+            padding: 0;
+        }
+        
+        .job li {
+            font-size: 11px;
+            margin-bottom: 6px;
             line-height: 1.6;
+            text-align: justify;
         }
         
         .education-item {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
-        .education-title {
-            font-weight: bold;
-            font-size: 13px;
-            text-transform: uppercase;
+        .degree {
+            font-size: 12px;
+            font-weight: 700;
+            color: #8b4789;
+            margin: 0;
         }
         
-        .education-details {
-            font-size: 13px;
+        .institution {
+            font-size: 11px;
             color: #555;
+            font-style: italic;
+            margin: 3px 0;
         }
         
-        .references {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
+        .cert-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f4f8;
+            border-left: 3px solid #c084bc;
         }
         
-        .reference-item {
-            flex: 1;
+        .cert-title {
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #8b4789;
+            margin: 0;
         }
         
-        .reference-name {
-            font-weight: bold;
-            font-size: 13px;
-            text-transform: uppercase;
-            margin-bottom: 5px;
+        .cert-org {
+            font-size: 10.5px;
+            color: #666;
+            margin: 3px 0 0 0;
         }
         
-        .reference-contact {
-            font-size: 13px;
-            color: #555;
-        }
-        
-        .email-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 10px 20px;
+        .personal-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 11px;
+            background: #f8f4f8;
+            padding: 15px;
             border-radius: 5px;
-            font-size: 14px;
-            font-weight: bold;
-            text-decoration: none;
-            color: #333;
+        }
+        
+        .detail-item {
+            display: flex;
+        }
+        
+        .detail-label {
+            font-weight: 700;
+            color: #8b4789;
+            min-width: 140px;
+        }
+        
+        .references-note {
+            font-size: 11px;
+            text-align: center;
+            padding: 15px;
+            background: #f8f4f8;
+            border-radius: 5px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        @media print {
+            body {
+                padding: 0;
+            }
+            .section {
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>
 <body>
-    <button class="download-btn" onclick="downloadAsWord()">⬇️ Download as Word Document</button>
-    <a href="mailto:eliabsiji@gmail.com" class="email-button">📧 Email</a>
-    
-    <script>
-        function downloadAsWord() {
-            const content = document.documentElement.outerHTML;
-            const blob = new Blob(['\ufeff', content], {
-                type: 'application/msword'
-            });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'Ilemobayo_Eliab_Siji_CV.doc';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-    </script>
-    
     <div class="header">
-        <h1>ILEMOBAYO ELIAB SIJI</h1>
-        <div class="subtitle">Software Developer | Python/Django & Node.js/NestJS Specialist</div>
-        
+        <h1>ILEMOBAYO ADENIKE MERCY</h1>
+        <div class="title">French Language Educator | B.Ed. French</div>
         <div class="contact-info">
-            <div class="contact-item">📞 +234 9057522004</div>
-            <div class="contact-item">✉️ eliabsiji@gmail.com</div>
-            <div class="contact-item">📍 Ondo, Ondo State</div>
-            <div class="contact-item">🎂 1987-01-04</div>
-            <div class="contact-item">🇳🇬 Nigerian</div>
+            No. 84 Ife Road, Harmony Estate Junction, Ondo State, Nigeria<br>
+            📞 +234 704 563 2784 | ✉️ omololuadenike95@gmail.com
         </div>
     </div>
-    
-    <div class="section-title">PROFESSIONAL SUMMARY</div>
-    <div class="content-text">
-        Results-driven Software Developer with over 9 years of experience in full-stack web development, specializing in Php/Laravel, Python/Django and Node.js/NestJS frameworks for scalable backend solutions. Proven track record in leading development teams, architecting complex systems including cryptocurrency exchanges, logistics platforms, and enterprise management solutions. Expert in building RESTful APIs, implementing secure payment systems, and optimizing database performance with MySQL and PostgreSQL. Strong technical leader with experience mentoring development teams and delivering high-impact projects across fintech, education, and logistics sectors. Passionate about leveraging cutting-edge technologies to solve real-world problems and drive organizational growth.
-    </div>
-    
-    <div class="section-title">SKILLS</div>
-    <div class="skills-container">
-        <div class="skill-tag">API integration</div>
-        <div class="skill-tag">Machine learning</div>
-        <div class="skill-tag">Mobile app development</div>
-        <div class="skill-tag">Continuous integration</div>
-        <div class="skill-tag">Back end development</div>
-        <div class="skill-tag">Python</div>
-        <div class="skill-tag">Django</div>
-        <div class="skill-tag">Flask</div>
-        <div class="skill-tag">Node.js</div>
-        <div class="skill-tag">NestJS</div>
-        <div class="skill-tag">PHP</div>
-        <div class="skill-tag">Laravel</div>
-        <div class="skill-tag">MySQL</div>
-        <div class="skill-tag">PostgreSQL</div>
-        <div class="skill-tag">Database Design</div>
-        <div class="skill-tag">Database Optimization</div>
-        <div class="skill-tag">RESTful APIs</div>
-        <div class="skill-tag">GraphQL</div>
-        <div class="skill-tag">JWT</div>
-        <div class="skill-tag">OAuth Authentication</div>
-        <div class="skill-tag">HTML5</div>
-        <div class="skill-tag">CSS3</div>
-        <div class="skill-tag">JavaScript</div>
-        <div class="skill-tag">Responsive Design</div>
-        <div class="skill-tag">VS Code</div>
-        <div class="skill-tag">Git</div>
-        <div class="skill-tag">GitHub</div>
-        <div class="skill-tag">Docker</div>
-        <div class="skill-tag">Jupyter Notebook</div>
-        <div class="skill-tag">CI/CD Pipelines</div>
-        <div class="skill-tag">Server Management</div>
-        <div class="skill-tag">Web Deployment</div>
-        <div class="skill-tag">.NET MAUI Framework</div>
-        <div class="skill-tag">Pandas</div>
-        <div class="skill-tag">NumPy</div>
-        <div class="skill-tag">Matplotlib</div>
-        <div class="skill-tag">Data Analysis</div>
-        <div class="skill-tag">Blockchain/Crypto</div>
-        <div class="skill-tag">Payment Systems</div>
-        <div class="skill-tag">Fintech Solutions</div>
-    </div>
-    
-    <div class="section-title">EXPERIENCE</div>
-    
-    <div class="job-title">SOFTWARE ENGINEER/DEVELOPER, ondo, ondo</div>
-    <div class="company-info">Qudroid Systems, January 2025–Present</div>
-    <ul>
-        <li>Collaborated with other developers in the design of new features for existing systems.</li>
-        <li>Maintained and updated existing software applications.</li>
-        <li>Participated in code reviews to ensure high standards of quality assurance.</li>
-        <li>Analyzed customer requirements to determine optimal solutions.</li>
-        <li>Implemented bug fixes and feature enhancements as needed.</li>
-        <li>Developed user interfaces that are intuitive, responsive, and accessible across multiple platforms.</li>
-        <li>Developed code and design for software components in adherence with system requirements.</li>
-        <li>Developed unit tests to ensure code quality and facilitate future code maintenance.</li>
-    </ul>
-    
-    <div class="job-title">TECH LEAD, Abuja</div>
-    <div class="company-info">AlgoLog, January 2024–January 2025</div>
-    <ul>
-        <li>Lead a team of software developers in designing and implementing enterprise-grade logistics and supply chain management solutions, improving operational efficiency by 35%.</li>
-        <li>Spearheaded the development of Spacer, a comprehensive Space management platform built with NestJS.</li>
-        <li>Architected scalable backend infrastructure using NestJS and MySQL, reducing API response times by 40% through optimized query structures and caching strategies.</li>
-        <li>Implemented secure authentication systems and role-based access control (RBAC) for multi-tenant applications, ensuring data security compliance with industry standards.</li>
-        <li>Established CI/CD pipelines using Git and automated testing frameworks, reducing deployment errors by 60% and accelerating release cycles.</li>
-    </ul>
-    
-    <div class="job-title">LEAD SOFTWARE DEVELOPER (LARAVEL & DJANGO)</div>
-    <div class="company-info">Qudroid Systems, January 2021–January 2022</div>
-    <ul>
-        <li>Led the development of 8+ client-facing web applications using Django and Laravel frameworks, delivering scalable solutions for fintech, healthcare, and e-commerce sectors.</li>
-        <li>Developed a Cryptocurrency Exchange Platform with advanced trading features including real-time price updates, order matching engine, wallet management, and secure transaction processing using Django and WebSocket technology.</li>
-        <li>Built a Payment Audit Software for financial reconciliation, automating transaction verification processes and reducing manual audit time by 70% through intelligent anomaly detection.</li>
-        <li>Created a School Result Management System for educational institutions, enabling automated grade calculation, report card generation, and parent portal access for 5,000+ students.</li>
-        <li>Designed and implemented RESTful APIs consumed by mobile and web applications, improving data retrieval efficiency by 30% through query optimization and database indexing.</li>
-        <li>Integrated third-party payment gateways (Paystack, Flutterwave) and cryptocurrency APIs, ensuring secure and compliant financial transactions.</li>
-    </ul>
-    
-    <div class="job-title">LEAD WEB DEVELOPER (BACKEND)</div>
-    <div class="company-info">Help3 Organization, January 2019–January 2021</div>
-    <ul>
-        <li>Spearheaded backend development for humanitarian aid platforms using PHP and Python, handling complex business logic for applications serving 50,000+ users.</li>
-        <li>Developed custom Django modules for donation management, volunteer coordination, and impact reporting, enhancing platform engagement by 45%.</li>
-        <li>Optimized database schemas and queries in MySQL, reducing page load times by 25% and improving overall system performance.</li>
-        <li>Conducted comprehensive code reviews and implemented automated testing protocols, reducing production bugs by 40%.</li>
-    </ul>
-    
-    <div class="job-title">SYSTEM ANALYST, Minna</div>
-    <div class="company-info">Centre for Open and Distance Learning (CODEL), Federal University of Technology, Minna, January 2015–January 2018</div>
-    <ul>
-        <li>Analyzed, designed, and implemented a Journal Management System for Adeyemi College of Education, streamlining academic publication workflows for 200+ researchers.</li>
-        <li>Built database-driven systems using PHP and MySQL for academic staff management, supporting 500+ users with features including profile management and performance analytics.</li>
-        <li>Performed comprehensive requirement analysis and system design, creating detailed technical documentation and UML diagrams.</li>
-        <li>Provided technical support and end-user training, ensuring smooth system adoption and maintaining 99% uptime during peak academic periods.</li>
-    </ul>
-    
-    <div class="section-title">EDUCATION</div>
-    
-    <div class="education-item">
-        <div class="education-title">BACHELOR OF TECHNOLOGY (B.TECH) IN COMPUTER SCIENCE, Niger State</div>
-        <div class="education-details">Federal University of Technology, January 2014</div>
-    </div>
-    
-    <div class="education-item">
-        <div class="education-title">WEST AFRICAN SENIOR SCHOOL CERTIFICATE EXAMINATION (WASSCE), Odigbo L.G.A.</div>
-        <div class="education-details">Blessing Comprehensive College, January 2006</div>
-    </div>
-    
-    <div class="education-item">
-        <div class="education-title">NATIONAL YOUTH SERVICE CORPS (NYSC) – CERTIFICATE OF NATIONAL SERVICE</div>
-        <div class="education-details">Federal Republic of Nigeria, January 2015</div>
-    </div>
-    
-    <div class="section-title">CERTIFICATIONS</div>
-    <ul>
-        <li>Certificate of Proficiency in Java Programming Language, Choicetech Computer Institute (in collaboration with IEEE), 01/01/10</li>
-    </ul>
-    
-    <div class="section-title">REFERENCES</div>
-    <div class="references">
-        <div class="reference-item">
-            <div class="reference-name">PROF. (MRS.) ADESULU</div>
-            <div class="reference-contact">📞 +234 803 400 3560</div>
-        </div>
-        <div class="reference-item">
-            <div class="reference-name">MR. KOLEBAJE</div>
-            <div class="reference-contact">📞 +234 803 330 0818</div>
+
+    <div class="section">
+        <div class="section-title">Professional Summary</div>
+        <div class="summary">
+            Dedicated and detail-oriented French Education graduate (B.Ed. French) with 7+ years of progressive teaching experience across primary and secondary school levels. Proven expertise in delivering quality instruction in French Language and Civic Education, with strong classroom management and curriculum planning skills. Experienced in strategic planning, student assessment, and collaborative team environments. Multilingual professional fluent in English, French, Yoruba, and Pidgin, with demonstrated ability to improve student performance through innovative teaching methodologies and effective communication. Seeking to leverage educational expertise and passion for language instruction to contribute to organizational growth and student success.
         </div>
     </div>
-    
-    <div class="section-title">LANGUAGES</div>
-    <ul>
-        <li>English (Fluent)</li>
-    </ul>
-    
-    <div class="section-title">KEY PROJECTS TECHNICAL ACHIEVEMENTS</div>
-    <ul>
-        <li><strong>E-commerce Mobile App (Gozak Supermarket).</strong> An E-commerce platform allowing customers to purchase goods at their convenience., Flutter, Laravel, MySQL</li>
-        <li><strong>Spacer - Logistics Management Platform.</strong> Comprehensive logistics solution handling real-time tracking, notification systems, and analytics dashboards., Python, Django, NestJS, PostgreSQL, Redis, WebSocket, Docker</li>
-        <li><strong>Cryptocurrency Exchange Platform.</strong> Full-featured crypto trading platform., Laravel Framework</li>
-        <li><strong>Journal Management System (Adeyemi College of Education).</strong> Academic publication management system facilitating manuscript submission, peer review workflow, and editorial decision tracking. Reduced publication processing time by 50% through streamlined digital workflows., Django, MySQL, HTML5, CSS3, JavaScript</li>
-        <li><strong>School Result Management System.</strong> Automated grade processing and report generation system supporting continuous assessment, exam scoring, and transcript generation. Enabled parent/student portal access for real-time grade viewing., Laravel Framework, MySQL, Bootstrap, PDF Generation Libraries</li>
-        <li><strong>Payment Audit Software.</strong> Financial reconciliation platform automating transaction verification across multiple payment channels. Machine learning-powered anomaly detection reduced manual audit completion time by 70%., Laravel Framework, MySQL</li>
-    </ul>
+
+    <div class="section">
+        <div class="section-title">Core Competencies</div>
+        <div class="skills-grid">
+            <div class="skill-item">French Language Teaching</div>
+            <div class="skill-item">Classroom Management</div>
+            <div class="skill-item">Curriculum Development</div>
+            <div class="skill-item">Student Assessment & Evaluation</div>
+            <div class="skill-item">Lesson Planning & Delivery</div>
+            <div class="skill-item">Educational Technology</div>
+            <div class="skill-item">Communication Skills</div>
+            <div class="skill-item">Customer Service Excellence</div>
+            <div class="skill-item">Strategic Planning</div>
+            <div class="skill-item">Team Collaboration</div>
+            <div class="skill-item">Problem Solving</div>
+            <div class="skill-item">Record Keeping & Documentation</div>
+            <div class="skill-item">Microsoft Office Suite</div>
+            <div class="skill-item">Multilingual Communication</div>
+            <div class="skill-item">Student Motivation</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Professional Experience</div>
+        
+        <div class="job">
+            <div class="job-header">
+                <div class="job-title">Class/Subject Teacher</div>
+                <div class="company">Adepetu Nursery & Primary School, Fagun, Ondo State</div>
+                <div class="date">2023</div>
+            </div>
+            <ul>
+                <li>Delivered comprehensive lessons across core subjects including Mathematics, English Language, and Basic Science for primary school pupils, ensuring curriculum compliance and learning objectives were met.</li>
+                <li>Prepared detailed lesson notes, instructional materials, and visual aids to enhance student comprehension and engagement in the classroom.</li>
+                <li>Maintained accurate student records including attendance, academic performance, and behavioral reports for parent-teacher communication.</li>
+                <li>Conducted continuous assessments and examinations to evaluate student progress and identify areas requiring additional support or intervention.</li>
+                <li>Created a positive and inclusive learning environment that encouraged student participation, critical thinking, and character development.</li>
+                <li>Collaborated with fellow teachers and school administrators to implement effective teaching strategies and improve overall educational outcomes.</li>
+            </ul>
+        </div>
+
+        <div class="job">
+            <div class="job-header">
+                <div class="job-title">French Language Teacher</div>
+                <div class="company">Divine Grace Model Academy, Gani, Ondo State</div>
+                <div class="date">2021</div>
+            </div>
+            <ul>
+                <li>Taught French language to junior and senior secondary school students, covering grammar, vocabulary, pronunciation, and conversational skills aligned with the Nigerian curriculum.</li>
+                <li>Developed and implemented engaging lesson plans incorporating interactive activities, multimedia resources, and cultural immersion experiences to enhance language acquisition.</li>
+                <li>Prepared students for internal assessments, term examinations, and standardized tests through targeted instruction and regular practice exercises.</li>
+                <li>Assessed student performance through written tests, oral presentations, and practical exercises, providing constructive feedback to support continuous improvement.</li>
+                <li>Organized French language clubs and cultural activities to foster student interest in Francophone culture and improve language proficiency beyond classroom instruction.</li>
+                <li>Maintained comprehensive records of student progress and communicated regularly with parents regarding academic performance and behavioral development.</li>
+            </ul>
+        </div>
+
+        <div class="job">
+            <div class="job-header">
+                <div class="job-title">Civic Education Teacher (National Youth Service Corps)</div>
+                <div class="company">Government Secondary School (UBE), Ogu, Rivers State</div>
+                <div class="date">2019</div>
+            </div>
+            <ul>
+                <li>Delivered Civic Education lessons to secondary school students, covering topics including citizenship rights and responsibilities, democracy, governance, and social values.</li>
+                <li>Developed lesson plans and teaching materials aligned with the UBE curriculum to promote civic awareness and responsible citizenship among students.</li>
+                <li>Supervised students during classroom activities, examinations, and extracurricular events, ensuring adherence to school rules and maintaining discipline.</li>
+                <li>Coordinated class activities and collaborated with other corps members to organize educational programs and community development initiatives.</li>
+                <li>Participated in school management meetings and contributed to strategic planning for improving student performance and school development.</li>
+                <li>Mentored students on career choices and personal development, fostering positive relationships that encouraged academic excellence and character building.</li>
+            </ul>
+        </div>
+
+        <div class="job">
+            <div class="job-header">
+                <div class="job-title">French Teaching Practice (Student Teacher)</div>
+                <div class="company">Demonstration Secondary School, Ondo State</div>
+                <div class="date">2016 – 2017</div>
+            </div>
+            <ul>
+                <li>Conducted classroom teaching under the supervision of experienced French language educators as part of the Bachelor of Education program requirements.</li>
+                <li>Assisted in lesson planning, curriculum development, and instructional delivery for junior and senior secondary school French classes.</li>
+                <li>Observed and implemented effective teaching methodologies, classroom management techniques, and student engagement strategies.</li>
+                <li>Prepared and administered tests and assessments to evaluate student comprehension and language proficiency.</li>
+                <li>Participated in departmental meetings and professional development sessions to enhance pedagogical skills and teaching competencies.</li>
+            </ul>
+        </div>
+
+        <div class="job">
+            <div class="job-header">
+                <div class="job-title">Customer Care Representative</div>
+                <div class="company">CHAMS PLC, Lagos State</div>
+                <div class="date">2016</div>
+            </div>
+            <ul>
+                <li>Provided exceptional customer support and complaint resolution services, ensuring client satisfaction and maintaining positive relationships.</li>
+                <li>Supported biometric capture and identity registration programs for government initiatives, demonstrating attention to detail and data accuracy.</li>
+                <li>Handled customer inquiries via phone, email, and in-person interactions, providing timely and accurate information regarding company services.</li>
+                <li>Maintained detailed records of customer interactions and transactions using company database systems.</li>
+                <li>Collaborated with team members to resolve complex customer issues and improve service delivery processes.</li>
+            </ul>
+        </div>
+
+        <div class="job">
+            <div class="job-header">
+                <div class="job-title">Class Teacher</div>
+                <div class="company">Amazing Grace Nursery & Primary School, Lagos State</div>
+                <div class="date">2013 – 2014</div>
+            </div>
+            <ul>
+                <li>Taught primary school classes across multiple subjects, ensuring adherence to the national curriculum and educational standards.</li>
+                <li>Monitored and evaluated student performance through continuous assessment, end-of-term examinations, and parent-teacher conferences.</li>
+                <li>Prepared comprehensive lesson notes and instructional materials tailored to diverse learning styles and abilities.</li>
+                <li>Managed classroom activities, maintained discipline, and created a conducive learning environment that promoted student engagement and academic success.</li>
+                <li>Collaborated with school administration and fellow teachers to implement educational programs and extracurricular activities.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Education</div>
+        
+        <div class="education-item">
+            <div class="degree">Bachelor of Education (B.Ed.) in French</div>
+            <div class="institution">Obafemi Awolowo University (Adeyemi Chapter), Ondo State, Nigeria</div>
+            <div class="date">2015 – 2019</div>
+        </div>
+
+        <div class="education-item">
+            <div class="degree">West African Senior School Certificate Examination (WASSCE)</div>
+            <div class="institution">Abesan Comprehensive Senior College, Lagos State, Nigeria</div>
+            <div class="date">2010 – 2013</div>
+        </div>
+
+        <div class="education-item">
+            <div class="degree">Primary School Leaving Certificate</div>
+            <div class="institution">Methodist Primary School, Igbogila Ipaja, Lagos State, Nigeria</div>
+            <div class="date">2001 – 2007</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Professional Certifications & Training</div>
+        
+        <div class="cert-item">
+            <div class="cert-title">French Language Immersion Programme</div>
+            <div class="cert-org">Nigerian French Language Village (NFLV), Badagry, Lagos State | 2016</div>
+        </div>
+
+        <div class="cert-item">
+            <div class="cert-title">Soft Skills Development Training</div>
+            <div class="cert-org">Jobberman Nigeria | 2022</div>
+        </div>
+
+        <div class="cert-item">
+            <div class="cert-title">National Youth Service Corps (NYSC) Certificate</div>
+            <div class="cert-org">Federal Republic of Nigeria | 2019</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Language Proficiency</div>
+        <div class="summary">
+            <strong>English:</strong> Fluent (Native) | <strong>French:</strong> Professional Working Proficiency | <strong>Yoruba:</strong> Fluent (Native) | <strong>Nigerian Pidgin:</strong> Fluent
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Personal Details</div>
+        <div class="personal-details">
+            <div class="detail-item">
+                <span class="detail-label">Gender:</span> Female
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Nationality:</span> Nigerian
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">State of Origin:</span> Ondo State
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Marital Status:</span> Married
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">References</div>
+        <div class="references-note">
+            Professional references available upon request
+        </div>
+    </div>
 </body>
 </html>
