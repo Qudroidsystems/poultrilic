@@ -53,7 +53,7 @@
                                 <div class="card-body p-4 p-sm-5 m-lg-4">
                                     <!-- Logo & Title -->
                                     <div class="text-center mb-5">
-                                        <img src="{{ asset('website/assets/images/logo/prime-farm-logo.jpeg') }}" 
+                                        <img src="{{ asset('website/assets/images/logo/prime-farm-logo2.jpeg') }}" 
                                              alt="Poultritics Portal Logo" 
                                              class="auth-logo mb-4">
 
