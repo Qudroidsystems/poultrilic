@@ -1,149 +1,134 @@
   <!--====== Start Footer ======-->
-        <footer class="footer-default footer-white dark-black-bg">
-            <div class="container">
-                <div class="footer-top wow fadeInUp">
-                    <div class="row">
-                        <div class="col-lg-4 col-md-12 footer-contact-item">
-                            <div class="contact-info d-flex justify-content-center">
-                                <div class="site-logo text-center">
-                                    <a href="index.html" class="brand-logo"><img src="{{ asset('website/assets/images/logo/logo-2.png')}}" alt="Footer Logo"></a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4 col-md-12 footer-contact-item">
-                            <div class="contact-info d-flex">
-                                <div class="icon">
-                                    <i class="flaticon-placeholder"></i>
-                                </div>
-                                <div class="text">
-                                    <h5>Locations</h5>
-                                    <h6>55 Main Street, New York</h6>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4 col-md-12 footer-contact-item">
-                            <div class="contact-info d-flex">
-                                <div class="icon">
-                                    <i class="flaticon-placeholder"></i>
-                                </div>
-                                <div class="text">
-                                    <h5>Email Us</h5>
-                                    <h6><a href="mailto:hotlineinfo@gmial.com">hotlineinfo@gmial.com</a></h6>
-                                </div>
-                            </div>
-                        </div>
+      
+  <script>
+// Smooth scrolling for all anchor links with #
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            e.preventDefault();
+            window.scrollTo({
+                top: target.offsetTop - 100, // Adjust for fixed header height
+                behavior: 'smooth'
+            });
+
+            // Optional: Update URL without jumping
+            history.pushState(null, null, this.getAttribute('href'));
+        }
+    });
+});
+
+// Also handle page load with hash (e.g., direct link to #contact)
+window.addEventListener('load', () => {
+    if (window.location.hash) {
+        const target = document.querySelector(window.location.hash);
+        if (target) {
+            setTimeout(() => {
+                window.scrollTo({
+                    top: target.offsetTop - 100,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+    }
+});
+</script>
+  <!--====== Start Footer Section ======-->
+<footer class="footer-area dark-black-bg pt-100 pb-50">
+    <div class="container">
+        <div class="row">
+            <!-- About Widget -->
+            <div class="col-lg-4 col-md-6 col-sm-12">
+                <div class="footer-widget about-widget mb-40 wow fadeInUp">
+                    <div class="footer-logo mb-30">
+                        <a href="{{ url('/') }}">
+                            <img src="{{ asset('website/assets/images/logo/prime-farm-logo-white.png') }}" alt="Prime Farm Logo">
+                        </a>
                     </div>
-                </div>
-                <div class="footer-widget pt-70 pb-25">
-                    <div class="row">
-                        <div class="col-xl-4 col-lg-4 col-md-5 col-sm-12">
-                            <div class="footer-widget about-widget mb-40 wow fadeInDown">
-                                <h4 class="widget-title">About Us</h4>
-                                <div class="footer-about-content">
-                                    <p>Sit amet consectetur adipiscing
-                                        elit sed do eiusmo tempor incidunt ut labore et dolore magna aliquae. Quis ipsum suspendisse ultrices gravida commodo viverra</p>
-                                    <div class="social-box">
-                                        <h4 class="mb-15">Follow On</h4>
-                                        <ul class="social-link">
-                                            <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
-                                            <li><a href="#"><i class="fab fa-twitter"></i></a></li>
-                                            <li><a href="#"><i class="fab fa-linkedin"></i></a></li>
-                                            <li><a href="#"><i class="fab fa-youtube"></i></a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4 col-lg-4 col-md-7 col-sm-12">
-                            <div class="footer-widget footer-nav-widget mb-40 wow fadeInUp">
-                                <h4 class="widget-title">Services</h4>
-                                <div class="footer-widget-nav">
-                                    <ul>
-                                        <li><a href="#">Agriculture Foods</a></li>
-                                        <li><a href="#">Organic Vegetables</a></li>
-                                        <li><a href="#">Pond & Sea Fish</a></li>
-                                        <li><a href="#">Cow Milk & Meat</a></li>
-                                        <li><a href="#">Modern Equipment</a></li>
-                                        <li><a href="#">Natural Wheats</a></li>
-                                        <li><a href="#">Eggs & Meat</a></li>
-                                    </ul>
-                                    <ul>
-                                        <li><a href="#">Company History</a></li>
-                                        <li><a href="#">Latest News</a></li>
-                                        <li><a href="#">Needs a Career ?</a></li>
-                                        <li><a href="#">Meet The Team</a></li>
-                                        <li><a href="#">Setting & Privacy</a></li>
-                                        <li><a href="#">My Account</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4 col-lg-4 col-md-6 col-sm-12">
-                            <div class="footer-widget recent-post-widget mb-40 wow fadeInDown">
-                                <h4 class="widget-title">Recent News</h4>
-                                <ul class="post-widget-wrap">
-                                    <li class="post-item">
-                                        <img src="{{ asset('website/assets/images/widget/news-1.jpg')}}" alt="Post Image">
-                                        <div class="post-title-date">
-                                            <h3 class="title"><a href="blog-details.html">Designing Better Links Websites & Emails</a></h3>
-                                            <span class="posted-on"><i class="fas fa-calendar-alt"></i><a href="#">25 March 2022</a></span>
-                                        </div>
-                                    </li>
-                                    <li class="post-item">
-                                        <img src="{{ asset('website/assets/images/widget/news-2.jpg')}}" alt="Post Image">
-                                        <div class="post-title-date">
-                                            <h3 class="title"><a href="blog-details.html">Advent Calendars For Web Designers</a></h3>
-                                            <span class="posted-on"><i class="fas fa-calendar-alt"></i><a href="#">25 March 2022</a></span>
-                                        </div>
-                                    </li>
-                                </ul>
-                                <a href="blog-standard.html" class="more-btn">View More News</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="footer-newsletter footer-newsletter-one text-white wow fadeInUp">
-                    <div class="row">
-                        <div class="col-xl-3">
-                            <div class="footer-text">
-                                <h5>Subscrive Our Newsletter
-                                    To Get More Updates</h5>
-                            </div>
-                        </div>
-                        <div class="col-xl-9">
-                            <div class="newsletter-form">
-                                <form>
-                                    <div class="row">
-                                        <div class="col-lg-5">
-                                            <div class="form_group">
-                                                <input type="email" class="form_control" placeholder="Email Address" name="email" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-4">
-                                            <div class="form_group">
-                                                <input type="text" class="form_control" placeholder="Phone" name="phone" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-3">
-                                            <div class="form_group">
-                                                <button class="main-btn btn-yellow">Subscribe Now</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="footer-copyright">
-                    <div class="col-lg-12">
-                        <div class="copyright-text text-center">
-                            <p>&copy; 2022 Orgrarium. All Rights Reserved</p>
-                        </div>
-                    </div>
+                    <p class="text-white opacity-80 mb-30">
+                        Prime Farm is a leading integrated sustainable farm dedicated to delivering premium poultry, livestock, fresh grains, fish, and vegetables. We prioritize ethical practices, animal welfare, and environmental responsibility to provide nutritious, farm-fresh products you can trust.
+                    </p>
+                    <ul class="social-link">
+                        <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
+                        <li><a href="#"><i class="fab fa-twitter"></i></a></li>
+                        <li><a href="#"><i class="fab fa-instagram"></i></a></li>
+                        <li><a href="#"><i class="fab fa-youtube"></i></a></li>
+                        <li><a href="#"><i class="fab fa-whatsapp"></i></a></li>
+                    </ul>
                 </div>
             </div>
-        </footer><!--====== End Footer ======-->
+
+            <!-- Quick Links -->
+            <div class="col-lg-2 col-md-6 col-sm-6">
+                <div class="footer-widget nav-widget mb-40 wow fadeInUp" data-wow-delay=".2s">
+                    <h4 class="widget-title text-white mb-30">Quick Links</h4>
+                    <ul class="footer-nav">
+                        <li><a href="{{ url('/') }}">Home</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#products">Our Products</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Our Products -->
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <div class="footer-widget nav-widget mb-40 wow fadeInUp" data-wow-delay=".3s">
+                    <h4 class="widget-title text-white mb-30">Our Products</h4>
+                    <ul class="footer-nav">
+                        <li><a href="#broilers">Broiler Chickens</a></li>
+                        <li><a href="#layers">Layers & Fresh Eggs</a></li>
+                        <li><a href="#grains">Wheat & Maize Grains</a></li>
+                        <li><a href="#cows">Dairy & Beef Cattle</a></li>
+                        <li><a href="#fish">Pond-Raised Fish</a></li>
+                        <li><a href="#vegetables">Fresh Vegetables</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="col-lg-3 col-md-6 col-sm-12">
+                <div class="footer-widget contact-widget mb-40 wow fadeInUp" data-wow-delay=".4s">
+                    <h4 class="widget-title text-white mb-30">Contact Info</h4>
+                    <ul class="contact-list">
+                        <li class="d-flex mb-20">
+                            <i class="flaticon-placeholder text-yellow me-3"></i>
+                            <span class="text-white opacity-80">123 Agricultural Zone,<br>Lagos, Nigeria</span>
+                        </li>
+                        <li class="d-flex mb-20">
+                            <i class="flaticon-phone-call text-yellow me-3"></i>
+                            <a href="tel:+2349012345678" class="text-white opacity-80">+234 901 234 5678</a>
+                        </li>
+                        <li class="d-flex">
+                            <i class="flaticon-email text-yellow me-3"></i>
+                            <a href="mailto:info@primefarm.ng" class="text-white opacity-80">info@primefarm.ng</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copyright Area -->
+    <div class="copyright-area border-top pt-20 mt-50">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="text-white opacity-75 mb-0">
+                        &copy; <script>document.write(new Date().getFullYear())</script> Prime Farm. All Rights Reserved.
+                    </p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="text-white opacity-75 mb-0">
+                        Designed with ❤️ by Your Team
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<!--====== End Footer Section ======-->
+
         <!--====== back-to-top ======-->
         <a href="#" class="back-to-top" ><i class="far fa-angle-up"></i></a>
         <!--====== Jquery js ======-->

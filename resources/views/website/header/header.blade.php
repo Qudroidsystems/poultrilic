@@ -41,98 +41,97 @@
         </div> --}}
         <!--====== End Preloader ======-->
         <!--====== Start Header Section ======-->
-          <header class="header-area">
-            <div class="header-top-bar top-bar-one dark-black-bg">
-                <div class="container-fluid">
-                    <div class="row align-items-center">
-                        <div class="col-xl-6 col-lg-12 col-md-12 col-6">
-                            <div class="top-bar-left d-flex align-items-center">
-                                <span class="text">Welcome to Agriculture & Organic Food Template</span>
-                                <span class="lang-dropdown">
-                                    <select class="wide">
-                                        <option value="01">English</option>
-                                        <option value="02">French</option>
-                                    </select>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-xl-6 col-lg-12 col-md-12 col-6">
-                            <div class="top-bar-right">
-                                <span class="text"><i class="far fa-clock"></i>Opening Hours : Sunday- Friday, 08:00 am - 05:00pm</span>
-                                <ul class="social-link">
-                                    <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
-                                    <li><a href="#"><i class="fab fa-twitter"></i></a></li>
-                                    <li><a href="#"><i class="fab fa-linkedin"></i></a></li>
-                                    <li><a href="#"><i class="fab fa-youtube"></i></a></li>
-                                </ul>
-                            </div>
-                        </div>
+ <header class="header-area">
+    <div class="header-top-bar top-bar-one dark-black-bg">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-xl-6 col-lg-12 col-md-12 col-6">
+                    <div class="top-bar-left d-flex align-items-center">
+                        <span class="text">Welcome to Prime Farm – Sustainable Poultry, Livestock & Fresh Produce</span>
+                        <span class="lang-dropdown">
+                            <select class="wide">
+                                <option value="01">English</option>
+                                <option value="02">French</option>
+                            </select>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-xl-6 col-lg-12 col-md-12 col-6">
+                    <div class="top-bar-right">
+                        <span class="text"><i class="far fa-clock"></i>Opening Hours: Monday - Saturday, 07:00 am - 06:00 pm</span>
+                        <ul class="social-link">
+                            <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
+                            <li><a href="#"><i class="fab fa-twitter"></i></a></li>
+                            <li><a href="#"><i class="fab fa-linkedin"></i></a></li>
+                            <li><a href="#"><i class="fab fa-youtube"></i></a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
-            <div class="header-navigation navigation-two">
-                <div class="nav-overlay"></div>
-                <div class="container-fluid">
-                    <div class="primary-menu">
-                        <div class="site-branding">
-                            <a href="index.html" class="brand-logo"><img src="assets/images/logo/logo-1.png" alt="Site Logo"></a>
+        </div>
+    </div>
+    <div class="header-navigation navigation-two">
+        <div class="nav-overlay"></div>
+        <div class="container-fluid">
+            <div class="primary-menu">
+                <div class="site-branding">
+                    <a href="{{ url('/') }}" class="brand-logo">
+                        <img src="{{ asset('website/assets/images/logo/prime-farm-logo.jpeg') }}" alt="Prime Farm Logo">
+                    </a>
+                </div>
+                <div class="nav-inner-menu">
+                    <div class="nav-menu">
+                        <!-- Mobile Logo -->
+                        <div class="mobile-logo mb-30 d-block d-xl-none text-center">
+                            <a href="{{ url('/') }}" class="brand-logo">
+                                <img src="{{ asset('website/assets/images/logo/prime-farm-logo.jpeg') }}" alt="Prime Farm Logo">
+                            </a>
                         </div>
-                        <div class="nav-inner-menu">
-                            <div class="nav-menu">
-                                <!--=== Mobile Logo ===-->
-                                <div class="mobile-logo mb-30 d-block d-xl-none text-center">
-                                    <a href="index.html" class="brand-logo"><img src="assets/images/logo/logo-1.png" alt="Site Logo"></a>
-                                </div>
-                                <!--=== Navbar Call Button ===-->
-                                <div class="call-button text-center">
-                                    <span><i class="far fa-phone"></i><a href="tel:+012(345)678">+012 (345) 678</a></span>
-                                </div>
-                                <!--=== Main Menu ===-->
-                                <nav class="main-menu">
-                                    <ul>
-                                        <li><a href="#" class="active">Home</a>
-                                           
-                                        </li>
-                                        <li><a href="about.html">About</a></li>
-                                        <li class="menu-item has-children"><a href="#">Services</a>
-                                            <ul class="sub-menu">
-                                                <li><a href="services.html">Our Services</a></li>
-                                                <li><a href="service-details.html">Service Details</a></li>
-                                            </ul>
-                                        </li>
-                                      
-                                        {{-- <li class="menu-item has-children"><a href="#"></a>
-                                            <ul class="sub-menu">
-                                                <li><a href="farmers.html">Our Farmers</a></li>
-                                                <li><a href="faqs.html">Faq</a></li>
-                                                <li><a href="contact.html">Contact</a></li>
-                                            </ul>
-                                        </li> --}}
-                                         <li><a href="contact.html">Contact</a></li>
+                        <!-- Navbar Call Button -->
+                        <div class="call-button text-center">
+                            <span><i class="far fa-phone"></i><a href="tel:+0123456789">+012 345 6789</a></span>
+                        </div>
+                        <!-- Main Menu -->
+                        <nav class="main-menu">
+                            <ul>
+                                <li><a href="{{ url('/') }}" class="active">Home</a></li>
+                                <li><a href="#about">About</a></li>
+                                <li class="menu-item has-children">
+                                    <a href="#products">Products</a>
+                                    <ul class="sub-menu">
+                                        <li><a href="#broilers">Broilers</a></li>
+                                        <li><a href="#layers">Layers & Eggs</a></li>
+                                        <li><a href="#grains">Grains</a></li>
+                                        <li><a href="#cows">Cows (Dairy & Beef)</a></li>
+                                        <li><a href="#fish">Fish Farming</a></li>
+                                        <li><a href="#vegetables">Vegetables</a></li>
                                     </ul>
-                                </nav>
-                                <!--=== Navbar Menu Button ===-->
-                                <div class="menu-button">
-                                    <a href="contact.html" class="main-btn btn-yellow">Get a Quote</a>
-                                </div>
-                            </div>
-                            <!--=== nav Right Item ===-->
-                            <div class="nav-right-item d-flex align-items-center">
-                                <div class="call-button">
-                                    <span><i class="far fa-phone"></i><a href="tel:+012(345)678">+012 (345) 678</a></span>
-                                </div>
-                                <div class="menu-button">
-                                    <a href="contact.html" class="main-btn btn-yellow">Get a Quote</a>
-                                </div>
-                                <div class="navbar-toggler">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </div>
-                            </div>
+                                </li>
+                                <li><a href="#contact">Contact</a></li>
+                            </ul>
+                        </nav>
+                        <!-- Navbar Menu Button -->
+                        <div class="menu-button">
+                            <a href="#contact" class="main-btn btn-yellow">Get a Quote</a>
+                        </div>
+                    </div>
+                    <!-- Nav Right Item -->
+                    <div class="nav-right-item d-flex align-items-center">
+                        <div class="call-button">
+                            <span><i class="far fa-phone"></i><a href="tel:+0123456789">+012 345 6789</a></span>
+                        </div>
+                        <div class="menu-button">
+                            <a href="#contact" class="main-btn btn-yellow">Get a Quote</a>
+                        </div>
+                        <div class="navbar-toggler">
+                            <span></span><span></span><span></span>
                         </div>
                     </div>
                 </div>
             </div>
-        </header>
+        </div>
+    </div>
+</header>
         <!--====== End Header Section ======-->
+
+      
