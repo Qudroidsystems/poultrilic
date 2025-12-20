@@ -131,6 +131,34 @@ class DashboardController extends Controller
         return $dailyEntries->sum('broken_egg');
     }
 
+    /**
+     * Calculate average daily production per bird
+     */
+    private function calculateProductionRate($dailyEntries, $currentBirds)
+    {
+        if ($currentBirds <= 0 || $dailyEntries->count() === 0) {
+            return 0;
+        }
+
+        // Get total eggs produced
+        $totalEggs = 0;
+        foreach ($dailyEntries as $entry) {
+            $eggData = $this->parseEggData($entry->daily_egg_production);
+            $totalEggs += $eggData['total_pieces'];
+        }
+
+        // Calculate average eggs per bird per day
+        $daysCount = $dailyEntries->count();
+        $avgEggsPerBirdPerDay = ($totalEggs / $daysCount) / $currentBirds;
+        
+        // Convert to percentage (assuming 1 egg per bird per day = 100%)
+        // Or simply show as decimal: 0.85 means 85% production rate
+        $productionRate = $avgEggsPerBirdPerDay * 100;
+        
+        // Cap at reasonable values
+        return min(100, max(0, $productionRate));
+    }
+
     public function index(Request $request)
     {
         $pagetitle = "Poultry Analytics";
@@ -202,15 +230,8 @@ class DashboardController extends Controller
         // For backward compatibility
         $totalEggsSold = $totalEggsSoldTotalPieces;
 
-        // FIXED: Production rate calculation - FIX THE HUGE PERCENTAGE ERROR
-        $avgProductionRate = 0;
-        if ($currentBirds > 0 && $dailyEntries->count() > 0) {
-            $avgDailyProduction = $totalEggProductionTotalPieces / $dailyEntries->count();
-            $avgProductionRate = ($avgDailyProduction / $currentBirds) * 100;
-            
-            // Cap at reasonable values (0-100%)
-            $avgProductionRate = min(100, max(0, $avgProductionRate));
-        }
+        // FIXED: Production rate calculation - CORRECT CALCULATION
+        $avgProductionRate = $this->calculateProductionRate($dailyEntries, $currentBirds);
 
         // Revenue calculation (assuming $0.05 per egg)
         $totalRevenue = $totalEggsSoldTotalPieces * 0.05;
@@ -249,11 +270,11 @@ class DashboardController extends Controller
             // Calculate average production rate for the week
             $weekProductionRate = 0;
             if ($weekEntries->count() > 0) {
-                $avgDailyProductionWeek = $weekProduction / $weekEntries->count();
                 $avgCurrentBirdsWeek = $weekEntries->avg('current_birds');
                 if ($avgCurrentBirdsWeek > 0) {
-                    $weekProductionRate = ($avgDailyProductionWeek / $avgCurrentBirdsWeek) * 100;
-                    $weekProductionRate = min(100, max(0, $weekProductionRate)); // Cap at 0-100%
+                    $avgEggsPerBirdPerDay = ($weekProduction / $weekEntries->count()) / $avgCurrentBirdsWeek;
+                    $weekProductionRate = $avgEggsPerBirdPerDay * 100;
+                    $weekProductionRate = min(100, max(0, $weekProductionRate));
                 }
             }
 
@@ -302,6 +323,15 @@ class DashboardController extends Controller
             $eggMortalityRate = ($totalEggMortality / $totalEggProductionTotalPieces) * 100;
         }
 
+        // Calculate additional KPIs
+        $birdMortalityRate = $totalBirds > 0 ? ($totalMortality / $totalBirds) * 100 : 0;
+        $revenuePerBird = $currentBirds > 0 ? $totalRevenue / $currentBirds : 0;
+        $feedPerBird = $currentBirds > 0 ? $totalFeedBags / $currentBirds : 0;
+        $feedEfficiency = $totalEggProductionTotalPieces > 0 ? $totalFeedBags / $totalEggProductionTotalPieces : 0;
+        $costPerEgg = $totalEggsSoldTotalPieces > 0 ? $operationalExpenses / $totalEggsSoldTotalPieces : 0;
+        $eggDisposalRate = $totalEggProductionTotalPieces > 0 ? (($totalEggsSoldTotalPieces + $totalEggMortality) / $totalEggProductionTotalPieces) * 100 : 0;
+        $eggSalesEfficiency = ($totalEggsSoldTotalPieces + $totalEggMortality) > 0 ? ($totalEggsSoldTotalPieces / ($totalEggsSoldTotalPieces + $totalEggMortality)) * 100 : 0;
+
         return view('dashboards.dashboard', compact(
             'pagetitle',
             'totalBirds',
@@ -340,7 +370,14 @@ class DashboardController extends Controller
             'eggMortalityChartData',
             'feedCost',
             'drugCost',
-            'laborCost'
+            'laborCost',
+            'birdMortalityRate',
+            'revenuePerBird',
+            'feedPerBird',
+            'feedEfficiency',
+            'costPerEgg',
+            'eggDisposalRate',
+            'eggSalesEfficiency'
         ));
     }
 
