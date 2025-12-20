@@ -50,8 +50,9 @@
                 </div>
             </div>
 
-            <!-- Key Metrics -->
+            <!-- First Row - Key Metrics -->
             <div class="row">
+                <!-- Total Birds Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
@@ -72,6 +73,8 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Current Birds Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
@@ -92,30 +95,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-xxl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <p class="fs-md text-muted mb-4">Total Egg Production</p>
-                                    <h3 class="mb-0 mt-auto">
-                                        <span class="counter-value" data-target="{{ $totalEggProductionCrates }}">
-                                            {{ number_format($totalEggProductionCrates, 0) }}
-                                        </span> Cr
-                                    </h3>
-                                    <small class="text-muted">{{ number_format($totalEggProduction, 0) }} eggs</small>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-info-subtle text-info rounded fs-3">
-                                            <i class="bi bi-egg"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+                <!-- Bird Mortality Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
@@ -136,113 +117,8 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Egg Production Card -->
-            <div class="col-xxl-3 col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex">
-                            <div class="flex-grow-1">
-                                <p class="fs-md text-muted mb-4">Total Egg Production</p>
-                                <h3 class="mb-0 mt-auto">
-                                    <span class="counter-value" data-target="{{ $totalEggProductionCrates }}">
-                                        {{ number_format($totalEggProductionCrates, 0) }}
-                                    </span> Cr
-                                    <span class="counter-value" data-target="{{ $totalEggProductionPieces }}">
-                                        {{ $totalEggProductionPieces }}
-                                    </span> Pc
-                                </h3>
-                                <small class="text-muted">{{ number_format($totalEggProductionTotalPieces, 0) }} total eggs</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feed Consumption Card -->
-            <div class="col-xxl-3 col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex">
-                            <div class="flex-grow-1">
-                                <p class="fs-md text-muted mb-4">Feed Consumed</p>
-                                <h3 class="mb-0 mt-auto">
-                                    <span class="counter-value" data-target="{{ $totalFeedBags }}">
-                                        {{ number_format($totalFeedBags, 1) }}
-                                    </span> Bags
-                                </h3>
-                                <small class="text-muted">{{ number_format($totalFeedKg, 1) }} kg total</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Eggs Sold Card -->
-            <div class="col-xxl-3 col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex">
-                            <div class="flex-grow-1">
-                                <p class="fs-md text-muted mb-4">Eggs Sold</p>
-                                <h3 class="mb-0 mt-auto">
-                                    <span class="counter-value" data-target="{{ $totalEggsSoldCrates }}">
-                                        {{ number_format($totalEggsSoldCrates, 0) }}
-                                    </span> Cr
-                                    <span class="counter-value" data-target="{{ $totalEggsSoldPieces }}">
-                                        {{ $totalEggsSoldPieces }}
-                                    </span> Pc
-                                </h3>
-                                <small class="text-muted">{{ number_format($totalEggsSoldTotalPieces, 0) }} total eggs</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Second Row Metrics -->
-            <div class="row">
-                <div class="col-xxl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <p class="fs-md text-muted mb-4">Feed Consumed</p>
-                                    <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $totalFeedConsumed }}">{{ number_format($totalFeedConsumed, 1) }}</span> kg</h3>
-                                    <small class="text-muted">Total consumption</small>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-warning-subtle text-warning rounded fs-3">
-                                            <i class="bi bi-basket"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xxl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <p class="fs-md text-muted mb-4">Eggs Sold</p>
-                                    <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $totalEggsSold }}">{{ number_format($totalEggsSold, 0) }}</span></h3>
-                                    <small class="text-muted">Total sales</small>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div class="avatar-sm">
-                                        <span class="avatar-title bg-success-subtle text-success rounded fs-3">
-                                            <i class="bi bi-cash-coin"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Production Rate Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
@@ -263,19 +139,109 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Second Row - Egg Production Metrics -->
+            <div class="row">
+                <!-- Egg Production Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex">
                                 <div class="flex-grow-1">
-                                    <p class="fs-md text-muted mb-4">Egg Mortality</p>
+                                    <p class="fs-md text-muted mb-4">Total Egg Production</p>
+                                    <h3 class="mb-0 mt-auto">
+                                        <span class="counter-value" data-target="{{ $totalEggProductionCrates }}">
+                                            {{ number_format($totalEggProductionCrates, 0) }}
+                                        </span> Cr
+                                        <span class="counter-value" data-target="{{ $totalEggProductionPieces }}">
+                                            {{ $totalEggProductionPieces }}
+                                        </span> Pc
+                                    </h3>
+                                    <small class="text-muted">{{ number_format($totalEggProductionTotalPieces, 0) }} total eggs</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-info-subtle text-info rounded fs-3">
+                                            <i class="bi bi-egg"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Eggs Sold Card -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Eggs Sold</p>
+                                    <h3 class="mb-0 mt-auto">
+                                        <span class="counter-value" data-target="{{ $totalEggsSoldCrates }}">
+                                            {{ number_format($totalEggsSoldCrates, 0) }}
+                                        </span> Cr
+                                        <span class="counter-value" data-target="{{ $totalEggsSoldPieces }}">
+                                            {{ $totalEggsSoldPieces }}
+                                        </span> Pc
+                                    </h3>
+                                    <small class="text-muted">{{ number_format($totalEggsSoldTotalPieces, 0) }} total eggs</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-success-subtle text-success rounded fs-3">
+                                            <i class="bi bi-cash-coin"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Egg Mortality Card -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Egg Mortality (Broken)</p>
                                     <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $totalEggMortality }}">{{ number_format($totalEggMortality, 0) }}</span></h3>
-                                    <small class="text-muted">Broken eggs</small>
+                                    <small class="text-muted">Broken/damaged eggs</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-warning-subtle text-warning rounded fs-3">
+                                            <i class="bi bi-x-circle"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Egg Mortality Rate Card -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Egg Mortality Rate</p>
+                                    @php
+                                        $eggMortalityRate = $totalEggProductionTotalPieces > 0 
+                                            ? ($totalEggMortality / $totalEggProductionTotalPieces) * 100 
+                                            : 0;
+                                    @endphp
+                                    <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $eggMortalityRate }}">{{ number_format($eggMortalityRate, 1) }}</span>%</h3>
+                                    <small class="text-muted">Broken vs Total Production</small>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="avatar-sm">
                                         <span class="avatar-title bg-danger-subtle text-danger rounded fs-3">
-                                            <i class="bi bi-x-circle"></i>
+                                            <i class="bi bi-pie-chart"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -285,9 +251,36 @@
                 </div>
             </div>
 
-            <!-- Financial Metrics -->
+            <!-- Third Row - Feed and Resources -->
             <div class="row">
-                <div class="col-xxl-4 col-md-6">
+                <!-- Feed Consumed Card -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Feed Consumed</p>
+                                    <h3 class="mb-0 mt-auto">
+                                        <span class="counter-value" data-target="{{ $totalFeedBags }}">
+                                            {{ number_format($totalFeedBags, 1) }}
+                                        </span> Bags
+                                    </h3>
+                                    <small class="text-muted">({{ number_format($totalFeedKg, 1) }} kg)</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-warning-subtle text-warning rounded fs-3">
+                                            <i class="bi bi-basket"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Drug Usage Card -->
+                <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex">
@@ -307,14 +300,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-xxl-4 col-md-6">
+
+                <!-- Revenue Card -->
+                <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex">
                                 <div class="flex-grow-1">
                                     <p class="fs-md text-muted mb-4">Total Revenue</p>
                                     <h3 class="mb-0 mt-auto">$<span class="counter-value" data-target="{{ $totalRevenue }}">{{ number_format($totalRevenue, 2) }}</span></h3>
-                                    <small class="text-muted">From egg sales</small>
+                                    <small class="text-muted">From egg sales ($0.05 per egg)</small>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="avatar-sm">
@@ -327,7 +322,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-xxl-4 col-md-6">
+
+                <!-- Net Income Card -->
+                <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex">
@@ -336,7 +333,7 @@
                                     <h3 class="mb-0 mt-auto {{ $netIncome < 0 ? 'text-danger' : 'text-success' }}">
                                         $<span class="counter-value" data-target="{{ abs($netIncome) }}">{{ number_format($netIncome, 2) }}</span>
                                     </h3>
-                                    <small class="text-muted">After expenses</small>
+                                    <small class="text-muted">After all expenses</small>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="avatar-sm">
@@ -356,20 +353,26 @@
                 <div class="col-xxl-6">
                     <div class="card">
                         <div class="card-header">
-                            <h5 class="card-title mb-0">Feed Consumption (Last 4 Weeks)</h5>
+                            <h5 class="card-title mb-0">Feed Consumption - Last 4 Weeks</h5>
                         </div>
                         <div class="card-body">
                             <canvas id="feedConsumptionChart" height="300"></canvas>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Feed consumption in 50kg bags</small>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xxl-6">
                     <div class="card">
                         <div class="card-header">
-                            <h5 class="card-title mb-0">Drug Usage (Treatment Days)</h5>
+                            <h5 class="card-title mb-0">Drug Usage - Treatment Days</h5>
                         </div>
                         <div class="card-body">
                             <canvas id="drugUsageChart" height="300"></canvas>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Number of days with medication administered</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -383,6 +386,9 @@
                         </div>
                         <div class="card-body">
                             <canvas id="eggProductionVsSoldChart" height="300"></canvas>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Comparison of eggs produced vs eggs sold</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -393,6 +399,9 @@
                         </div>
                         <div class="card-body">
                             <canvas id="productionRateAndEggMortalityChart" height="300"></canvas>
+                            <div class="text-center mt-2">
+                                <small class="text-muted">Production rate (%) vs Broken eggs count</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -412,7 +421,7 @@
                                         <div class="card-body">
                                             <h6 class="card-title">Income</h6>
                                             <div class="d-flex justify-content-between mb-2">
-                                                <span>Egg Sales:</span>
+                                                <span>Egg Sales ({{ number_format($totalEggsSoldTotalPieces, 0) }} eggs):</span>
                                                 <strong class="text-success">${{ number_format($totalRevenue, 2) }}</strong>
                                             </div>
                                             <hr>
@@ -428,15 +437,15 @@
                                         <div class="card-body">
                                             <h6 class="card-title">Expenses</h6>
                                             <div class="d-flex justify-content-between mb-2">
-                                                <span>Feed Cost:</span>
+                                                <span>Feed Cost ({{ number_format($totalFeedBags, 1) }} bags):</span>
                                                 <strong class="text-danger">${{ number_format($feedCost, 2) }}</strong>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
-                                                <span>Drug Cost:</span>
+                                                <span>Drug Cost ({{ $totalDrugUsage }} days):</span>
                                                 <strong class="text-danger">${{ number_format($drugCost, 2) }}</strong>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
-                                                <span>Labor Cost:</span>
+                                                <span>Labor Cost (30 days):</span>
                                                 <strong class="text-danger">${{ number_format($laborCost, 2) }}</strong>
                                             </div>
                                             <hr>
@@ -456,9 +465,14 @@
                                                 Net Income: ${{ number_format($netIncome, 2) }}
                                             </h4>
                                             @if($netIncome < 0)
-                                                <p class="text-danger mb-0">Operating at a loss</p>
+                                                <p class="text-danger mb-0">
+                                                    Operating at a loss of ${{ number_format(abs($netIncome), 2) }}
+                                                </p>
                                             @else
-                                                <p class="text-success mb-0">Profitable operation</p>
+                                                <p class="text-success mb-0">
+                                                    Profitable - ${{ number_format($netIncome, 2) }} profit
+                                                </p>
+                                                <small>Profit Margin: {{ $totalRevenue > 0 ? number_format(($netIncome/$totalRevenue)*100, 1) : 0 }}%</small>
                                             @endif
                                         </div>
                                     </div>
@@ -476,11 +490,12 @@
                             <div class="mb-3">
                                 <strong>Capital Investment:</strong><br>
                                 <span class="text-primary">${{ number_format($capitalInvestment, 2) }}</span>
-                                <small class="text-muted d-block">{{ number_format($totalBirds, 0) }} birds × $2.00</small>
+                                <small class="text-muted d-block">{{ number_format($totalBirds, 0) }} birds × $2.00 each</small>
                             </div>
                             <div class="mb-3">
                                 <strong>Operational Expenses:</strong><br>
                                 <span class="text-danger">${{ number_format($operationalExpenses, 2) }}</span>
+                                <small class="text-muted d-block">Feed: ${{ number_format($feedCost, 2) }}, Drugs: ${{ number_format($drugCost, 2) }}, Labor: ${{ number_format($laborCost, 2) }}</small>
                             </div>
                             <div class="mb-3">
                                 <strong>Net Income:</strong><br>
@@ -491,7 +506,7 @@
                             <div class="mb-3">
                                 <strong>Capital Value:</strong><br>
                                 <span class="text-info">${{ number_format($capitalValue, 2) }}</span>
-                                <small class="text-muted d-block">Based on income approach (10% cap rate)</small>
+                                <small class="text-muted d-block">Based on income approach (10% capitalization rate)</small>
                             </div>
                             <canvas id="flockCapitalChart" height="250"></canvas>
                         </div>
@@ -512,26 +527,125 @@
                                     <div class="mb-3">
                                         <h3 class="text-primary">{{ number_format($avgProductionRate, 1) }}%</h3>
                                         <p class="text-muted mb-0">Production Rate</p>
+                                        <small class="text-muted">Eggs per bird per day</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
-                                        <h3 class="text-info">{{ $totalBirds > 0 ? number_format(($totalMortality / $totalBirds) * 100, 2) : 0 }}%</h3>
-                                        <p class="text-muted mb-0">Mortality Rate</p>
+                                        @php
+                                            $birdMortalityRate = $totalBirds > 0 
+                                                ? ($totalMortality / $totalBirds) * 100 
+                                                : 0;
+                                        @endphp
+                                        <h3 class="text-info">{{ number_format($birdMortalityRate, 2) }}%</h3>
+                                        <p class="text-muted mb-0">Bird Mortality Rate</p>
+                                        <small class="text-muted">{{ $totalMortality }} / {{ $totalBirds }} birds</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
                                         <h3 class="text-success">${{ number_format($totalRevenue / max($currentBirds, 1), 2) }}</h3>
                                         <p class="text-muted mb-0">Revenue per Bird</p>
+                                        <small class="text-muted">Based on {{ $currentBirds }} current birds</small>
                                     </div>
                                 </div>
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
-                                        <h3 class="text-warning">{{ $currentBirds > 0 ? number_format($totalFeedConsumed / $currentBirds, 2) : 0 }}kg</h3>
+                                        <h3 class="text-warning">{{ $currentBirds > 0 ? number_format($totalFeedKg / $currentBirds, 2) : 0 }}kg</h3>
                                         <p class="text-muted mb-0">Feed per Bird</p>
+                                        <small class="text-muted">{{ number_format($totalFeedBags, 1) }} bags total</small>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        @php
+                                            $feedEfficiency = $totalEggProductionTotalPieces > 0 
+                                                ? $totalFeedKg / $totalEggProductionTotalPieces 
+                                                : 0;
+                                        @endphp
+                                        <h3 class="text-dark">{{ number_format($feedEfficiency, 2) }}kg</h3>
+                                        <p class="text-muted mb-0">Feed per Egg</p>
+                                        <small class="text-muted">Feed efficiency ratio</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <h3 class="text-secondary">{{ $totalDrugUsage > 0 ? number_format($currentBirds / $totalDrugUsage, 1) : 0 }}</h3>
+                                        <p class="text-muted mb-0">Birds per Treatment</p>
+                                        <small class="text-muted">Drug administration efficiency</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        @php
+                                            $eggDisposalRate = $totalEggProductionTotalPieces > 0 
+                                                ? (($totalEggsSoldTotalPieces + $totalEggMortality) / $totalEggProductionTotalPieces) * 100 
+                                                : 0;
+                                        @endphp
+                                        <h3 class="text-success">{{ number_format($eggDisposalRate, 1) }}%</h3>
+                                        <p class="text-muted mb-0">Egg Disposal Rate</p>
+                                        <small class="text-muted">Sold + Broken vs Produced</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        @php
+                                            $eggSalesRate = $totalEggsSoldTotalPieces > 0 
+                                                ? ($totalEggsSoldTotalPieces / ($totalEggsSoldTotalPieces + $totalEggMortality)) * 100 
+                                                : 0;
+                                        @endphp
+                                        <h3 class="text-info">{{ number_format($eggSalesRate, 1) }}%</h3>
+                                        <p class="text-muted mb-0">Sales Efficiency</p>
+                                        <small class="text-muted">Sold vs (Sold + Broken)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Summary Report</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert {{ $netIncome < 0 ? 'alert-danger' : 'alert-success' }}">
+                                <h5 class="alert-heading">Overall Performance Summary</h5>
+                                <p>
+                                    During the selected period ({{ $startDate->format('M d, Y') }} to {{ $endDate->format('M d, Y') }}), 
+                                    @if($flockId)
+                                        Flock {{ $flockId }} 
+                                    @else
+                                        all flocks
+                                    @endif
+                                    produced <strong>{{ number_format($totalEggProductionTotalPieces, 0) }} eggs</strong> 
+                                    ({{ $totalEggProductionCrates }} crates {{ $totalEggProductionPieces }} pieces).
+                                </p>
+                                <p>
+                                    Of these, <strong>{{ number_format($totalEggsSoldTotalPieces, 0) }} eggs</strong> were sold, 
+                                    generating <strong>${{ number_format($totalRevenue, 2) }}</strong> in revenue. 
+                                    <strong>{{ number_format($totalEggMortality, 0) }} eggs</strong> were broken ({{ number_format($eggMortalityRate, 1) }}% of production).
+                                </p>
+                                <p>
+                                    Feed consumption totaled <strong>{{ number_format($totalFeedBags, 1) }} bags</strong> 
+                                    ({{ number_format($totalFeedKg, 1) }} kg), costing <strong>${{ number_format($feedCost, 2) }}</strong>.
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Final Result:</strong> 
+                                    @if($netIncome < 0)
+                                        The operation incurred a loss of <strong>${{ number_format(abs($netIncome), 2) }}</strong> 
+                                        during this period. Consider reviewing feed efficiency and mortality rates.
+                                    @else
+                                        The operation generated a profit of <strong>${{ number_format($netIncome, 2) }}</strong> 
+                                        with a profit margin of {{ $totalRevenue > 0 ? number_format(($netIncome/$totalRevenue)*100, 1) : 0 }}%.
+                                    @endif
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -552,7 +666,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Debug chart data
         console.log('Weeks:', {!! json_encode($weeks) !!});
-        console.log('Feed Data:', {!! json_encode(array_values($feedChartData)) !!});
+        console.log('Feed Data (Bags):', {!! json_encode(array_values($feedChartData)) !!});
         console.log('Drug Data:', {!! json_encode(array_values($drugChartData)) !!});
         console.log('Egg Production Data:', {!! json_encode(array_values($eggProductionChartData)) !!});
         console.log('Egg Sold Data:', {!! json_encode(array_values($eggSoldChartData)) !!});
@@ -609,31 +723,46 @@
             plugins: {
                 legend: {
                     position: 'top',
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    grid: {
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
                 }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index',
             }
         };
 
-        // Initialize Feed Consumption Chart
+        // Initialize Feed Consumption Chart (in BAGS)
         try {
             new Chart(document.getElementById('feedConsumptionChart'), {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: {!! json_encode($weeks->map(function($week) {
                         return 'Week ' . substr($week, -2);
                     })) !!},
                     datasets: [{
-                        label: 'Feed Consumption (kg)',
+                        label: 'Feed Consumption (Bags)',
                         data: {!! json_encode(array_values($feedChartData)) !!},
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
+                        backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                        borderColor: '#ffc107',
+                        borderWidth: 1,
+                        borderRadius: 5,
                     }]
                 },
                 options: {
@@ -643,13 +772,27 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Kilograms (kg)'
+                                text: 'Number of Bags (50kg each)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' bags';
+                                }
                             }
                         },
                         x: {
                             title: {
                                 display: true,
                                 text: 'Week'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Feed: ${context.raw.toFixed(1)} bags`;
+                                }
                             }
                         }
                     }
@@ -662,7 +805,7 @@
         // Initialize Drug Usage Chart
         try {
             new Chart(document.getElementById('drugUsageChart'), {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: {!! json_encode($weeks->map(function($week) {
                         return 'Week ' . substr($week, -2);
@@ -670,9 +813,13 @@
                     datasets: [{
                         label: 'Treatment Days',
                         data: {!! json_encode(array_values($drugChartData)) !!},
-                        backgroundColor: '#dc3545',
-                        borderColor: '#dc3545',
-                        borderWidth: 1
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderColor: '#0d6efd',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0d6efd',
+                        pointRadius: 5
                     }]
                 },
                 options: {
@@ -685,13 +832,25 @@
                                 text: 'Number of Days'
                             },
                             ticks: {
-                                stepSize: 1
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return Number.isInteger(value) ? value : '';
+                                }
                             }
                         },
                         x: {
                             title: {
                                 display: true,
                                 text: 'Week'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Treatment Days: ${context.raw}`;
+                                }
                             }
                         }
                     }
@@ -713,16 +872,18 @@
                         {
                             label: 'Eggs Produced',
                             data: {!! json_encode(array_values($eggProductionChartData)) !!},
-                            backgroundColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.8)',
                             borderColor: '#28a745',
-                            borderWidth: 1
+                            borderWidth: 1,
+                            borderRadius: 5,
                         },
                         {
                             label: 'Eggs Sold',
                             data: {!! json_encode(array_values($eggSoldChartData)) !!},
-                            backgroundColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.8)',
                             borderColor: '#ffc107',
-                            borderWidth: 1
+                            borderWidth: 1,
+                            borderRadius: 5,
                         }
                     ]
                 },
@@ -734,12 +895,28 @@
                             title: {
                                 display: true,
                                 text: 'Number of Eggs'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
                             }
                         },
                         x: {
                             title: {
                                 display: true,
                                 text: 'Week'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label;
+                                    const value = context.raw;
+                                    return `${label}: ${value.toLocaleString()} eggs`;
+                                }
                             }
                         }
                     }
@@ -763,20 +940,24 @@
                             data: {!! json_encode(array_values($productionRateChartData)) !!},
                             borderColor: '#17a2b8',
                             backgroundColor: 'rgba(23, 162, 184, 0.1)',
-                            borderWidth: 2,
+                            borderWidth: 3,
                             fill: true,
                             tension: 0.4,
-                            yAxisID: 'y'
+                            yAxisID: 'y',
+                            pointBackgroundColor: '#17a2b8',
+                            pointRadius: 5
                         },
                         {
-                            label: 'Egg Mortality',
+                            label: 'Egg Mortality (Broken)',
                             data: {!! json_encode(array_values($eggMortalityChartData)) !!},
                             borderColor: '#dc3545',
                             backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                            borderWidth: 2,
+                            borderWidth: 3,
                             fill: true,
                             tension: 0.4,
-                            yAxisID: 'y1'
+                            yAxisID: 'y1',
+                            pointBackgroundColor: '#dc3545',
+                            pointRadius: 5
                         }
                     ]
                 },
@@ -792,7 +973,12 @@
                                 text: 'Production Rate (%)'
                             },
                             min: 0,
-                            max: 100
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
                         },
                         y1: {
                             type: 'linear',
@@ -800,16 +986,35 @@
                             position: 'right',
                             title: {
                                 display: true,
-                                text: 'Egg Mortality'
+                                text: 'Egg Mortality Count'
                             },
                             grid: {
                                 drawOnChartArea: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
                             }
                         },
                         x: {
                             title: {
                                 display: true,
                                 text: 'Week'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label;
+                                    const value = context.raw;
+                                    if (label.includes('Production Rate')) {
+                                        return `${label}: ${value.toFixed(1)}%`;
+                                    }
+                                    return `${label}: ${value} eggs`;
+                                }
                             }
                         }
                     }
@@ -831,8 +1036,8 @@
                             Math.max(0, {{ $operationalExpenses }}),
                             Math.max(0, {{ $netIncome }})
                         ],
-                        backgroundColor: ['#007bff', '#dc3545', '#28a745'],
-                        borderColor: ['#007bff', '#dc3545', '#28a745'],
+                        backgroundColor: ['#0d6efd', '#dc3545', '{{ $netIncome >= 0 ? "#28a745" : "#dc3545" }}'],
+                        borderColor: ['#0d6efd', '#dc3545', '{{ $netIncome >= 0 ? "#28a745" : "#dc3545" }}'],
                         borderWidth: 2
                     }]
                 },

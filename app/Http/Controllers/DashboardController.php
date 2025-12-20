@@ -93,7 +93,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get total sold eggs from the most recent entry (cumulative total)
+     * Calculate total sold eggs by summing daily_sold_egg field
      */
     private function getTotalSoldEggs($dailyEntries)
     {
@@ -101,14 +101,20 @@ class DashboardController extends Controller
             return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
         }
 
-        // Get the most recent entry which should have the cumulative total_sold_egg
-        $latestEntry = $dailyEntries->sortByDesc('created_at')->first();
-        
-        if ($latestEntry && $latestEntry->total_sold_egg) {
-            return $this->parseEggData($latestEntry->total_sold_egg);
+        $totalSoldPieces = 0;
+        foreach ($dailyEntries as $entry) {
+            $soldData = $this->parseEggData($entry->daily_sold_egg);
+            $totalSoldPieces += $soldData['total_pieces'];
         }
 
-        return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
+        $crates = floor($totalSoldPieces / self::EGGS_PER_CRATE);
+        $pieces = $totalSoldPieces % self::EGGS_PER_CRATE;
+
+        return [
+            'crates' => $crates,
+            'pieces' => $pieces,
+            'total_pieces' => $totalSoldPieces
+        ];
     }
 
     /**
@@ -116,27 +122,29 @@ class DashboardController extends Controller
      */
     private function calculateTotalProduction($dailyEntries)
     {
-        $totalCrates = 0;
         $totalPieces = 0;
-        $totalPiecesOnly = 0;
 
         foreach ($dailyEntries as $entry) {
             $eggData = $this->parseEggData($entry->daily_egg_production);
-            $totalCrates += $eggData['crates'];
-            $totalPieces += $eggData['pieces'];
-            $totalPiecesOnly += $eggData['total_pieces'];
+            $totalPieces += $eggData['total_pieces'];
         }
 
-        // Convert excess pieces to crates
-        $extraCratesFromPieces = floor($totalPieces / self::EGGS_PER_CRATE);
-        $finalCrates = $totalCrates + $extraCratesFromPieces;
-        $finalPieces = $totalPieces % self::EGGS_PER_CRATE;
+        $crates = floor($totalPieces / self::EGGS_PER_CRATE);
+        $pieces = $totalPieces % self::EGGS_PER_CRATE;
 
         return [
-            'crates' => $finalCrates,
-            'pieces' => $finalPieces,
-            'total_pieces' => $totalPiecesOnly
+            'crates' => $crates,
+            'pieces' => $pieces,
+            'total_pieces' => $totalPieces
         ];
+    }
+
+    /**
+     * Calculate total broken eggs
+     */
+    private function calculateTotalBrokenEggs($dailyEntries)
+    {
+        return $dailyEntries->sum('broken_egg');
     }
 
     public function index(Request $request)
@@ -156,7 +164,8 @@ class DashboardController extends Controller
         $flocks = Flock::all();
         
         // Base query with date filtering
-        $query = DailyEntry::whereBetween('created_at', [$startDate, $endDate]);
+        $query = DailyEntry::whereBetween('created_at', [$startDate, $endDate])
+                          ->with('weekEntry.flock');
         
         if ($flockId) {
             $query->whereHas('weekEntry', function($q) use ($flockId) {
@@ -165,7 +174,7 @@ class DashboardController extends Controller
         }
 
         // Get all daily entries for calculations
-        $dailyEntries = $query->with('weekEntry.flock')->get();
+        $dailyEntries = $query->get();
 
         // Key Metrics Calculations
         $totalBirds = $flockId 
@@ -185,26 +194,28 @@ class DashboardController extends Controller
         $totalEggProductionPieces = $productionData['pieces'];
         $totalEggProductionTotalPieces = $productionData['total_pieces'];
         
-        // Fix: Add the missing variables
+        // For backward compatibility
         $totalEggProduction = $totalEggProductionTotalPieces;
 
-        // Feed calculations - convert to bags
+        // Feed calculations - ALL IN BAGS
         $totalFeedKg = $dailyEntries->sum('daily_feeds');
         $totalFeedBags = $this->kgToBags($totalFeedKg);
         
-        // Fix: Add the missing variable - totalFeedConsumed is the same as totalFeedKg
-        $totalFeedConsumed = $totalFeedKg;
+        // For backward compatibility
+        $totalFeedConsumed = $totalFeedKg; // Keep in kg for some charts
 
         $totalMortality = $dailyEntries->sum('daily_mortality');
-        $totalEggMortality = $dailyEntries->sum('broken_egg');
+        
+        // Egg Mortality = Broken Eggs
+        $totalEggMortality = $this->calculateTotalBrokenEggs($dailyEntries);
 
-        // CORRECTED: Get total sold eggs from cumulative total_sold_egg field of latest entry
+        // Total sold eggs
         $soldEggData = $this->getTotalSoldEggs($dailyEntries);
         $totalEggsSoldCrates = $soldEggData['crates'];
         $totalEggsSoldPieces = $soldEggData['pieces'];
         $totalEggsSoldTotalPieces = $soldEggData['total_pieces'];
         
-        // Fix: Add the missing variable - totalEggsSold is the same as totalEggsSoldTotalPieces
+        // For backward compatibility
         $totalEggsSold = $totalEggsSoldTotalPieces;
 
         // Production rate calculation
@@ -239,12 +250,14 @@ class DashboardController extends Controller
         })->map(function($weekEntries) {
             $weekProduction = 0;
             $weekSales = 0;
+            $weekBroken = 0;
             
             foreach ($weekEntries as $entry) {
                 $productionData = $this->parseEggData($entry->daily_egg_production);
                 $salesData = $this->parseEggData($entry->daily_sold_egg);
                 $weekProduction += $productionData['total_pieces'];
                 $weekSales += $salesData['total_pieces'];
+                $weekBroken += $entry->broken_egg;
             }
 
             return [
@@ -252,11 +265,12 @@ class DashboardController extends Controller
                 'drugs' => $weekEntries->where('drugs', '!=', 'Nil')->where('drugs', '!=', '')->count(),
                 'eggs_produced' => $weekProduction,
                 'eggs_sold' => $weekSales,
+                'eggs_broken' => $weekBroken,
                 'production_rate' => $weekEntries->avg(function($entry) {
                     $production = $this->parseEggData($entry->daily_egg_production)['total_pieces'];
                     return $entry->current_birds > 0 ? ($production / $entry->current_birds) * 100 : 0;
                 }),
-                'egg_mortality' => $weekEntries->sum('broken_egg'),
+                'egg_mortality' => $weekBroken,
             ];
         });
 
@@ -277,7 +291,7 @@ class DashboardController extends Controller
         foreach ($weeks as $week) {
             $data = $chartData[$week] ?? [
                 'feed_bags' => 0, 'drugs' => 0, 'eggs_produced' => 0, 
-                'eggs_sold' => 0, 'production_rate' => 0, 'egg_mortality' => 0
+                'eggs_sold' => 0, 'eggs_broken' => 0, 'production_rate' => 0, 'egg_mortality' => 0
             ];
             
             $feedChartData[] = $data['feed_bags'];
@@ -292,19 +306,19 @@ class DashboardController extends Controller
             'pagetitle',
             'totalBirds',
             'currentBirds',
-            'totalEggProduction', // Now included
+            'totalEggProduction',
             'totalEggProductionCrates',
             'totalEggProductionPieces',
             'totalEggProductionTotalPieces',
             'totalMortality',
             'totalFeedBags',
             'totalFeedKg',
-            'totalFeedConsumed', // Now included
+            'totalFeedConsumed',
             'totalDrugUsage',
             'totalEggsSoldCrates',
             'totalEggsSoldPieces',
             'totalEggsSoldTotalPieces',
-            'totalEggsSold', // Now included - this was missing
+            'totalEggsSold',
             'totalRevenue',
             'avgProductionRate',
             'totalEggMortality',
