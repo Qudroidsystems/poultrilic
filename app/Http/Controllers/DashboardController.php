@@ -223,6 +223,68 @@ class DashboardController extends Controller
         return $unrealisticEntries;
     }
 
+    /**
+     * Calculate flock-specific metrics
+     */
+    private function calculateFlockMetrics($flockId, $dailyEntries)
+    {
+        if ($flockId) {
+            // Single flock selected
+            $flock = Flock::find($flockId);
+            if (!$flock) {
+                return [
+                    'totalBirds' => 0,
+                    'currentBirds' => 0,
+                    'totalMortality' => 0
+                ];
+            }
+            
+            $totalBirds = $flock->initial_bird_count;
+            
+            // Get latest current birds from this flock
+            $latestEntry = $dailyEntries->sortByDesc('created_at')->first();
+            $currentBirds = $latestEntry->current_birds ?? 0;
+            
+            // Calculate correct mortality: initial - current
+            $totalMortality = max(0, $totalBirds - $currentBirds);
+            
+            return [
+                'totalBirds' => $totalBirds,
+                'currentBirds' => $currentBirds,
+                'totalMortality' => $totalMortality
+            ];
+        } else {
+            // All flocks combined
+            $totalBirds = Flock::sum('initial_bird_count');
+            
+            // For all flocks, we need to get the latest current birds for each flock
+            // Since we're combining data from both flocks, we need a different approach
+            
+            // Get all flocks
+            $flocks = Flock::all();
+            $currentBirds = 0;
+            
+            foreach ($flocks as $flock) {
+                // Get latest entry for this flock
+                $latestEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flock) {
+                    $q->where('flock_id', $flock->id);
+                })->orderBy('created_at', 'desc')->first();
+                
+                if ($latestEntry) {
+                    $currentBirds += $latestEntry->current_birds;
+                }
+            }
+            
+            $totalMortality = max(0, $totalBirds - $currentBirds);
+            
+            return [
+                'totalBirds' => $totalBirds,
+                'currentBirds' => $currentBirds,
+                'totalMortality' => $totalMortality
+            ];
+        }
+    }
+
     public function index(Request $request)
     {
         $pagetitle = "Poultry Analytics";
@@ -256,23 +318,11 @@ class DashboardController extends Controller
         $unrealisticEntries = $this->validateEggProduction($dailyEntries);
         $hasDataQualityIssues = count($unrealisticEntries) > 0;
 
-        // Key Metrics Calculations
-        $totalBirds = $flockId 
-            ? Flock::find($flockId)->initial_bird_count ?? 0
-            : Flock::sum('initial_bird_count');
-
-        // Current birds - use average of last 7 days for more stable calculation
-        $currentBirds = 0;
-        if ($dailyEntries->count() > 0) {
-            $lastWeekEntries = $dailyEntries->sortByDesc('created_at')->take(7);
-            $currentBirds = (int) $lastWeekEntries->avg('current_birds');
-            
-            // Fallback to latest if average fails
-            if ($currentBirds <= 0) {
-                $latestEntry = $dailyEntries->sortByDesc('created_at')->first();
-                $currentBirds = $latestEntry->current_birds ?? 0;
-            }
-        }
+        // CORRECTED: Calculate flock metrics (total birds, current birds, mortality)
+        $flockMetrics = $this->calculateFlockMetrics($flockId, $dailyEntries);
+        $totalBirds = $flockMetrics['totalBirds'];
+        $currentBirds = $flockMetrics['currentBirds'];
+        $totalMortality = $flockMetrics['totalMortality'];
 
         // Egg production calculations - in crates and pieces
         $productionData = $this->calculateTotalProduction($dailyEntries);
@@ -290,8 +340,6 @@ class DashboardController extends Controller
         // For backward compatibility
         $totalFeedConsumed = $totalFeedBags; // Now in bags, not kg
 
-        $totalMortality = $dailyEntries->sum('daily_mortality');
-        
         // Egg Mortality = Broken Eggs
         $totalEggMortality = $this->calculateTotalBrokenEggs($dailyEntries);
 
@@ -415,19 +463,22 @@ class DashboardController extends Controller
         })->count();
         
         $avgDailyProduction = $daysWithProduction > 0 ? $totalEggProductionTotalPieces / $daysWithProduction : 0;
-        $avgDailyBirds = $dailyEntries->filter(function($entry) {
+        
+        // Calculate average daily birds from entries with positive bird count
+        $entriesWithBirds = $dailyEntries->filter(function($entry) {
             return $entry->current_birds > 0;
-        })->avg('current_birds');
+        });
+        $avgDailyBirds = $entriesWithBirds->count() > 0 ? $entriesWithBirds->avg('current_birds') : 0;
 
         return view('dashboards.dashboard', compact(
             'pagetitle',
             'totalBirds',
             'currentBirds',
+            'totalMortality', // CORRECTED: This is now initial - current, not sum(daily_mortality)
             'totalEggProduction',
             'totalEggProductionCrates',
             'totalEggProductionPieces',
             'totalEggProductionTotalPieces',
-            'totalMortality',
             'totalFeedBags',
             'totalFeedKg',
             'totalFeedConsumed',
