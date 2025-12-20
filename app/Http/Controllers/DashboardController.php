@@ -132,7 +132,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Calculate average daily production per bird
+     * Calculate average daily production per bird - FIXED VERSION
      */
     private function calculateProductionRate($dailyEntries, $currentBirds)
     {
@@ -140,23 +140,87 @@ class DashboardController extends Controller
             return 0;
         }
 
-        // Get total eggs produced
-        $totalEggs = 0;
-        foreach ($dailyEntries as $entry) {
+        // Filter out entries with 0 or negative birds and unrealistic production
+        $validEntries = $dailyEntries->filter(function($entry) {
+            if ($entry->current_birds <= 0) {
+                return false;
+            }
+            
             $eggData = $this->parseEggData($entry->daily_egg_production);
-            $totalEggs += $eggData['total_pieces'];
+            
+            // Cap unrealistic production at 110% of bird count
+            $maxPossible = $entry->current_birds * 1.1;
+            if ($eggData['total_pieces'] > $maxPossible) {
+                return false;
+            }
+            
+            return true;
+        });
+        
+        if ($validEntries->count() === 0) {
+            return 0;
         }
 
+        // Get total eggs produced from valid entries only
+        $totalEggs = 0;
+        $daysWithProduction = 0;
+        
+        foreach ($validEntries as $entry) {
+            $eggData = $this->parseEggData($entry->daily_egg_production);
+            
+            // Only count days with egg production data
+            if ($eggData['total_pieces'] > 0) {
+                $totalEggs += $eggData['total_pieces'];
+                $daysWithProduction++;
+            }
+        }
+        
+        if ($daysWithProduction === 0) {
+            return 0;
+        }
+        
+        // Use average birds across valid entries
+        $avgBirds = $validEntries->avg('current_birds');
+        
+        if ($avgBirds <= 0) {
+            return 0;
+        }
+        
         // Calculate average eggs per bird per day
-        $daysCount = $dailyEntries->count();
-        $avgEggsPerBirdPerDay = ($totalEggs / $daysCount) / $currentBirds;
+        $avgEggsPerBirdPerDay = ($totalEggs / $daysWithProduction) / $avgBirds;
         
-        // Convert to percentage (assuming 1 egg per bird per day = 100%)
-        // Or simply show as decimal: 0.85 means 85% production rate
-        $productionRate = $avgEggsPerBirdPerDay * 100;
+        // Cap at 100% (1 egg per bird per day is 100%)
+        $productionRate = min(100, max(0, $avgEggsPerBirdPerDay * 100));
         
-        // Cap at reasonable values
-        return min(100, max(0, $productionRate));
+        return $productionRate;
+    }
+
+    /**
+     * Validate and clean egg production data
+     */
+    private function validateEggProduction($dailyEntries)
+    {
+        $unrealisticEntries = [];
+        
+        foreach ($dailyEntries as $entry) {
+            if ($entry->current_birds > 0) {
+                $eggData = $this->parseEggData($entry->daily_egg_production);
+                $maxPossible = $entry->current_birds * 1.1; // Allow 10% margin
+                
+                // If production exceeds possible maximum, flag it
+                if ($eggData['total_pieces'] > $maxPossible) {
+                    $unrealisticEntries[] = [
+                        'id' => $entry->id,
+                        'birds' => $entry->current_birds,
+                        'eggs' => $eggData['total_pieces'],
+                        'rate' => ($eggData['total_pieces'] / $entry->current_birds) * 100,
+                        'date' => $entry->created_at->format('Y-m-d')
+                    ];
+                }
+            }
+        }
+        
+        return $unrealisticEntries;
     }
 
     public function index(Request $request)
@@ -188,16 +252,26 @@ class DashboardController extends Controller
         // Get all daily entries for calculations
         $dailyEntries = $query->get();
 
+        // Validate data quality
+        $unrealisticEntries = $this->validateEggProduction($dailyEntries);
+        $hasDataQualityIssues = count($unrealisticEntries) > 0;
+
         // Key Metrics Calculations
         $totalBirds = $flockId 
             ? Flock::find($flockId)->initial_bird_count ?? 0
             : Flock::sum('initial_bird_count');
 
-        // Current birds from the most recent entry
+        // Current birds - use average of last 7 days for more stable calculation
         $currentBirds = 0;
         if ($dailyEntries->count() > 0) {
-            $latestEntry = $dailyEntries->sortByDesc('created_at')->first();
-            $currentBirds = $latestEntry->current_birds ?? 0;
+            $lastWeekEntries = $dailyEntries->sortByDesc('created_at')->take(7);
+            $currentBirds = (int) $lastWeekEntries->avg('current_birds');
+            
+            // Fallback to latest if average fails
+            if ($currentBirds <= 0) {
+                $latestEntry = $dailyEntries->sortByDesc('created_at')->first();
+                $currentBirds = $latestEntry->current_birds ?? 0;
+            }
         }
 
         // Egg production calculations - in crates and pieces
@@ -269,12 +343,15 @@ class DashboardController extends Controller
 
             // Calculate average production rate for the week
             $weekProductionRate = 0;
-            if ($weekEntries->count() > 0) {
-                $avgCurrentBirdsWeek = $weekEntries->avg('current_birds');
-                if ($avgCurrentBirdsWeek > 0) {
-                    $avgEggsPerBirdPerDay = ($weekProduction / $weekEntries->count()) / $avgCurrentBirdsWeek;
-                    $weekProductionRate = $avgEggsPerBirdPerDay * 100;
-                    $weekProductionRate = min(100, max(0, $weekProductionRate));
+            $validWeekEntries = $weekEntries->filter(function($entry) {
+                return $entry->current_birds > 0;
+            });
+            
+            if ($validWeekEntries->count() > 0) {
+                $avgCurrentBirdsWeek = $validWeekEntries->avg('current_birds');
+                if ($avgCurrentBirdsWeek > 0 && $weekProduction > 0) {
+                    $avgEggsPerBirdPerDay = ($weekProduction / $validWeekEntries->count()) / $avgCurrentBirdsWeek;
+                    $weekProductionRate = min(100, max(0, $avgEggsPerBirdPerDay * 100));
                 }
             }
 
@@ -332,6 +409,16 @@ class DashboardController extends Controller
         $eggDisposalRate = $totalEggProductionTotalPieces > 0 ? (($totalEggsSoldTotalPieces + $totalEggMortality) / $totalEggProductionTotalPieces) * 100 : 0;
         $eggSalesEfficiency = ($totalEggsSoldTotalPieces + $totalEggMortality) > 0 ? ($totalEggsSoldTotalPieces / ($totalEggsSoldTotalPieces + $totalEggMortality)) * 100 : 0;
 
+        // Data quality metrics
+        $daysWithProduction = $dailyEntries->filter(function($entry) {
+            return $this->parseEggData($entry->daily_egg_production)['total_pieces'] > 0;
+        })->count();
+        
+        $avgDailyProduction = $daysWithProduction > 0 ? $totalEggProductionTotalPieces / $daysWithProduction : 0;
+        $avgDailyBirds = $dailyEntries->filter(function($entry) {
+            return $entry->current_birds > 0;
+        })->avg('current_birds');
+
         return view('dashboards.dashboard', compact(
             'pagetitle',
             'totalBirds',
@@ -377,7 +464,12 @@ class DashboardController extends Controller
             'feedEfficiency',
             'costPerEgg',
             'eggDisposalRate',
-            'eggSalesEfficiency'
+            'eggSalesEfficiency',
+            'hasDataQualityIssues',
+            'unrealisticEntries',
+            'daysWithProduction',
+            'avgDailyProduction',
+            'avgDailyBirds'
         ));
     }
 
