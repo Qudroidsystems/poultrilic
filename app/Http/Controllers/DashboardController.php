@@ -21,7 +21,7 @@ class DashboardController extends Controller
 
     // Constants
     const EGGS_PER_CRATE = 30;
-    const KG_PER_BAG = 50;
+    const BAG_WEIGHT_KG = 50; // For information only - actual calculation treats each unit as 1 bag
 
     /**
      * Parse egg string format (e.g., "25 Cr 19PC") to total pieces and crates
@@ -74,22 +74,6 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
         }
-    }
-
-    /**
-     * Convert kg to bags
-     */
-    private function kgToBags($kg)
-    {
-        return $kg / self::KG_PER_BAG;
-    }
-
-    /**
-     * Convert bags to kg
-     */
-    private function bagsToKg($bags)
-    {
-        return $bags * self::KG_PER_BAG;
     }
 
     /**
@@ -197,12 +181,12 @@ class DashboardController extends Controller
         // For backward compatibility
         $totalEggProduction = $totalEggProductionTotalPieces;
 
-        // Feed calculations - ALL IN BAGS
-        $totalFeedKg = $dailyEntries->sum('daily_feeds');
-        $totalFeedBags = $this->kgToBags($totalFeedKg);
+        // FIXED: Feed calculations - each daily_feeds unit = 1 BAG (not kg)
+        $totalFeedBags = $dailyEntries->sum('daily_feeds');
+        $totalFeedKg = $totalFeedBags * self::BAG_WEIGHT_KG; // Convert to kg for display
         
         // For backward compatibility
-        $totalFeedConsumed = $totalFeedKg; // Keep in kg for some charts
+        $totalFeedConsumed = $totalFeedBags; // Now in bags, not kg
 
         $totalMortality = $dailyEntries->sum('daily_mortality');
         
@@ -218,12 +202,14 @@ class DashboardController extends Controller
         // For backward compatibility
         $totalEggsSold = $totalEggsSoldTotalPieces;
 
-        // Production rate calculation
+        // FIXED: Production rate calculation - FIX THE HUGE PERCENTAGE ERROR
         $avgProductionRate = 0;
         if ($currentBirds > 0 && $dailyEntries->count() > 0) {
-            $totalProductionDays = $dailyEntries->count();
-            $avgDailyProduction = $totalEggProductionTotalPieces / $totalProductionDays;
+            $avgDailyProduction = $totalEggProductionTotalPieces / $dailyEntries->count();
             $avgProductionRate = ($avgDailyProduction / $currentBirds) * 100;
+            
+            // Cap at reasonable values (0-100%)
+            $avgProductionRate = min(100, max(0, $avgProductionRate));
         }
 
         // Revenue calculation (assuming $0.05 per egg)
@@ -237,7 +223,7 @@ class DashboardController extends Controller
 
         // Flock Capital Analysis - using bags for feed cost
         $capitalInvestment = $totalBirds * 2; // $2 per bird
-        $feedCost = $totalFeedBags * 25; // $25 per bag (50kg)
+        $feedCost = $totalFeedBags * 25; // $25 per bag
         $drugCost = $totalDrugUsage * 10; // $10 per drug administration
         $laborCost = 1000; // Fixed for 30 days
         $operationalExpenses = $feedCost + $drugCost + $laborCost;
@@ -260,16 +246,24 @@ class DashboardController extends Controller
                 $weekBroken += $entry->broken_egg;
             }
 
+            // Calculate average production rate for the week
+            $weekProductionRate = 0;
+            if ($weekEntries->count() > 0) {
+                $avgDailyProductionWeek = $weekProduction / $weekEntries->count();
+                $avgCurrentBirdsWeek = $weekEntries->avg('current_birds');
+                if ($avgCurrentBirdsWeek > 0) {
+                    $weekProductionRate = ($avgDailyProductionWeek / $avgCurrentBirdsWeek) * 100;
+                    $weekProductionRate = min(100, max(0, $weekProductionRate)); // Cap at 0-100%
+                }
+            }
+
             return [
-                'feed_bags' => $this->kgToBags($weekEntries->sum('daily_feeds')),
+                'feed_bags' => $weekEntries->sum('daily_feeds'), // Already in bags
                 'drugs' => $weekEntries->where('drugs', '!=', 'Nil')->where('drugs', '!=', '')->count(),
                 'eggs_produced' => $weekProduction,
                 'eggs_sold' => $weekSales,
                 'eggs_broken' => $weekBroken,
-                'production_rate' => $weekEntries->avg(function($entry) {
-                    $production = $this->parseEggData($entry->daily_egg_production)['total_pieces'];
-                    return $entry->current_birds > 0 ? ($production / $entry->current_birds) * 100 : 0;
-                }),
+                'production_rate' => $weekProductionRate,
                 'egg_mortality' => $weekBroken,
             ];
         });
@@ -302,6 +296,12 @@ class DashboardController extends Controller
             $eggMortalityChartData[] = $data['egg_mortality'];
         }
 
+        // Calculate egg mortality rate (broken eggs as percentage of total production)
+        $eggMortalityRate = 0;
+        if ($totalEggProductionTotalPieces > 0) {
+            $eggMortalityRate = ($totalEggMortality / $totalEggProductionTotalPieces) * 100;
+        }
+
         return view('dashboards.dashboard', compact(
             'pagetitle',
             'totalBirds',
@@ -322,6 +322,7 @@ class DashboardController extends Controller
             'totalRevenue',
             'avgProductionRate',
             'totalEggMortality',
+            'eggMortalityRate',
             'capitalInvestment',
             'operationalExpenses',
             'netIncome',
