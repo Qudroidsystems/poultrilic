@@ -92,32 +92,8 @@
                 </div>
             </div>
 
-            <!-- Data Quality Summary -->
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <p class="text-muted mb-2">Data Quality Summary</p>
-                            <div class="d-flex justify-content-between">
-                                <span>Total Days:</span>
-                                <strong>{{ $dailyEntries->count() }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span>Days with Production:</span>
-                                <strong>{{ $daysWithProduction }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span>Avg Daily Birds:</span>
-                                <strong>{{ number_format($avgDailyBirds, 0) }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span>Avg Daily Eggs:</span>
-                                <strong>{{ number_format($avgDailyProduction, 0) }}</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- REMOVED the old debug section that was causing the error -->
+            <!-- The d-none section with $dailyEntries->count() has been removed -->
 
             <!-- First Row - Key Metrics -->
             <div class="row">
