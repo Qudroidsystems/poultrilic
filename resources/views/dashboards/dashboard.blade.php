@@ -50,6 +50,20 @@
                 </div>
             </div>
 
+            <!-- Temporary debug section - REMOVE THIS AFTER FIXING -->
+            <div class="row mb-3 d-none">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h5>Debug Info:</h5>
+                        <p>Total Eggs: {{ $totalEggProductionTotalPieces }}</p>
+                        <p>Days: {{ $dailyEntries->count() }}</p>
+                        <p>Current Birds: {{ $currentBirds }}</p>
+                        <p>Calculation: ({{ $totalEggProductionTotalPieces }} / {{ $dailyEntries->count() }}) / {{ $currentBirds }} = {{ $totalEggProductionTotalPieces / $dailyEntries->count() }} / {{ $currentBirds }} = {{ ($totalEggProductionTotalPieces / $dailyEntries->count()) / $currentBirds }}</p>
+                        <p>As Percentage: {{ (($totalEggProductionTotalPieces / $dailyEntries->count()) / $currentBirds) * 100 }}%</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- First Row - Key Metrics -->
             <div class="row">
                 <!-- Total Birds Card -->
@@ -119,111 +133,26 @@
                 </div>
 
                 <!-- Production Rate Card - FIXED -->
-                <!-- Production Rate Card - FIXED -->
-<div class="col-xxl-3 col-md-6">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex">
-                <div class="flex-grow-1">
-                    <p class="fs-md text-muted mb-4">Production Rate</p>
-                    <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $avgProductionRate }}">{{ number_format($avgProductionRate, 1) }}</span>%</h3>
-                    <small class="text-muted">Average eggs per bird per day</small>
-                </div>
-                <div class="flex-shrink-0">
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-info-subtle text-info rounded fs-3">
-                            <i class="bi bi-graph-up"></i>
-                        </span>
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Production Rate</p>
+                                    <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $avgProductionRate }}">{{ number_format($avgProductionRate, 1) }}</span>%</h3>
+                                    <small class="text-muted">Average eggs per bird per day</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-info-subtle text-info rounded fs-3">
+                                            <i class="bi bi-graph-up"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Egg Mortality Rate Card - FIXED -->
-<div class="col-xxl-3 col-md-6">
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex">
-                <div class="flex-grow-1">
-                    <p class="fs-md text-muted mb-4">Egg Mortality Rate</p>
-                    <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $eggMortalityRate }}">{{ number_format($eggMortalityRate, 1) }}</span>%</h3>
-                    <small class="text-muted">Broken vs Total Production</small>
-                </div>
-                <div class="flex-shrink-0">
-                    <div class="avatar-sm">
-                        <span class="avatar-title bg-danger-subtle text-danger rounded fs-3">
-                            <i class="bi bi-pie-chart"></i>
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- In the KPI section, update to use the calculated variables: -->
-<div class="row">
-    <div class="col-md-3 text-center">
-        <div class="mb-3">
-            <h3 class="text-primary">{{ number_format($avgProductionRate, 1) }}%</h3>
-            <p class="text-muted mb-0">Production Rate</p>
-            <small class="text-muted">Eggs per bird per day</small>
-        </div>
-    </div>
-    <div class="col-md-3 text-center">
-        <div class="mb-3">
-            <h3 class="text-info">{{ number_format($birdMortalityRate, 2) }}%</h3>
-            <p class="text-muted mb-0">Bird Mortality Rate</p>
-            <small class="text-muted">{{ $totalMortality }} / {{ $totalBirds }} birds</small>
-        </div>
-    </div>
-    <div class="col-md-3 text-center">
-        <div class="mb-3">
-            <h3 class="text-success">${{ number_format($revenuePerBird, 2) }}</h3>
-            <p class="text-muted mb-0">Revenue per Bird</p>
-            <small class="text-muted">Based on {{ $currentBirds }} current birds</small>
-        </div>
-    </div>
-    <div class="col-md-3 text-center">
-        <div class="mb-3">
-            <h3 class="text-warning">{{ number_format($feedPerBird, 3) }} bags</h3>
-            <p class="text-muted mb-0">Feed per Bird</p>
-            <small class="text-muted">{{ number_format($totalFeedBags, 2) }} bags total</small>
-        </div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-3 text-center">
-        <div class="mb-3">
-            <h3 class="text-dark">{{ number_format($feedEfficiency, 4) }} bags</h3>
-            <p class="text-muted mb-0">Feed per Egg</p>
-            <small class="text-muted">Bags per egg produced</small>
-        </div>
-    </div>
-    <div class="col-md-3 text-center">
-        <div class="mb-3">
-            <h3 class="text-secondary">${{ number_format($costPerEgg, 4) }}</h3>
-            <p class="text-muted mb-0">Cost per Egg</p>
-            <small class="text-muted">Operational cost per egg sold</small>
-        </div>
-    </div>
-    <div class="col-md-3 text-center">
-        <div class="mb-3">
-            <h3 class="text-success">{{ number_format($eggDisposalRate, 1) }}%</h3>
-            <p class="text-muted mb-0">Egg Disposal Rate</p>
-            <small class="text-muted">Sold + Broken vs Produced</small>
-        </div>
-    </div>
-    <div class="col-md-3 text-center">
-        <div class="mb-3">
-            <h3 class="text-info">{{ number_format($eggSalesEfficiency, 1) }}%</h3>
-            <p class="text-muted mb-0">Sales Efficiency</p>
-            <small class="text-muted">Sold vs (Sold + Broken)</small>
-        </div>
-    </div>
-</div>
             </div>
 
             <!-- Second Row - Egg Production Metrics -->
@@ -342,7 +271,7 @@
                                     <p class="fs-md text-muted mb-4">Feed Consumed</p>
                                     <h3 class="mb-0 mt-auto">
                                         <span class="counter-value" data-target="{{ $totalFeedBags }}">
-                                            {{ number_format($totalFeedBags, 2) }}
+                                            {{ number_format($totalFeedBags, 1) }}
                                         </span> Bags
                                     </h3>
                                     <small class="text-muted">({{ number_format($totalFeedKg, 1) }} kg equivalent)</small>
@@ -517,7 +446,7 @@
                                         <div class="card-body">
                                             <h6 class="card-title">Expenses</h6>
                                             <div class="d-flex justify-content-between mb-2">
-                                                <span>Feed Cost ({{ number_format($totalFeedBags, 2) }} bags @ $25):</span>
+                                                <span>Feed Cost ({{ number_format($totalFeedBags, 1) }} bags @ $25):</span>
                                                 <strong class="text-danger">${{ number_format($feedCost, 2) }}</strong>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
@@ -612,11 +541,6 @@
                                 </div>
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
-                                        @php
-                                            $birdMortalityRate = $totalBirds > 0 
-                                                ? ($totalMortality / $totalBirds) * 100 
-                                                : 0;
-                                        @endphp
                                         <h3 class="text-info">{{ number_format($birdMortalityRate, 2) }}%</h3>
                                         <p class="text-muted mb-0">Bird Mortality Rate</p>
                                         <small class="text-muted">{{ $totalMortality }} / {{ $totalBirds }} birds</small>
@@ -624,9 +548,6 @@
                                 </div>
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
-                                        @php
-                                            $revenuePerBird = $currentBirds > 0 ? $totalRevenue / $currentBirds : 0;
-                                        @endphp
                                         <h3 class="text-success">${{ number_format($revenuePerBird, 2) }}</h3>
                                         <p class="text-muted mb-0">Revenue per Bird</p>
                                         <small class="text-muted">Based on {{ $currentBirds }} current birds</small>
@@ -634,23 +555,15 @@
                                 </div>
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
-                                        @php
-                                            $feedPerBird = $currentBirds > 0 ? $totalFeedBags / $currentBirds : 0;
-                                        @endphp
                                         <h3 class="text-warning">{{ number_format($feedPerBird, 3) }} bags</h3>
                                         <p class="text-muted mb-0">Feed per Bird</p>
-                                        <small class="text-muted">{{ number_format($totalFeedBags, 2) }} bags total</small>
+                                        <small class="text-muted">{{ number_format($totalFeedBags, 1) }} bags total</small>
                                     </div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
-                                        @php
-                                            $feedEfficiency = $totalEggProductionTotalPieces > 0 
-                                                ? $totalFeedBags / $totalEggProductionTotalPieces 
-                                                : 0;
-                                        @endphp
                                         <h3 class="text-dark">{{ number_format($feedEfficiency, 4) }} bags</h3>
                                         <p class="text-muted mb-0">Feed per Egg</p>
                                         <small class="text-muted">Bags per egg produced</small>
@@ -658,11 +571,6 @@
                                 </div>
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
-                                        @php
-                                            $costPerEgg = $totalEggsSoldTotalPieces > 0 
-                                                ? $operationalExpenses / $totalEggsSoldTotalPieces 
-                                                : 0;
-                                        @endphp
                                         <h3 class="text-secondary">${{ number_format($costPerEgg, 4) }}</h3>
                                         <p class="text-muted mb-0">Cost per Egg</p>
                                         <small class="text-muted">Operational cost per egg sold</small>
@@ -670,11 +578,6 @@
                                 </div>
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
-                                        @php
-                                            $eggDisposalRate = $totalEggProductionTotalPieces > 0 
-                                                ? (($totalEggsSoldTotalPieces + $totalEggMortality) / $totalEggProductionTotalPieces) * 100 
-                                                : 0;
-                                        @endphp
                                         <h3 class="text-success">{{ number_format($eggDisposalRate, 1) }}%</h3>
                                         <p class="text-muted mb-0">Egg Disposal Rate</p>
                                         <small class="text-muted">Sold + Broken vs Produced</small>
@@ -682,11 +585,6 @@
                                 </div>
                                 <div class="col-md-3 text-center">
                                     <div class="mb-3">
-                                        @php
-                                            $eggSalesEfficiency = ($totalEggsSoldTotalPieces + $totalEggMortality) > 0 
-                                                ? ($totalEggsSoldTotalPieces / ($totalEggsSoldTotalPieces + $totalEggMortality)) * 100 
-                                                : 0;
-                                        @endphp
                                         <h3 class="text-info">{{ number_format($eggSalesEfficiency, 1) }}%</h3>
                                         <p class="text-muted mb-0">Sales Efficiency</p>
                                         <small class="text-muted">Sold vs (Sold + Broken)</small>
@@ -724,7 +622,7 @@
                                     <strong>{{ number_format($totalEggMortality, 0) }} eggs</strong> were broken ({{ number_format($eggMortalityRate, 1) }}% of production).
                                 </p>
                                 <p>
-                                    Feed consumption totaled <strong>{{ number_format($totalFeedBags, 2) }} bags</strong> 
+                                    Feed consumption totaled <strong>{{ number_format($totalFeedBags, 1) }} bags</strong> 
                                     costing <strong>${{ number_format($feedCost, 2) }}</strong>.
                                     Medication was administered on <strong>{{ $totalDrugUsage }} days</strong> costing <strong>${{ number_format($drugCost, 2) }}</strong>.
                                 </p>
@@ -747,9 +645,7 @@
     </div>
 </div>
 
-@endsection
 
-@section('scripts')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
