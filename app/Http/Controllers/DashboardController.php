@@ -526,30 +526,170 @@ class DashboardController extends Controller
     }
 
     public function export(Request $request)
-    {
-        $startDate = $request->input('start_date')
-            ? Carbon::parse($request->input('start_date'))->startOfDay()
-            : Carbon::now()->subDays(30)->startOfDay();
-        $endDate = $request->input('end_date')
-            ? Carbon::parse($request->input('end_date'))->endOfDay()
-            : Carbon::now()->endOfDay();
-        $flockId = $request->input('flock_id');
-        $format = $request->input('format', 'csv');
+{
+    $startDate = $request->input('start_date')
+        ? Carbon::parse($request->input('start_date'))->startOfDay()
+        : Carbon::now()->subDays(30)->startOfDay();
+    $endDate = $request->input('end_date')
+        ? Carbon::parse($request->input('end_date'))->endOfDay()
+        : Carbon::now()->endOfDay();
+    $flockId = $request->input('flock_id');
+    $format = $request->input('format', 'csv');
 
-        if ($format === 'pdf') {
-            $data = (new PoultryAnalyticsExport($startDate, $endDate, $flockId))->collection()->toArray();
-            $pdf = Pdf::loadView('exports.poultry_analytics_pdf', [
-                'data' => $data,
-                'startDate' => $startDate,
-                'endDate' => $endDate,
-                'flockId' => $flockId
+    // Get data for export
+    $data = (new PoultryAnalyticsExport($startDate, $endDate, $flockId))->collection()->toArray();
+    
+    if ($format === 'pdf') {
+        // Prepare data for PDF using your template structure
+        $exportData = $this->prepareExportData($startDate, $endDate, $flockId, $data);
+        
+        $pdf = Pdf::loadView('exports.poultry_analytics_pdf', $exportData)
+            ->setPaper('a4', 'landscape')
+            ->setOptions([
+                'defaultFont' => 'Helvetica',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
             ]);
-            return $pdf->download('poultry_analytics_' . now()->format('Ymd_His') . '.pdf');
-        }
-
-        return Excel::download(
-            new PoultryAnalyticsExport($startDate, $endDate, $flockId),
-            'poultry_analytics_' . now()->format('Ymd_His') . '.csv'
-        );
+        
+        $filename = 'poultry_analytics_' . now()->format('Ymd_His') . '.pdf';
+        return $pdf->download($filename);
     }
+
+    // CSV export remains the same
+    return Excel::download(
+        new PoultryAnalyticsExport($startDate, $endDate, $flockId),
+        'poultry_analytics_' . now()->format('Ymd_His') . '.csv'
+    );
+}
+
+/**
+ * Prepare data for PDF export using the provided template structure
+ */
+private function prepareExportData($startDate, $endDate, $flockId, $data)
+{
+    // Get flock information
+    $flocks = Flock::all();
+    $selectedFlock = $flockId ? Flock::find($flockId) : null;
+    
+    // Calculate summary metrics from data
+    $summaryMetrics = $this->calculateExportSummary($data);
+    
+    // Prepare the data array matching your template structure
+    return [
+        'pagetitle' => 'Poultry Analytics Report',
+        
+        // Mock school info structure for your template
+        'schoolInfo' => (object)[
+            'logo_url' => null,
+            'school_name' => 'Poultry Farm Analytics',
+            'school_address' => 'PrimeFarm Poultry Management System',
+            'school_email' => 'analytics@primefarm.ng',
+            'school_phone' => '+234 XXX XXX XXXX',
+        ],
+        
+        'statementNumber' => 'PA-' . now()->format('Ymd-His'),
+        'schoolterm' => 'Poultry Analytics',
+        'schoolsession' => $startDate->format('M Y') . ' to ' . $endDate->format('M Y'),
+        
+        // Student info structure (adapted for flock info)
+        'studentdata' => collect([(object)[
+            'firstname' => $selectedFlock ? 'Flock ' . $selectedFlock->id : 'All Flocks',
+            'lastname' => '',
+            'admissionNo' => $selectedFlock ? 'Flock-' . $selectedFlock->id : 'ALL-FLOCKS',
+            'schoolclass' => 'Poultry Farm',
+            'arm' => '',
+            'homeadd' => 'PrimeFarm Poultry Management',
+            'phone' => 'N/A',
+        ]]),
+        
+        // Summary metrics
+        'totalSchoolBill' => 0, // Not applicable for poultry
+        'totalPaid' => 0, // Not applicable for poultry
+        'totalOutstanding' => 0, // Not applicable for poultry
+        
+        // Poultry summary metrics
+        'summaryMetrics' => $summaryMetrics,
+        
+        // Main data table
+        'studentpaymentbill' => $this->preparePoultryDataTable($data),
+        
+        // Date range
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'flockId' => $flockId,
+    ];
+}
+
+/**
+ * Calculate summary metrics for export
+ */
+private function calculateExportSummary($data)
+{
+    if (empty($data)) {
+        return [
+            'totalBirds' => 0,
+            'currentBirds' => 0,
+            'totalMortality' => 0,
+            'totalEggProduction' => 0,
+            'totalEggsSold' => 0,
+            'totalRevenue' => 0,
+            'totalFeedBags' => 0,
+            'totalDrugUsage' => 0,
+            'avgProductionRate' => 0,
+            'netIncome' => 0,
+        ];
+    }
+    
+    // Calculate totals from data
+    $totalEggProduction = 0;
+    $totalEggsSold = 0;
+    $totalFeedBags = 0;
+    $totalDrugUsage = 0;
+    $totalRevenue = 0;
+    
+    foreach ($data as $row) {
+        $totalEggProduction += $row['total_egg_production'] ?? 0;
+        $totalEggsSold += $row['eggs_sold'] ?? 0;
+        $totalFeedBags += $row['feed_consumed_bags'] ?? 0;
+        $totalDrugUsage += $row['drug_usage_days'] ?? 0;
+        $totalRevenue += $row['revenue'] ?? 0;
+    }
+    
+    return [
+        'totalBirds' => $data[0]['total_birds'] ?? 0,
+        'currentBirds' => $data[0]['current_birds'] ?? 0,
+        'totalMortality' => $data[0]['bird_mortality'] ?? 0,
+        'totalEggProduction' => $totalEggProduction,
+        'totalEggsSold' => $totalEggsSold,
+        'totalRevenue' => $totalRevenue,
+        'totalFeedBags' => $totalFeedBags,
+        'totalDrugUsage' => $totalDrugUsage,
+        'avgProductionRate' => $data[0]['production_rate'] ?? 0,
+        'netIncome' => $data[0]['net_income'] ?? 0,
+    ];
+}
+
+/**
+ * Prepare poultry data for the table in your template
+ */
+private function preparePoultryDataTable($data)
+{
+    $tableData = [];
+    
+    foreach ($data as $index => $row) {
+        $tableData[] = (object)[
+            'title' => $row['week'] ?? 'N/A',
+            'description' => 'Weekly Analytics',
+            'amount' => $row['total_egg_production'] ?? 0,
+            'amount_paid' => $row['eggs_sold'] ?? 0,
+            'balance' => ($row['total_egg_production'] ?? 0) - ($row['eggs_sold'] ?? 0),
+            'payment_method' => 'Egg Production',
+            'payment_date' => $row['date'] ?? now()->format('Y-m-d'),
+            'payment_status' => $row['production_rate'] >= 70 ? 'Good' : ($row['production_rate'] >= 50 ? 'Average' : 'Poor'),
+            'received_by' => 'System',
+        ];
+    }
+    
+    return collect($tableData);
+}
 }
