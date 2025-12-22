@@ -63,6 +63,14 @@ class FlockAnalyticsService
     }
     
     /**
+     * Calculate metrics for all flocks - Alias for calculateAllFlockMetrics
+     */
+    public static function calculateCombinedMetrics($startDate = null, $endDate = null)
+    {
+        return self::calculateAllFlockMetrics($startDate, $endDate);
+    }
+    
+    /**
      * Calculate metrics for all flocks
      */
     public static function calculateAllFlockMetrics($startDate = null, $endDate = null)
@@ -360,5 +368,60 @@ class FlockAnalyticsService
         $productionRate = min(100, max(0, $avgEggsPerBirdPerDay * 100));
         
         return $productionRate;
+    }
+    
+    /**
+     * Get flock details by ID
+     */
+    public static function getFlockDetails($flockId)
+    {
+        $flock = Flock::find($flockId);
+        
+        if (!$flock) {
+            return null;
+        }
+        
+        // Get first and last entries to determine age
+        $firstEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
+            $q->where('flock_id', $flockId);
+        })->orderBy('created_at', 'asc')->first();
+        
+        $lastEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
+            $q->where('flock_id', $flockId);
+        })->orderBy('created_at', 'desc')->first();
+        
+        $ageInWeeks = 0;
+        if ($firstEntry) {
+            $firstDate = Carbon::parse($firstEntry->created_at);
+            $now = Carbon::now();
+            $ageInWeeks = $firstDate->diffInWeeks($now);
+        }
+        
+        return [
+            'id' => $flock->id,
+            'name' => $flock->name,
+            'initial_birds' => $flock->initial_bird_count,
+            'current_birds' => $flock->current_bird_count,
+            'mortality' => $flock->calculateMortality(),
+            'age_in_weeks' => $ageInWeeks,
+            'first_entry_date' => $firstEntry ? $firstEntry->created_at->format('Y-m-d') : null,
+            'last_entry_date' => $lastEntry ? $lastEntry->created_at->format('Y-m-d') : null,
+            'status' => $flock->status,
+        ];
+    }
+    
+    /**
+     * Get all flocks with basic details
+     */
+    public static function getAllFlockDetails()
+    {
+        $flocks = Flock::all();
+        $details = [];
+        
+        foreach ($flocks as $flock) {
+            $details[] = self::getFlockDetails($flock->id);
+        }
+        
+        return $details;
     }
 }
