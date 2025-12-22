@@ -30,4 +30,42 @@ class DailyEntry extends Model
     {
         return $this->belongsTo(WeekEntry::class);
     }
+    
+    // Update flock's current bird count when daily mortality is recorded
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::created(function ($dailyEntry) {
+            $dailyEntry->updateFlockBirdCount();
+        });
+        
+        static::updated(function ($dailyEntry) {
+            if ($dailyEntry->isDirty('daily_mortality')) {
+                $dailyEntry->updateFlockBirdCount();
+            }
+        });
+    }
+    
+    public function updateFlockBirdCount()
+    {
+        try {
+            $weekEntry = $this->weekEntry;
+            if ($weekEntry && $weekEntry->flock) {
+                $flock = $weekEntry->flock;
+                
+                // Get the latest current_birds from this flock's entries
+                $latestEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flock) {
+                    $q->where('flock_id', $flock->id);
+                })->orderBy('created_at', 'desc')->first();
+                
+                if ($latestEntry) {
+                    $flock->current_bird_count = $latestEntry->current_birds;
+                    $flock->save();
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error updating flock bird count: ' . $e->getMessage());
+        }
+    }
 }

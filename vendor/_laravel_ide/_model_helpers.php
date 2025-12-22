@@ -988,6 +988,8 @@ namespace App\Models {
      * @property integer $initial_bird_count
      * @property int $id
      * @property-read mixed $total_mortality
+     * @property-read mixed $mortality_rate
+     * @property-read mixed $survival_rate
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WeekEntry> $weekEntries
      * @property-read int|null $weekEntries_count
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereId($value)
@@ -995,6 +997,7 @@ namespace App\Models {
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereCurrentBirdCount($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereCreatedAt($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereUpdatedAt($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock active()
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock newModelQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock newQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock query()
@@ -1304,6 +1307,8 @@ namespace App\Models {
      * @property int $flock_id
      * @property int $id
      * @property-read mixed $total_egg_in_farm
+     * @property-read mixed $total_feed_consumed
+     * @property-read mixed $total_eggs_produced
      * @property-read \App\Models\Flock $flock
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DailyEntry> $dailyEntries
      * @property-read int|null $dailyEntries_count

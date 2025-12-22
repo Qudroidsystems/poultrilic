@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PoultryAnalyticsExport;
+use App\Services\FlockAnalyticsService;
 
 class DashboardController extends Controller
 {
@@ -22,269 +23,12 @@ class DashboardController extends Controller
 
     // Constants
     const EGGS_PER_CRATE = 30;
-    const BAG_WEIGHT_KG = 50; // For information only - actual calculation treats each unit as 1 bag
-
-    /**
-     * Parse egg string format (e.g., "25 Cr 19PC") to total pieces and crates
-     */
-    private function parseEggData($eggString)
-    {
-        if (empty($eggString) || $eggString === '0 Cr 0PC' || $eggString === '0 Cr 0PC') {
-            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
-        }
-
-        try {
-            // Handle formats like "25 Cr 19PC", "0 Cr 5PC", "25 Cr 0PC", "4,985 CR"
-            if (strpos($eggString, ',') !== false) {
-                // Handle comma format like "4,985 CR"
-                preg_match('/([\d,]+)\s*CR?/', $eggString, $matches);
-                if (count($matches) === 2) {
-                    $crates = (int)str_replace(',', '', $matches[1]);
-                    return [
-                        'crates' => $crates,
-                        'pieces' => 0,
-                        'total_pieces' => $crates * self::EGGS_PER_CRATE
-                    ];
-                }
-            } else {
-                // Handle regular format "25 Cr 19PC"
-                preg_match('/(\d+)\s*Cr\s*(\d+)PC/', $eggString, $matches);
-                if (count($matches) === 3) {
-                    $crates = (int)$matches[1];
-                    $pieces = (int)$matches[2];
-                    return [
-                        'crates' => $crates,
-                        'pieces' => $pieces,
-                        'total_pieces' => ($crates * self::EGGS_PER_CRATE) + $pieces
-                    ];
-                }
-                
-                // Handle format with only crates "21CR"
-                preg_match('/(\d+)\s*CR/', $eggString, $matches);
-                if (count($matches) === 2) {
-                    $crates = (int)$matches[1];
-                    return [
-                        'crates' => $crates,
-                        'pieces' => 0,
-                        'total_pieces' => $crates * self::EGGS_PER_CRATE
-                    ];
-                }
-            }
-            
-            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
-        } catch (\Exception $e) {
-            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
-        }
-    }
-
-    /**
-     * Calculate total sold eggs by summing daily_sold_egg field
-     */
-    private function getTotalSoldEggs($dailyEntries)
-    {
-        if ($dailyEntries->count() === 0) {
-            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
-        }
-
-        $totalSoldPieces = 0;
-        foreach ($dailyEntries as $entry) {
-            $soldData = $this->parseEggData($entry->daily_sold_egg);
-            $totalSoldPieces += $soldData['total_pieces'];
-        }
-
-        $crates = floor($totalSoldPieces / self::EGGS_PER_CRATE);
-        $pieces = $totalSoldPieces % self::EGGS_PER_CRATE;
-
-        return [
-            'crates' => $crates,
-            'pieces' => $pieces,
-            'total_pieces' => $totalSoldPieces
-        ];
-    }
-
-    /**
-     * Calculate total production from daily entries
-     */
-    private function calculateTotalProduction($dailyEntries)
-    {
-        $totalPieces = 0;
-
-        foreach ($dailyEntries as $entry) {
-            $eggData = $this->parseEggData($entry->daily_egg_production);
-            $totalPieces += $eggData['total_pieces'];
-        }
-
-        $crates = floor($totalPieces / self::EGGS_PER_CRATE);
-        $pieces = $totalPieces % self::EGGS_PER_CRATE;
-
-        return [
-            'crates' => $crates,
-            'pieces' => $pieces,
-            'total_pieces' => $totalPieces
-        ];
-    }
-
-    /**
-     * Calculate total broken eggs
-     */
-    private function calculateTotalBrokenEggs($dailyEntries)
-    {
-        return $dailyEntries->sum('broken_egg');
-    }
-
-    /**
-     * Calculate average daily production per bird - FIXED VERSION
-     */
-    private function calculateProductionRate($dailyEntries, $currentBirds)
-    {
-        if ($currentBirds <= 0 || $dailyEntries->count() === 0) {
-            return 0;
-        }
-
-        // Filter out entries with 0 or negative birds and unrealistic production
-        $validEntries = $dailyEntries->filter(function($entry) {
-            if ($entry->current_birds <= 0) {
-                return false;
-            }
-            
-            $eggData = $this->parseEggData($entry->daily_egg_production);
-            
-            // Cap unrealistic production at 110% of bird count
-            $maxPossible = $entry->current_birds * 1.1;
-            if ($eggData['total_pieces'] > $maxPossible) {
-                return false;
-            }
-            
-            return true;
-        });
-        
-        if ($validEntries->count() === 0) {
-            return 0;
-        }
-
-        // Get total eggs produced from valid entries only
-        $totalEggs = 0;
-        $daysWithProduction = 0;
-        
-        foreach ($validEntries as $entry) {
-            $eggData = $this->parseEggData($entry->daily_egg_production);
-            
-            // Only count days with egg production data
-            if ($eggData['total_pieces'] > 0) {
-                $totalEggs += $eggData['total_pieces'];
-                $daysWithProduction++;
-            }
-        }
-        
-        if ($daysWithProduction === 0) {
-            return 0;
-        }
-        
-        // Use average birds across valid entries
-        $avgBirds = $validEntries->avg('current_birds');
-        
-        if ($avgBirds <= 0) {
-            return 0;
-        }
-        
-        // Calculate average eggs per bird per day
-        $avgEggsPerBirdPerDay = ($totalEggs / $daysWithProduction) / $avgBirds;
-        
-        // Cap at 100% (1 egg per bird per day is 100%)
-        $productionRate = min(100, max(0, $avgEggsPerBirdPerDay * 100));
-        
-        return $productionRate;
-    }
-
-    /**
-     * Validate and clean egg production data
-     */
-    private function validateEggProduction($dailyEntries)
-    {
-        $unrealisticEntries = [];
-        
-        foreach ($dailyEntries as $entry) {
-            if ($entry->current_birds > 0) {
-                $eggData = $this->parseEggData($entry->daily_egg_production);
-                $maxPossible = $entry->current_birds * 1.1; // Allow 10% margin
-                
-                // If production exceeds possible maximum, flag it
-                if ($eggData['total_pieces'] > $maxPossible) {
-                    $unrealisticEntries[] = [
-                        'id' => $entry->id,
-                        'birds' => $entry->current_birds,
-                        'eggs' => $eggData['total_pieces'],
-                        'rate' => ($eggData['total_pieces'] / $entry->current_birds) * 100,
-                        'date' => $entry->created_at->format('Y-m-d')
-                    ];
-                }
-            }
-        }
-        
-        return $unrealisticEntries;
-    }
-
-    /**
-     * Calculate flock-specific metrics
-     */
-    private function calculateFlockMetrics($flockId, $dailyEntries)
-    {
-        if ($flockId) {
-            // Single flock selected
-            $flock = Flock::find($flockId);
-            if (!$flock) {
-                return [
-                    'totalBirds' => 0,
-                    'currentBirds' => 0,
-                    'totalMortality' => 0
-                ];
-            }
-            
-            $totalBirds = $flock->initial_bird_count;
-            
-            // Get latest current birds from this flock
-            $latestEntry = $dailyEntries->sortByDesc('created_at')->first();
-            $currentBirds = $latestEntry->current_birds ?? 0;
-            
-            // Calculate correct mortality: initial - current
-            $totalMortality = max(0, $totalBirds - $currentBirds);
-            
-            return [
-                'totalBirds' => $totalBirds,
-                'currentBirds' => $currentBirds,
-                'totalMortality' => $totalMortality
-            ];
-        } else {
-            // All flocks combined
-            $totalBirds = Flock::sum('initial_bird_count');
-            
-            // For all flocks, we need to get the latest current birds for each flock
-            // Since we're combining data from both flocks, we need a different approach
-            
-            // Get all flocks
-            $flocks = Flock::all();
-            $currentBirds = 0;
-            
-            foreach ($flocks as $flock) {
-                // Get latest entry for this flock
-                $latestEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flock) {
-                    $q->where('flock_id', $flock->id);
-                })->orderBy('created_at', 'desc')->first();
-                
-                if ($latestEntry) {
-                    $currentBirds += $latestEntry->current_birds;
-                }
-            }
-            
-            $totalMortality = max(0, $totalBirds - $currentBirds);
-            
-            return [
-                'totalBirds' => $totalBirds,
-                'currentBirds' => $currentBirds,
-                'totalMortality' => $totalMortality
-            ];
-        }
-    }
+    const BAG_WEIGHT_KG = 50;
+    const EGG_PRICE_NAIRA = 100; // ₦100 per egg (example price)
+    const FEED_COST_PER_BAG = 15000; // ₦15,000 per bag (example price)
+    const BIRD_COST = 2000; // ₦2,000 per bird (example cost)
+    const DRUG_COST_PER_DAY = 5000; // ₦5,000 per drug administration
+    const DAILY_LABOR_COST = 10000; // ₦10,000 per day
 
     public function index(Request $request)
     {
@@ -319,45 +63,37 @@ class DashboardController extends Controller
         $unrealisticEntries = $this->validateEggProduction($dailyEntries);
         $hasDataQualityIssues = count($unrealisticEntries) > 0;
 
-        // CORRECTED: Calculate flock metrics (total birds, current birds, mortality)
-        $flockMetrics = $this->calculateFlockMetrics($flockId, $dailyEntries);
+        // Calculate flock metrics using service
+        $flockMetrics = FlockAnalyticsService::calculateMetrics($flockId, $startDate, $endDate);
         $totalBirds = $flockMetrics['totalBirds'];
         $currentBirds = $flockMetrics['currentBirds'];
         $totalMortality = $flockMetrics['totalMortality'];
 
-        // Egg production calculations - in crates and pieces
-        $productionData = $this->calculateTotalProduction($dailyEntries);
-        $totalEggProductionCrates = $productionData['crates'];
-        $totalEggProductionPieces = $productionData['pieces'];
-        $totalEggProductionTotalPieces = $productionData['total_pieces'];
-        
-        // For backward compatibility
+        // Egg production calculations - using service data
+        $totalEggProductionCrates = $flockMetrics['total_egg_crates'];
+        $totalEggProductionPieces = $flockMetrics['total_egg_pieces_remainder'];
+        $totalEggProductionTotalPieces = $flockMetrics['total_egg_pieces'];
         $totalEggProduction = $totalEggProductionTotalPieces;
 
-        // FIXED: Feed calculations - each daily_feeds unit = 1 BAG (not kg)
-        $totalFeedBags = $dailyEntries->sum('daily_feeds');
-        $totalFeedKg = $totalFeedBags * self::BAG_WEIGHT_KG; // Convert to kg for display
-        
-        // For backward compatibility
-        $totalFeedConsumed = $totalFeedBags; // Now in bags, not kg
+        // Feed calculations
+        $totalFeedBags = $flockMetrics['total_feed_bags'];
+        $totalFeedKg = $flockMetrics['total_feed_kg'];
+        $totalFeedConsumed = $totalFeedBags;
 
         // Egg Mortality = Broken Eggs
-        $totalEggMortality = $this->calculateTotalBrokenEggs($dailyEntries);
+        $totalEggMortality = $flockMetrics['total_broken_eggs'];
 
         // Total sold eggs
-        $soldEggData = $this->getTotalSoldEggs($dailyEntries);
-        $totalEggsSoldCrates = $soldEggData['crates'];
-        $totalEggsSoldPieces = $soldEggData['pieces'];
-        $totalEggsSoldTotalPieces = $soldEggData['total_pieces'];
-        
-        // For backward compatibility
+        $totalEggsSoldCrates = $flockMetrics['total_sold_crates'];
+        $totalEggsSoldPieces = $flockMetrics['total_sold_pieces_remainder'];
+        $totalEggsSoldTotalPieces = $flockMetrics['total_sold_pieces'];
         $totalEggsSold = $totalEggsSoldTotalPieces;
 
-        // FIXED: Production rate calculation - CORRECT CALCULATION
+        // Calculate production rate
         $avgProductionRate = $this->calculateProductionRate($dailyEntries, $currentBirds);
 
-        // Revenue calculation (assuming $0.05 per egg)
-        $totalRevenue = $totalEggsSoldTotalPieces * 0.05;
+        // Revenue calculation in Naira
+        $totalRevenue = $flockMetrics['total_revenue'];
 
         // Drug usage - count days with drugs administered
         $totalDrugUsage = $dailyEntries->where('drugs', '!=', 'Nil')
@@ -365,11 +101,12 @@ class DashboardController extends Controller
             ->whereNotNull('drugs')
             ->count();
 
-        // Flock Capital Analysis - using bags for feed cost
-        $capitalInvestment = $totalBirds * 2; // $2 per bird
-        $feedCost = $totalFeedBags * 25; // $25 per bag
-        $drugCost = $totalDrugUsage * 10; // $10 per drug administration
-        $laborCost = 1000; // Fixed for 30 days
+        // Flock Capital Analysis - in Naira
+        $capitalInvestment = $totalBirds * self::BIRD_COST; // Cost per bird
+        $feedCost = $totalFeedBags * self::FEED_COST_PER_BAG; // Cost per bag
+        $drugCost = $totalDrugUsage * self::DRUG_COST_PER_DAY; // Cost per drug administration
+        $daysCount = $startDate->diffInDays($endDate) ?: 30;
+        $laborCost = self::DAILY_LABOR_COST * $daysCount; // Daily labor cost
         $operationalExpenses = $feedCost + $drugCost + $laborCost;
         $netIncome = $totalRevenue - $operationalExpenses;
         $capitalValue = $netIncome > 0 ? $netIncome / 0.1 : 0; // 10% cap rate
@@ -383,8 +120,8 @@ class DashboardController extends Controller
             $weekBroken = 0;
             
             foreach ($weekEntries as $entry) {
-                $productionData = $this->parseEggData($entry->daily_egg_production);
-                $salesData = $this->parseEggData($entry->daily_sold_egg);
+                $productionData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
+                $salesData = FlockAnalyticsService::parseEggData($entry->daily_sold_egg);
                 $weekProduction += $productionData['total_pieces'];
                 $weekSales += $salesData['total_pieces'];
                 $weekBroken += $entry->broken_egg;
@@ -405,7 +142,7 @@ class DashboardController extends Controller
             }
 
             return [
-                'feed_bags' => $weekEntries->sum('daily_feeds'), // Already in bags
+                'feed_bags' => $weekEntries->sum('daily_feeds'),
                 'drugs' => $weekEntries->where('drugs', '!=', 'Nil')->where('drugs', '!=', '')->count(),
                 'eggs_produced' => $weekProduction,
                 'eggs_sold' => $weekSales,
@@ -460,7 +197,8 @@ class DashboardController extends Controller
 
         // Data quality metrics
         $daysWithProduction = $dailyEntries->filter(function($entry) {
-            return $this->parseEggData($entry->daily_egg_production)['total_pieces'] > 0;
+            $eggData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
+            return $eggData['total_pieces'] > 0;
         })->count();
         
         $avgDailyProduction = $daysWithProduction > 0 ? $totalEggProductionTotalPieces / $daysWithProduction : 0;
@@ -475,7 +213,7 @@ class DashboardController extends Controller
             'pagetitle',
             'totalBirds',
             'currentBirds',
-            'totalMortality', // CORRECTED: This is now initial - current, not sum(daily_mortality)
+            'totalMortality',
             'totalEggProduction',
             'totalEggProductionCrates',
             'totalEggProductionPieces',
@@ -525,171 +263,266 @@ class DashboardController extends Controller
         ));
     }
 
+    /**
+     * Validate and clean egg production data
+     */
+    private function validateEggProduction($dailyEntries)
+    {
+        $unrealisticEntries = [];
+        
+        foreach ($dailyEntries as $entry) {
+            if ($entry->current_birds > 0) {
+                $eggData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
+                $maxPossible = $entry->current_birds * 1.1; // Allow 10% margin
+                
+                // If production exceeds possible maximum, flag it
+                if ($eggData['total_pieces'] > $maxPossible) {
+                    $unrealisticEntries[] = [
+                        'id' => $entry->id,
+                        'birds' => $entry->current_birds,
+                        'eggs' => $eggData['total_pieces'],
+                        'rate' => ($eggData['total_pieces'] / $entry->current_birds) * 100,
+                        'date' => $entry->created_at->format('Y-m-d')
+                    ];
+                }
+            }
+        }
+        
+        return $unrealisticEntries;
+    }
+
+    /**
+     * Calculate average daily production per bird
+     */
+    private function calculateProductionRate($dailyEntries, $currentBirds)
+    {
+        if ($currentBirds <= 0 || $dailyEntries->count() === 0) {
+            return 0;
+        }
+
+        // Filter out entries with 0 or negative birds and unrealistic production
+        $validEntries = $dailyEntries->filter(function($entry) {
+            if ($entry->current_birds <= 0) {
+                return false;
+            }
+            
+            $eggData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
+            
+            // Cap unrealistic production at 110% of bird count
+            $maxPossible = $entry->current_birds * 1.1;
+            if ($eggData['total_pieces'] > $maxPossible) {
+                return false;
+            }
+            
+            return true;
+        });
+        
+        if ($validEntries->count() === 0) {
+            return 0;
+        }
+
+        // Get total eggs produced from valid entries only
+        $totalEggs = 0;
+        $daysWithProduction = 0;
+        
+        foreach ($validEntries as $entry) {
+            $eggData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
+            
+            // Only count days with egg production data
+            if ($eggData['total_pieces'] > 0) {
+                $totalEggs += $eggData['total_pieces'];
+                $daysWithProduction++;
+            }
+        }
+        
+        if ($daysWithProduction === 0) {
+            return 0;
+        }
+        
+        // Use average birds across valid entries
+        $avgBirds = $validEntries->avg('current_birds');
+        
+        if ($avgBirds <= 0) {
+            return 0;
+        }
+        
+        // Calculate average eggs per bird per day
+        $avgEggsPerBirdPerDay = ($totalEggs / $daysWithProduction) / $avgBirds;
+        
+        // Cap at 100% (1 egg per bird per day is 100%)
+        $productionRate = min(100, max(0, $avgEggsPerBirdPerDay * 100));
+        
+        return $productionRate;
+    }
+
     public function export(Request $request)
-{
-    $startDate = $request->input('start_date')
-        ? Carbon::parse($request->input('start_date'))->startOfDay()
-        : Carbon::now()->subDays(30)->startOfDay();
-    $endDate = $request->input('end_date')
-        ? Carbon::parse($request->input('end_date'))->endOfDay()
-        : Carbon::now()->endOfDay();
-    $flockId = $request->input('flock_id');
-    $format = $request->input('format', 'csv');
+    {
+        $startDate = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : Carbon::now()->subDays(30)->startOfDay();
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : Carbon::now()->endOfDay();
+        $flockId = $request->input('flock_id');
+        $format = $request->input('format', 'csv');
 
-    // Get data for export
-    $data = (new PoultryAnalyticsExport($startDate, $endDate, $flockId))->collection()->toArray();
-    
-    if ($format === 'pdf') {
-        // Prepare data for PDF using your template structure
-        $exportData = $this->prepareExportData($startDate, $endDate, $flockId, $data);
+        // Get data for export
+        $data = (new PoultryAnalyticsExport($startDate, $endDate, $flockId))->collection()->toArray();
         
-        $pdf = Pdf::loadView('exports.poultry_analytics_pdf', $exportData)
-            ->setPaper('a4', 'landscape')
-            ->setOptions([
-                'defaultFont' => 'Helvetica',
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
-            ]);
-        
-        $filename = 'poultry_analytics_' . now()->format('Ymd_His') . '.pdf';
-        return $pdf->download($filename);
+        if ($format === 'pdf') {
+            // Prepare data for PDF using your template structure
+            $exportData = $this->prepareExportData($startDate, $endDate, $flockId, $data);
+            
+            $pdf = Pdf::loadView('exports.poultry_analytics_pdf', $exportData)
+                ->setPaper('a4', 'landscape')
+                ->setOptions([
+                    'defaultFont' => 'Helvetica',
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                ]);
+            
+            $filename = 'poultry_analytics_' . now()->format('Ymd_His') . '.pdf';
+            return $pdf->download($filename);
+        }
+
+        // CSV export remains the same
+        return Excel::download(
+            new PoultryAnalyticsExport($startDate, $endDate, $flockId),
+            'poultry_analytics_' . now()->format('Ymd_His') . '.csv'
+        );
     }
 
-    // CSV export remains the same
-    return Excel::download(
-        new PoultryAnalyticsExport($startDate, $endDate, $flockId),
-        'poultry_analytics_' . now()->format('Ymd_His') . '.csv'
-    );
-}
+    /**
+     * Prepare data for PDF export using the provided template structure
+     */
+    private function prepareExportData($startDate, $endDate, $flockId, $data)
+    {
+        // Calculate flock metrics using service
+        $flockMetrics = FlockAnalyticsService::calculateMetrics($flockId, $startDate, $endDate);
+        
+        // Calculate summary metrics from data
+        $summaryMetrics = $this->calculateExportSummary($data, $flockId);
+        
+        // Merge flock metrics into summary
+        $summaryMetrics = array_merge($summaryMetrics, [
+            'totalBirds' => $flockMetrics['totalBirds'],
+            'currentBirds' => $flockMetrics['currentBirds'],
+            'totalMortality' => $flockMetrics['totalMortality'],
+        ]);
 
-/**
- * Prepare data for PDF export using the provided template structure
- */
-private function prepareExportData($startDate, $endDate, $flockId, $data)
-{
-    // Get flock information
-    $flocks = Flock::all();
-    $selectedFlock = $flockId ? Flock::find($flockId) : null;
-    
-    // Calculate summary metrics from data
-    $summaryMetrics = $this->calculateExportSummary($data);
-    
-    // Prepare the data array matching your template structure
-    return [
-        'pagetitle' => 'Poultry Analytics Report',
+        // Get selected flock if any
+        $selectedFlock = $flockId ? Flock::find($flockId) : null;
         
-        // Mock school info structure for your template
-        'schoolInfo' => (object)[
-            'logo_url' => null,
-            'school_name' => 'Poultry Farm Analytics',
-            'school_address' => 'PrimeFarm Poultry Management System',
-            'school_email' => 'analytics@primefarm.ng',
-            'school_phone' => '+234 XXX XXX XXXX',
-        ],
-        
-        'statementNumber' => 'PA-' . now()->format('Ymd-His'),
-        'schoolterm' => 'Poultry Analytics',
-        'schoolsession' => $startDate->format('M Y') . ' to ' . $endDate->format('M Y'),
-        
-        // Student info structure (adapted for flock info)
-        'studentdata' => collect([(object)[
-            'firstname' => $selectedFlock ? 'Flock ' . $selectedFlock->id : 'All Flocks',
-            'lastname' => '',
-            'admissionNo' => $selectedFlock ? 'Flock-' . $selectedFlock->id : 'ALL-FLOCKS',
-            'schoolclass' => 'Poultry Farm',
-            'arm' => '',
-            'homeadd' => 'PrimeFarm Poultry Management',
-            'phone' => 'N/A',
-        ]]),
-        
-        // Summary metrics
-        'totalSchoolBill' => 0, // Not applicable for poultry
-        'totalPaid' => 0, // Not applicable for poultry
-        'totalOutstanding' => 0, // Not applicable for poultry
-        
-        // Poultry summary metrics
-        'summaryMetrics' => $summaryMetrics,
-        
-        // Main data table
-        'studentpaymentbill' => $this->preparePoultryDataTable($data),
-        
-        // Date range
-        'startDate' => $startDate,
-        'endDate' => $endDate,
-        'flockId' => $flockId,
-    ];
-}
-
-/**
- * Calculate summary metrics for export
- */
-private function calculateExportSummary($data)
-{
-    if (empty($data)) {
+        // Prepare the data array matching your template structure
         return [
-            'totalBirds' => 0,
-            'currentBirds' => 0,
-            'totalMortality' => 0,
-            'totalEggProduction' => 0,
-            'totalEggsSold' => 0,
-            'totalRevenue' => 0,
-            'totalFeedBags' => 0,
-            'totalDrugUsage' => 0,
-            'avgProductionRate' => 0,
-            'netIncome' => 0,
+            'pagetitle' => 'Poultry Analytics Report',
+            
+            // Mock school info structure for your template
+            'schoolInfo' => (object)[
+                'logo_url' => null,
+                'school_name' => 'Poultry Farm Analytics',
+                'school_address' => 'PrimeFarm Poultry Management System',
+                'school_email' => 'analytics@primefarm.ng',
+                'school_phone' => '+234 XXX XXX XXXX',
+            ],
+            
+            'statementNumber' => 'PA-' . now()->format('Ymd-His'),
+            'schoolterm' => 'Poultry Analytics',
+            'schoolsession' => $startDate->format('M Y') . ' to ' . $endDate->format('M Y'),
+            
+            // Student info structure (adapted for flock info)
+            'studentdata' => collect([(object)[
+                'firstname' => $selectedFlock ? 'Flock ' . $selectedFlock->name : 'All Flocks',
+                'lastname' => '',
+                'admissionNo' => $selectedFlock ? 'Flock-' . $selectedFlock->id : 'ALL-FLOCKS',
+                'schoolclass' => 'Poultry Farm',
+                'arm' => '',
+                'homeadd' => 'PrimeFarm Poultry Management',
+                'phone' => 'N/A',
+            ]]),
+            
+            // Summary metrics
+            'totalSchoolBill' => 0, // Not applicable for poultry
+            'totalPaid' => 0, // Not applicable for poultry
+            'totalOutstanding' => 0, // Not applicable for poultry
+            
+            // Poultry summary metrics
+            'summaryMetrics' => $summaryMetrics,
+            
+            // Main data table
+            'studentpaymentbill' => $this->preparePoultryDataTable($data),
+            
+            // Date range
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'flockId' => $flockId,
         ];
     }
-    
-    // Calculate totals from data
-    $totalEggProduction = 0;
-    $totalEggsSold = 0;
-    $totalFeedBags = 0;
-    $totalDrugUsage = 0;
-    $totalRevenue = 0;
-    
-    foreach ($data as $row) {
-        $totalEggProduction += $row['total_egg_production'] ?? 0;
-        $totalEggsSold += $row['eggs_sold'] ?? 0;
-        $totalFeedBags += $row['feed_consumed_bags'] ?? 0;
-        $totalDrugUsage += $row['drug_usage_days'] ?? 0;
-        $totalRevenue += $row['revenue'] ?? 0;
-    }
-    
-    return [
-        'totalBirds' => $data[0]['total_birds'] ?? 0,
-        'currentBirds' => $data[0]['current_birds'] ?? 0,
-        'totalMortality' => $data[0]['bird_mortality'] ?? 0,
-        'totalEggProduction' => $totalEggProduction,
-        'totalEggsSold' => $totalEggsSold,
-        'totalRevenue' => $totalRevenue,
-        'totalFeedBags' => $totalFeedBags,
-        'totalDrugUsage' => $totalDrugUsage,
-        'avgProductionRate' => $data[0]['production_rate'] ?? 0,
-        'netIncome' => $data[0]['net_income'] ?? 0,
-    ];
-}
 
-/**
- * Prepare poultry data for the table in your template
- */
-private function preparePoultryDataTable($data)
-{
-    $tableData = [];
-    
-    foreach ($data as $index => $row) {
-        $tableData[] = (object)[
-            'title' => $row['week'] ?? 'N/A',
-            'description' => 'Weekly Analytics',
-            'amount' => $row['total_egg_production'] ?? 0,
-            'amount_paid' => $row['eggs_sold'] ?? 0,
-            'balance' => ($row['total_egg_production'] ?? 0) - ($row['eggs_sold'] ?? 0),
-            'payment_method' => 'Egg Production',
-            'payment_date' => $row['date'] ?? now()->format('Y-m-d'),
-            'payment_status' => $row['production_rate'] >= 70 ? 'Good' : ($row['production_rate'] >= 50 ? 'Average' : 'Poor'),
-            'received_by' => 'System',
+    /**
+     * Calculate summary metrics for export
+     */
+    private function calculateExportSummary($data, $flockId = null)
+    {
+        if (empty($data)) {
+            return [
+                'totalEggProduction' => 0,
+                'totalEggsSold' => 0,
+                'totalRevenue' => 0,
+                'totalFeedBags' => 0,
+                'totalDrugUsage' => 0,
+                'avgProductionRate' => 0,
+                'netIncome' => 0,
+            ];
+        }
+        
+        // Calculate totals from data
+        $totalEggProduction = 0;
+        $totalEggsSold = 0;
+        $totalFeedBags = 0;
+        $totalDrugUsage = 0;
+        $totalRevenue = 0;
+        
+        foreach ($data as $row) {
+            $totalEggProduction += $row['total_egg_production'] ?? 0;
+            $totalEggsSold += $row['eggs_sold'] ?? 0;
+            $totalFeedBags += $row['feed_consumed_bags'] ?? 0;
+            $totalDrugUsage += $row['drug_usage_days'] ?? 0;
+            $totalRevenue += $row['revenue'] ?? 0;
+        }
+        
+        return [
+            'totalEggProduction' => $totalEggProduction,
+            'totalEggsSold' => $totalEggsSold,
+            'totalRevenue' => $totalRevenue,
+            'totalFeedBags' => $totalFeedBags,
+            'totalDrugUsage' => $totalDrugUsage,
+            'avgProductionRate' => $data[0]['production_rate'] ?? 0,
+            'netIncome' => $data[0]['net_income'] ?? 0,
         ];
     }
-    
-    return collect($tableData);
-}
+
+    /**
+     * Prepare poultry data for the table in your template
+     */
+    private function preparePoultryDataTable($data)
+    {
+        $tableData = [];
+        
+        foreach ($data as $index => $row) {
+            $tableData[] = (object)[
+                'title' => $row['week'] ?? 'N/A',
+                'description' => 'Weekly Analytics',
+                'amount' => $row['total_egg_production'] ?? 0,
+                'amount_paid' => $row['eggs_sold'] ?? 0,
+                'balance' => ($row['total_egg_production'] ?? 0) - ($row['eggs_sold'] ?? 0),
+                'payment_method' => 'Egg Production',
+                'payment_date' => $row['date'] ?? now()->format('Y-m-d'),
+                'payment_status' => $row['production_rate'] >= 70 ? 'Good' : ($row['production_rate'] >= 50 ? 'Average' : 'Poor'),
+                'received_by' => 'System',
+            ];
+        }
+        
+        return collect($tableData);
+    }
 }

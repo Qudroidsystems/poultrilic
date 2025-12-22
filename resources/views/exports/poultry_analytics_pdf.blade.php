@@ -244,6 +244,9 @@
                 print-color-adjust: exact;
             }
         }
+        .currency {
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -321,7 +324,7 @@
             </div>
             <div class="summary-mini">
                 <div class="row">
-                    <div class="amount text-success">${{ number_format($summaryMetrics['totalRevenue'], 2) }}</div>
+                    <div class="amount text-success currency">₦{{ number_format($summaryMetrics['totalRevenue'], 2) }}</div>
                 </div>
                 <div class="label">Total Revenue</div>
             </div>
@@ -362,7 +365,7 @@
                                 <td>{{ number_format($summaryMetrics['totalFeedBags'], 1) }}</td>
                                 <td>{{ number_format($summaryMetrics['totalDrugUsage'], 0) }} days</td>
                                 <td>{{ number_format($summaryMetrics['avgProductionRate'], 1) }}%</td>
-                                <td>${{ number_format($summaryMetrics['totalRevenue'], 2) }}</td>
+                                <td class="currency">₦{{ number_format($summaryMetrics['totalRevenue'], 2) }}</td>
                                 <td>
                                     <span class="status-badge status-{{ strtolower($analytics->payment_status) }}">
                                         {{ $analytics->payment_status }}
@@ -380,7 +383,7 @@
                             <td><strong>{{ number_format($summaryMetrics['totalFeedBags'], 1) }}</strong></td>
                             <td><strong>{{ number_format($summaryMetrics['totalDrugUsage'], 0) }} days</strong></td>
                             <td><strong>{{ number_format($summaryMetrics['avgProductionRate'], 1) }}%</strong></td>
-                            <td><strong>${{ number_format($summaryMetrics['totalRevenue'], 2) }}</strong></td>
+                            <td class="currency"><strong>₦{{ number_format($summaryMetrics['totalRevenue'], 2) }}</strong></td>
                             <td colspan="2"></td>
                         </tr>
                     </tfoot>
@@ -397,7 +400,7 @@
                 <tr>
                     <td>Net Income:</td>
                     <td class="{{ $summaryMetrics['netIncome'] >= 0 ? 'text-success' : 'text-danger' }}">
-                        <strong>${{ number_format($summaryMetrics['netIncome'], 2) }}</strong>
+                        <strong class="currency">₦{{ number_format($summaryMetrics['netIncome'], 2) }}</strong>
                         @if($summaryMetrics['netIncome'] >= 0)
                             (Profitable)
                         @else
@@ -435,6 +438,18 @@
                         @endif
                     </td>
                 </tr>
+                <tr>
+                    <td>Egg Production Rate:</td>
+                    <td>{{ number_format($summaryMetrics['avgProductionRate'], 1) }}%</td>
+                </tr>
+                <tr>
+                    <td>Feed Consumption:</td>
+                    <td>{{ number_format($summaryMetrics['totalFeedBags'], 1) }} bags</td>
+                </tr>
+                <tr>
+                    <td>Drug Usage Days:</td>
+                    <td>{{ number_format($summaryMetrics['totalDrugUsage'], 0) }} days</td>
+                </tr>
             </table>
         </div>
 
@@ -448,6 +463,7 @@
             </div>
             <p>This is an official poultry analytics report from PrimeFarm Management System.</p>
             <p>For any queries, please contact the farm administration.</p>
+            <p>Currency: Nigerian Naira (₦)</p>
         </div>
     </div>
 </body>
