@@ -1,5 +1,24 @@
 @extends('layouts.master')
 @section('content')
+<style>
+    .badge-status-active {
+        background-color: #198754;
+        color: white;
+    }
+    .badge-status-inactive {
+        background-color: #6c757d;
+        color: white;
+    }
+    .badge-status-sold {
+        background-color: #0d6efd;
+        color: white;
+    }
+    .badge-status-ended {
+        background-color: #dc3545;
+        color: white;
+    }
+</style>
+
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -18,8 +37,6 @@
                 </div>
             </div>
             <!-- End page title -->
-
-          
 
             @if ($errors->any())
                 <div class="alert alert-danger">
@@ -53,13 +70,22 @@
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <select id="birdCountFilter" class="form-control" data-choices data-choices-search-true data-choices-removeItem>
                                             <option value="all">Select Initial Bird Count Range</option>
                                             <option value="0-100">0-100</option>
                                             <option value="101-200">101-200</option>
                                             <option value="201-500">201-500</option>
                                             <option value="501+">501+</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <select id="statusFilter" class="form-control">
+                                            <option value="all">All Status</option>
+                                            <option value="active">Active</option>
+                                            <option value="inactive">Inactive</option>
+                                            <option value="sold">Sold</option>
+                                            <option value="ended">Ended</option>
                                         </select>
                                     </div>
                                     <div class="col-md-auto">
@@ -84,6 +110,12 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <h5 class="card-title mb-0 flex-grow-1">Flocks <span class="badge bg-dark-subtle text-dark ms-1">{{ $flocks->total() }}</span></h5>
+                                <div class="flex-shrink-0">
+                                    <span class="badge badge-status-active me-2">Active: {{ $flocks->where('status', 'active')->count() }}</span>
+                                    <span class="badge badge-status-inactive me-2">Inactive: {{ $flocks->where('status', 'inactive')->count() }}</span>
+                                    <span class="badge badge-status-sold me-2">Sold: {{ $flocks->where('status', 'sold')->count() }}</span>
+                                    <span class="badge badge-status-ended">Ended: {{ $flocks->where('status', 'ended')->count() }}</span>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -98,6 +130,7 @@
                                                 </th>
                                                 <th scope="col">Initial Bird Count</th>
                                                 <th scope="col">Current Bird Count</th>
+                                                <th scope="col">Status</th>
                                                 <th scope="col">Created At</th>
                                                 <th scope="col">Action</th>
                                             </tr>
@@ -113,6 +146,11 @@
                                                     </td>
                                                     <td class="initial_bird_count">{{ $flock->initial_bird_count }}</td>
                                                     <td class="current_bird_count">{{ $flock->current_bird_count }}</td>
+                                                    <td class="status">
+                                                        <span class="badge badge-status-{{ $flock->status }}">
+                                                            {{ ucfirst($flock->status) }}
+                                                        </span>
+                                                    </td>
                                                     <td class="created_at">{{ $flock->created_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <div class="hstack gap-2">
@@ -130,7 +168,7 @@
                                                 </tr>
                                             @empty
                                                 <tr class="noresult">
-                                                    <td colspan="5" class="text-center">No flocks found</td>
+                                                    <td colspan="6" class="text-center">No flocks found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -145,6 +183,9 @@
                                             </td>
                                             <td class="initial_bird_count">{initial_bird_count}</td>
                                             <td class="current_bird_count">{current_bird_count}</td>
+                                            <td class="status">
+                                                <span class="badge badge-status-{status}">{status_formatted}</span>
+                                            </td>
                                             <td class="created_at">{created_at}</td>
                                             <td>
                                                 <div class="hstack gap-2">
@@ -245,6 +286,15 @@
                                     <label for="initial_bird_count" class="form-label">Initial Bird Count</label>
                                     <input type="number" id="initial_bird_count" name="initial_bird_count" class="form-control" placeholder="Enter initial bird count" required min="0">
                                 </div>
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select id="status" name="status" class="form-select" required>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="sold">Sold</option>
+                                        <option value="ended">Ended</option>
+                                    </select>
+                                </div>
                                 <div class="alert alert-danger d-none" id="add-error-msg"></div>
                             </div>
                             <div class="modal-footer">
@@ -276,6 +326,15 @@
                                 <div class="mb-3">
                                     <label for="edit-current_bird_count" class="form-label">Current Bird Count</label>
                                     <input type="number" id="edit-current_bird_count" name="current_bird_count" class="form-control" placeholder="Enter current bird count" required min="0">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-status" class="form-label">Status</label>
+                                    <select id="edit-status" name="status" class="form-select" required>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="sold">Sold</option>
+                                        <option value="ended">Ended</option>
+                                    </select>
                                 </div>
                                 <div class="alert alert-danger d-none" id="edit-error-msg"></div>
                             </div>
@@ -317,7 +376,9 @@
     </div>
 </div>
 
+<!-- Custom JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
 
-    <!-- Custom JavaScript -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</script>
 @endsection
