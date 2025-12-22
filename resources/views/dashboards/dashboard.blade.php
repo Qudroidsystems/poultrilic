@@ -26,6 +26,11 @@
         max-width: 100%;
         height: auto !important;
     }
+    
+    /* Currency styling */
+    .currency {
+        font-family: Arial, sans-serif;
+    }
 </style>
 
 <div class="main-content">
@@ -377,6 +382,109 @@
                 </div>
             </div>
 
+            <!-- Third Row - Feed & Cost Metrics -->
+            <div class="row">
+                <!-- Feed Consumption Card -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Feed Consumption</p>
+                                    <h3 class="mb-0 mt-auto">
+                                        <span class="counter-value" data-target="{{ $totalFeedBags }}">
+                                            {{ number_format($totalFeedBags, 1) }}
+                                        </span> bags
+                                    </h3>
+                                    <small class="text-muted">{{ number_format($totalFeedKg, 0) }} kg total</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-warning-subtle text-warning rounded fs-3">
+                                            <i class="bi bi-basket"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feed Cost Card - UPDATED TO NAIRA -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Feed Cost</p>
+                                    <h3 class="mb-0 mt-auto currency"><span class="counter-value" data-target="{{ $feedCost }}">₦{{ number_format($feedCost, 2) }}</span></h3>
+                                    <small class="text-muted">{{ number_format($totalFeedBags, 1) }} bags × ₦15,000</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-danger-subtle text-danger rounded fs-3">
+                                            <i class="bi bi-currency-exchange"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Revenue Card - UPDATED TO NAIRA -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Total Revenue</p>
+                                    <h3 class="mb-0 mt-auto currency"><span class="counter-value" data-target="{{ $totalRevenue }}">₦{{ number_format($totalRevenue, 2) }}</span></h3>
+                                    <small class="text-muted">{{ number_format($totalEggsSoldTotalPieces, 0) }} eggs × ₦100</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-success-subtle text-success rounded fs-3">
+                                            <i class="bi bi-cash-stack"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Net Income Card - UPDATED TO NAIRA -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Net Income</p>
+                                    <h3 class="mb-0 mt-auto currency {{ $netIncome >= 0 ? 'text-success' : 'text-danger' }}">
+                                        <span class="counter-value" data-target="{{ $netIncome }}">₦{{ number_format($netIncome, 2) }}</span>
+                                    </h3>
+                                    <small class="text-muted">
+                                        @if($netIncome >= 0)
+                                            {{ $totalRevenue > 0 ? number_format(($netIncome/$totalRevenue)*100, 1) : 0 }}% profit margin
+                                        @else
+                                            Loss
+                                        @endif
+                                    </small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title {{ $netIncome >= 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} rounded fs-3">
+                                            <i class="bi bi-graph-up-arrow"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Charts Section - FIXED CONTAINER -->
             <div class="row">
                 <div class="col-xxl-6">
@@ -444,7 +552,7 @@
                 </div>
             </div>
 
-            <!-- Financial Analysis Section -->
+            <!-- Financial Analysis Section - UPDATED TO NAIRA -->
             <div class="row">
                 <div class="col-xxl-8">
                     <div class="card">
@@ -459,12 +567,12 @@
                                             <h6 class="card-title">Income</h6>
                                             <div class="d-flex justify-content-between mb-2">
                                                 <span>Egg Sales ({{ number_format($totalEggsSoldTotalPieces, 0) }} eggs):</span>
-                                                <strong class="text-success">${{ number_format($totalRevenue, 2) }}</strong>
+                                                <strong class="text-success currency">₦{{ number_format($totalRevenue, 2) }}</strong>
                                             </div>
                                             <hr>
                                             <div class="d-flex justify-content-between">
                                                 <span>Total Income:</span>
-                                                <strong class="text-success">${{ number_format($totalRevenue, 2) }}</strong>
+                                                <strong class="text-success currency">₦{{ number_format($totalRevenue, 2) }}</strong>
                                             </div>
                                         </div>
                                     </div>
@@ -474,21 +582,21 @@
                                         <div class="card-body">
                                             <h6 class="card-title">Expenses</h6>
                                             <div class="d-flex justify-content-between mb-2">
-                                                <span>Feed Cost ({{ number_format($totalFeedBags, 1) }} bags @ $25):</span>
-                                                <strong class="text-danger">${{ number_format($feedCost, 2) }}</strong>
+                                                <span>Feed Cost ({{ number_format($totalFeedBags, 1) }} bags @ ₦15,000):</span>
+                                                <strong class="text-danger currency">₦{{ number_format($feedCost, 2) }}</strong>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
-                                                <span>Drug Cost ({{ $totalDrugUsage }} days @ $10):</span>
-                                                <strong class="text-danger">${{ number_format($drugCost, 2) }}</strong>
+                                                <span>Drug Cost ({{ $totalDrugUsage }} days @ ₦5,000):</span>
+                                                <strong class="text-danger currency">₦{{ number_format($drugCost, 2) }}</strong>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
-                                                <span>Labor Cost (30 days):</span>
-                                                <strong class="text-danger">${{ number_format($laborCost, 2) }}</strong>
+                                                <span>Labor Cost ({{ $startDate->diffInDays($endDate) ?: 30 }} days @ ₦10,000):</span>
+                                                <strong class="text-danger currency">₦{{ number_format($laborCost, 2) }}</strong>
                                             </div>
                                             <hr>
                                             <div class="d-flex justify-content-between">
                                                 <span>Total Expenses:</span>
-                                                <strong class="text-danger">${{ number_format($operationalExpenses, 2) }}</strong>
+                                                <strong class="text-danger currency">₦{{ number_format($operationalExpenses, 2) }}</strong>
                                             </div>
                                         </div>
                                     </div>
@@ -498,16 +606,16 @@
                                 <div class="col-12">
                                     <div class="card {{ $netIncome < 0 ? 'bg-danger-subtle' : 'bg-success-subtle' }}">
                                         <div class="card-body text-center">
-                                            <h4 class="{{ $netIncome < 0 ? 'text-danger' : 'text-success' }}">
-                                                Net Income: ${{ number_format($netIncome, 2) }}
+                                            <h4 class="{{ $netIncome < 0 ? 'text-danger' : 'text-success' }} currency">
+                                                Net Income: ₦{{ number_format($netIncome, 2) }}
                                             </h4>
                                             @if($netIncome < 0)
                                                 <p class="text-danger mb-0">
-                                                    Operating at a loss of ${{ number_format(abs($netIncome), 2) }}
+                                                    Operating at a loss of ₦{{ number_format(abs($netIncome), 2) }}
                                                 </p>
                                             @else
                                                 <p class="text-success mb-0">
-                                                    Profitable - ${{ number_format($netIncome, 2) }} profit
+                                                    Profitable - ₦{{ number_format($netIncome, 2) }} profit
                                                 </p>
                                                 <small>Profit Margin: {{ $totalRevenue > 0 ? number_format(($netIncome/$totalRevenue)*100, 1) : 0 }}%</small>
                                             @endif
@@ -526,23 +634,27 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <strong>Capital Investment:</strong><br>
-                                <span class="text-primary">${{ number_format($capitalInvestment, 2) }}</span>
-                                <small class="text-muted d-block">{{ number_format($totalBirds, 0) }} birds × $2.00 each</small>
+                                <span class="text-primary currency">₦{{ number_format($capitalInvestment, 2) }}</span>
+                                <small class="text-muted d-block">{{ number_format($totalBirds, 0) }} birds × ₦2,000 each</small>
                             </div>
                             <div class="mb-3">
                                 <strong>Operational Expenses:</strong><br>
-                                <span class="text-danger">${{ number_format($operationalExpenses, 2) }}</span>
-                                <small class="text-muted d-block">Feed: ${{ number_format($feedCost, 2) }}, Drugs: ${{ number_format($drugCost, 2) }}, Labor: ${{ number_format($laborCost, 2) }}</small>
+                                <span class="text-danger currency">₦{{ number_format($operationalExpenses, 2) }}</span>
+                                <small class="text-muted d-block">
+                                    Feed: ₦{{ number_format($feedCost, 2) }}, 
+                                    Drugs: ₦{{ number_format($drugCost, 2) }}, 
+                                    Labor: ₦{{ number_format($laborCost, 2) }}
+                                </small>
                             </div>
                             <div class="mb-3">
                                 <strong>Net Income:</strong><br>
-                                <span class="{{ $netIncome < 0 ? 'text-danger' : 'text-success' }}">
-                                    ${{ number_format($netIncome, 2) }}
+                                <span class="{{ $netIncome < 0 ? 'text-danger' : 'text-success' }} currency">
+                                    ₦{{ number_format($netIncome, 2) }}
                                 </span>
                             </div>
                             <div class="mb-3">
                                 <strong>Capital Value:</strong><br>
-                                <span class="text-info">${{ number_format($capitalValue, 2) }}</span>
+                                <span class="text-info currency">₦{{ number_format($capitalValue, 2) }}</span>
                                 <small class="text-muted d-block">Based on income approach (10% capitalization rate)</small>
                             </div>
                             <div class="chart-container" style="height: 250px;">
@@ -553,7 +665,7 @@
                 </div>
             </div>
 
-            <!-- Summary Section -->
+            <!-- Summary Section - UPDATED TO NAIRA -->
             <div class="row">
                 <div class="col-12">
                     <div class="card">
@@ -583,13 +695,13 @@
                                 </p>
                                 <p>
                                     Of these, <strong>{{ number_format($totalEggsSoldTotalPieces, 0) }} eggs</strong> were sold, 
-                                    generating <strong>${{ number_format($totalRevenue, 2) }}</strong> in revenue. 
+                                    generating <strong class="currency">₦{{ number_format($totalRevenue, 2) }}</strong> in revenue. 
                                     <strong>{{ number_format($totalEggMortality, 0) }} eggs</strong> were broken ({{ number_format($eggMortalityRate, 1) }}% of production).
                                 </p>
                                 <p>
                                     Feed consumption totaled <strong>{{ number_format($totalFeedBags, 1) }} bags</strong> 
-                                    costing <strong>${{ number_format($feedCost, 2) }}</strong>.
-                                    Medication was administered on <strong>{{ $totalDrugUsage }} days</strong> costing <strong>${{ number_format($drugCost, 2) }}</strong>.
+                                    costing <strong class="currency">₦{{ number_format($feedCost, 2) }}</strong>.
+                                    Medication was administered on <strong>{{ $totalDrugUsage }} days</strong> costing <strong class="currency">₦{{ number_format($drugCost, 2) }}</strong>.
                                 </p>
                                 @if($hasDataQualityIssues)
                                 <div class="alert alert-warning mt-2">
@@ -600,13 +712,63 @@
                                 <p class="mb-0">
                                     <strong>Final Result:</strong> 
                                     @if($netIncome < 0)
-                                        The operation incurred a loss of <strong>${{ number_format(abs($netIncome), 2) }}</strong> 
+                                        The operation incurred a loss of <strong class="currency">₦{{ number_format(abs($netIncome), 2) }}</strong> 
                                         during this period. Consider reviewing feed efficiency and mortality rates.
                                     @else
-                                        The operation generated a profit of <strong>${{ number_format($netIncome, 2) }}</strong> 
+                                        The operation generated a profit of <strong class="currency">₦{{ number_format($netIncome, 2) }}</strong> 
                                         with a profit margin of {{ $totalRevenue > 0 ? number_format(($netIncome/$totalRevenue)*100, 1) : 0 }}%.
                                     @endif
                                 </p>
+                            </div>
+                            
+                            <!-- Additional Metrics -->
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6 class="card-title">Efficiency Metrics</h6>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Feed per Bird:</span>
+                                                <strong>{{ number_format($feedPerBird, 2) }} bags/bird</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Feed Efficiency:</span>
+                                                <strong>{{ number_format($feedEfficiency, 4) }} bags/egg</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Revenue per Bird:</span>
+                                                <strong class="currency">₦{{ number_format($revenuePerBird, 2) }}</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Cost per Egg:</span>
+                                                <strong class="currency">₦{{ number_format($costPerEgg, 2) }}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6 class="card-title">Sales & Disposal Metrics</h6>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Egg Sales Efficiency:</span>
+                                                <strong>{{ number_format($eggSalesEfficiency, 1) }}%</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Egg Disposal Rate:</span>
+                                                <strong>{{ number_format($eggDisposalRate, 1) }}%</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Avg Production Rate:</span>
+                                                <strong>{{ number_format($avgProductionRate, 1) }}%</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Bird Mortality Rate:</span>
+                                                <strong>{{ number_format($birdMortalityRate, 1) }}%</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -653,9 +815,9 @@
                     duration: 2,
                     separator: ',',
                     decimal: '.',
-                    decimalPlaces: element.textContent.includes('$') ? 2 : 
+                    decimalPlaces: element.textContent.includes('₦') ? 2 : 
                                   element.textContent.includes('%') ? 1 : 
-                                  element.textContent.includes('bags') ? 2 : 0
+                                  element.textContent.includes('bags') ? 1 : 0
                 });
                 if (!countUp.error) {
                     countUp.start();
@@ -979,7 +1141,7 @@
             console.error('Production Rate & Egg Mortality Chart Error:', error);
         }
 
-        // Initialize Flock Capital Chart
+        // Initialize Flock Capital Chart - UPDATED TO NAIRA
         try {
             const capitalCtx = document.getElementById('flockCapitalChart').getContext('2d');
             new Chart(capitalCtx, {
@@ -1009,7 +1171,7 @@
                                 label: function(context) {
                                     const label = context.label || '';
                                     const value = context.raw || 0;
-                                    return `${label}: $${value.toFixed(2)}`;
+                                    return `${label}: ₦${value.toFixed(2)}`;
                                 }
                             }
                         }
