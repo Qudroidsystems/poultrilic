@@ -211,19 +211,35 @@ class DashboardController extends Controller
         }
 
         // Prepare data for view
+       // Prepare data for view
         return view('dashboards.dashboard', compact(
             'pagetitle',
             'totalBirds',
             'currentBirds',
             'totalMortality',
             
-            // Production metrics
+            // Production metrics - add these back
             'productionMetrics',
             'feedMetrics', 
             'revenueMetrics',
             
+            // Add individual production variables for the view
+            'totalEggProductionCrates',
+            'totalEggProductionPieces', 
+            'totalEggProductionTotalPieces',
+            'totalFeedBags',
+            'totalFeedKg',
+            'totalFeedConsumed',
+            'totalEggsSoldCrates',
+            'totalEggsSoldPieces',
+            'totalEggsSoldTotalPieces',
+            'totalEggsSold',
+            'totalRevenue',
+            
             'totalDrugUsage',
             'avgProductionRate',
+            'totalEggMortality',
+            'eggMortalityRate',
             
             'capitalInvestment',
             'operationalExpenses',
