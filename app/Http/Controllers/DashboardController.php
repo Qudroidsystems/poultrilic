@@ -129,12 +129,12 @@ class DashboardController extends Controller
         $unrealisticEntries = $this->validateEggProduction($dailyEntries);
         $hasDataQualityIssues = count($unrealisticEntries) > 0;
 
-        // Calculate production metrics
+        // Calculate production metrics for the main view
         $productionMetrics = $this->calculateProductionMetrics($entriesForMetrics);
         $feedMetrics = $this->calculateFeedMetrics($entriesForMetrics);
         $revenueMetrics = $this->calculateRevenueMetrics($entriesForMetrics);
 
-        // Calculate production rate
+        // Calculate overall production rate
         $avgProductionRate = $this->calculateProductionRate($entriesForMetrics, $currentBirds);
 
         // Drug usage - count days with drugs administered
@@ -286,10 +286,26 @@ class DashboardController extends Controller
 
         $totalEggMortality = $productionMetrics['total_broken_eggs'];
 
-        // Calculate metrics for inactive flocks for comparison
+        // ========== Calculate metrics for active and inactive flocks separately ==========
+        // Calculate metrics for active flocks
+        $activeProductionMetrics = $this->calculateProductionMetrics($activeDailyEntries);
+        $activeFeedMetrics = $this->calculateFeedMetrics($activeDailyEntries);
+        $activeRevenueMetrics = $this->calculateRevenueMetrics($activeDailyEntries);
+        
+        // Calculate metrics for inactive flocks
         $inactiveProductionMetrics = $this->calculateProductionMetrics($inactiveDailyEntries);
         $inactiveFeedMetrics = $this->calculateFeedMetrics($inactiveDailyEntries);
         $inactiveRevenueMetrics = $this->calculateRevenueMetrics($inactiveDailyEntries);
+        
+        // Calculate production rates for individual flocks (for display in the table)
+        foreach ($activeFlockAnalysis['flocks'] as $flockId => &$flockData) {
+            $flockData['productionRate'] = $this->calculateFlockProductionRate($flockId, $activeDailyEntries);
+        }
+        
+        foreach ($inactiveFlockAnalysis['flocks'] as $flockId => &$flockData) {
+            $flockData['productionRate'] = $this->calculateFlockProductionRate($flockId, $inactiveDailyEntries);
+        }
+        // ========== END ==========
 
         // Prepare data for view
         return view('dashboards.dashboard', compact(
@@ -298,15 +314,23 @@ class DashboardController extends Controller
             'currentBirds',
             'totalMortality',
             
-            // Production metrics
+            // Production metrics (main view - either selected flock or all active flocks)
             'productionMetrics',
             'feedMetrics', 
             'revenueMetrics',
             
-            // Inactive flock metrics
+            // Active and inactive flock metrics (for comparison)
+            'activeProductionMetrics',
+            'activeFeedMetrics',
+            'activeRevenueMetrics',
             'inactiveProductionMetrics',
             'inactiveFeedMetrics',
             'inactiveRevenueMetrics',
+            
+            // Daily entries collections
+            'dailyEntries',
+            'activeDailyEntries',
+            'inactiveDailyEntries',
             
             // Individual production variables for the view
             'totalEggProductionCrates',
@@ -477,8 +501,38 @@ class DashboardController extends Controller
             'egg_sales_string' => "{$cratesSold} Cr {$piecesSold}PC",
         ];
     }
-    
+
     /**
+     * Calculate production rate for a specific flock
+     */
+    private function calculateFlockProductionRate($flockId, $dailyEntries)
+    {
+        $flockEntries = $dailyEntries->filter(function($entry) use ($flockId) {
+            return ($entry->weekEntry->flock_id ?? null) == $flockId;
+        });
+        
+        if ($flockEntries->count() === 0) {
+            return 0;
+        }
+        
+        $totalEggs = 0;
+        $totalBirdDays = 0;
+        
+        foreach ($flockEntries as $entry) {
+            $eggData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
+            $totalEggs += $eggData['total_pieces'];
+            $totalBirdDays += $entry->current_birds;
+        }
+        
+        if ($totalBirdDays === 0) {
+            return 0;
+        }
+        
+        $productionRate = ($totalEggs / $totalBirdDays) * 100;
+        return min(100, round($productionRate, 1));
+    }
+        
+        /**
      * Calculate feed metrics
      */
     private function calculateFeedMetrics($dailyEntries)
