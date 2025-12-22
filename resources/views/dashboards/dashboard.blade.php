@@ -20,48 +20,6 @@
             </div>
             <!-- End page title -->
 
-            <!-- Data Quality Warning -->
-            @if($hasDataQualityIssues)
-            <div class="row mb-3">
-                <div class="col-12">
-                    <div class="alert alert-warning">
-                        <h5 class="alert-heading">⚠️ Data Quality Issues Detected</h5>
-                        <p>Found {{ count($unrealisticEntries) }} entries with unrealistic egg production data.</p>
-                        <p><strong>Note:</strong> Production rate calculation excludes unrealistic entries (>110% of bird count).</p>
-                        <button class="btn btn-sm btn-outline-warning mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#dataIssuesDetails">
-                            Show Details
-                        </button>
-                        <div class="collapse mt-2" id="dataIssuesDetails">
-                            <div class="card card-body">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Entry ID</th>
-                                            <th>Date</th>
-                                            <th>Birds</th>
-                                            <th>Eggs Reported</th>
-                                            <th>Rate</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($unrealisticEntries as $entry)
-                                        <tr>
-                                            <td>{{ $entry['id'] }}</td>
-                                            <td>{{ $entry['date'] }}</td>
-                                            <td>{{ number_format($entry['birds'], 0) }}</td>
-                                            <td>{{ number_format($entry['eggs'], 0) }}</td>
-                                            <td class="text-danger">{{ number_format($entry['rate'], 1) }}%</td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
-
             <!-- Filters -->
             <div class="row mb-3">
                 <div class="col-md-4">
@@ -92,29 +50,16 @@
                 </div>
             </div>
 
-            <!-- Data Quality Summary -->
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <p class="text-muted mb-2">Data Quality Summary</p>
-                            <div class="d-flex justify-content-between">
-                                <span>Total Days:</span>
-                                <strong>{{ $dailyEntries->count() }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span>Days with Production:</span>
-                                <strong>{{ $daysWithProduction }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span>Avg Daily Birds:</span>
-                                <strong>{{ number_format($avgDailyBirds, 0) }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span>Avg Daily Eggs:</span>
-                                <strong>{{ number_format($avgDailyProduction, 0) }}</strong>
-                            </div>
-                        </div>
+            <!-- Temporary debug section - REMOVE THIS AFTER FIXING -->
+            <div class="row mb-3 d-none">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h5>Debug Info:</h5>
+                        <p>Total Eggs: {{ $totalEggProductionTotalPieces }}</p>
+                        <p>Days: {{ $dailyEntries->count() }}</p>
+                        <p>Current Birds: {{ $currentBirds }}</p>
+                        <p>Calculation: ({{ $totalEggProductionTotalPieces }} / {{ $dailyEntries->count() }}) / {{ $currentBirds }} = {{ $totalEggProductionTotalPieces / $dailyEntries->count() }} / {{ $currentBirds }} = {{ ($totalEggProductionTotalPieces / $dailyEntries->count()) / $currentBirds }}</p>
+                        <p>As Percentage: {{ (($totalEggProductionTotalPieces / $dailyEntries->count()) / $currentBirds) * 100 }}%</p>
                     </div>
                 </div>
             </div>
@@ -195,13 +140,7 @@
                                 <div class="flex-grow-1">
                                     <p class="fs-md text-muted mb-4">Production Rate</p>
                                     <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $avgProductionRate }}">{{ number_format($avgProductionRate, 1) }}</span>%</h3>
-                                    <small class="text-muted">
-                                        @if($hasDataQualityIssues)
-                                        (Excludes unrealistic entries)
-                                        @else
-                                        Average eggs per bird per day
-                                        @endif
-                                    </small>
+                                    <small class="text-muted">Average eggs per bird per day</small>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="avatar-sm">
@@ -687,12 +626,6 @@
                                     costing <strong>${{ number_format($feedCost, 2) }}</strong>.
                                     Medication was administered on <strong>{{ $totalDrugUsage }} days</strong> costing <strong>${{ number_format($drugCost, 2) }}</strong>.
                                 </p>
-                                @if($hasDataQualityIssues)
-                                <div class="alert alert-warning mt-2">
-                                    <strong>Note:</strong> {{ count($unrealisticEntries) }} entries were excluded from production rate calculation 
-                                    due to unrealistic data (egg production > 110% of bird count).
-                                </div>
-                                @endif
                                 <p class="mb-0">
                                     <strong>Final Result:</strong> 
                                     @if($netIncome < 0)
@@ -712,12 +645,22 @@
     </div>
 </div>
 
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.8.0/countUp.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Debug chart data
+        console.log('Weeks:', {!! json_encode($weeks) !!});
+        console.log('Feed Data (Bags):', {!! json_encode(array_values($feedChartData)) !!});
+        console.log('Drug Data:', {!! json_encode(array_values($drugChartData)) !!});
+        console.log('Egg Production Data:', {!! json_encode(array_values($eggProductionChartData)) !!});
+        console.log('Egg Sold Data:', {!! json_encode(array_values($eggSoldChartData)) !!});
+        console.log('Production Rate Data:', {!! json_encode(array_values($productionRateChartData)) !!});
+        console.log('Egg Mortality Data:', {!! json_encode(array_values($eggMortalityChartData)) !!});
+
         // Initialize Flatpickr
         flatpickr('#dateRangePicker', {
             mode: 'range',
