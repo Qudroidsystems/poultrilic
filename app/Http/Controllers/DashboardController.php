@@ -46,9 +46,9 @@ class DashboardController extends Controller
         $flockId = $request->input('flock_id');
         $flocks = Flock::all();
         
-        // Separate active and inactive flocks
-        $activeFlocks = $flocks->where('status', 'active');
-        $inactiveFlocks = $flocks->where('status', '!=', 'active');
+        // Get active and inactive flocks
+        $activeFlocks = Flock::where('status', 'active')->get();
+        $inactiveFlocks = Flock::where('status', '!=', 'active')->get();
         
         // Get all daily entries for calculations
         $dailyEntries = DailyEntry::whereBetween('created_at', [$startDate, $endDate])
@@ -72,13 +72,37 @@ class DashboardController extends Controller
         // Analyze flock data
         $flockAnalysis = $this->analyzeFlockData($allDailyEntriesForAnalysis);
         
-        // Separate analysis for active and inactive flocks
-        $activeFlockAnalysis = $this->filterFlockAnalysisByStatus($flockAnalysis, $activeFlocks);
-        $inactiveFlockAnalysis = $this->filterFlockAnalysisByStatus($flockAnalysis, $inactiveFlocks);
+        // Get analysis for active flocks
+        $activeFlockAnalysis = $this->analyzeFlockData(
+            $allDailyEntriesForAnalysis->filter(function($entry) use ($activeFlocks) {
+                $flockId = $entry->weekEntry->flock_id ?? null;
+                return $activeFlocks->contains('id', $flockId);
+            })
+        );
+
+        // Get analysis for inactive flocks
+        $inactiveFlockAnalysis = $this->analyzeFlockData(
+            $allDailyEntriesForAnalysis->filter(function($entry) use ($inactiveFlocks) {
+                $flockId = $entry->weekEntry->flock_id ?? null;
+                return $inactiveFlocks->contains('id', $flockId);
+            })
+        );
+
+        // Separate daily entries for active and inactive flocks
+        $activeDailyEntries = $dailyEntries->filter(function($entry) use ($activeFlocks) {
+            $flockId = $entry->weekEntry->flock_id ?? null;
+            return $activeFlocks->contains('id', $flockId);
+        });
+
+        $inactiveDailyEntries = $dailyEntries->filter(function($entry) use ($inactiveFlocks) {
+            $flockId = $entry->weekEntry->flock_id ?? null;
+            return $inactiveFlocks->contains('id', $flockId);
+        });
 
         // Use the analyzed data for metrics
         if ($flockId) {
             // Single flock selected
+            $selectedFlock = Flock::find($flockId);
             $flockData = $flockAnalysis['flocks'][$flockId] ?? [
                 'totalBirds' => 0,
                 'currentBirds' => 0, 
@@ -88,27 +112,33 @@ class DashboardController extends Controller
             $totalBirds = $flockData['totalBirds'];
             $currentBirds = $flockData['currentBirds'];
             $totalMortality = $flockData['totalMortality'];
+            
+            // Use appropriate daily entries based on selected flock
+            $entriesForMetrics = $selectedFlock && $selectedFlock->status === 'active' 
+                ? $activeDailyEntries 
+                : $inactiveDailyEntries;
         } else {
-            // All active flocks combined
+            // All flocks - use active flocks for main metrics
             $totalBirds = $activeFlockAnalysis['totalBirdsAll'] ?? 0;
             $currentBirds = $activeFlockAnalysis['currentBirdsAll'] ?? 0;
             $totalMortality = $activeFlockAnalysis['totalMortalityAll'] ?? 0;
+            $entriesForMetrics = $activeDailyEntries;
         }
 
         // Validate data quality
         $unrealisticEntries = $this->validateEggProduction($dailyEntries);
         $hasDataQualityIssues = count($unrealisticEntries) > 0;
 
-        // Calculate production metrics from daily entries
-        $productionMetrics = $this->calculateProductionMetrics($dailyEntries);
-        $feedMetrics = $this->calculateFeedMetrics($dailyEntries);
-        $revenueMetrics = $this->calculateRevenueMetrics($dailyEntries);
+        // Calculate production metrics
+        $productionMetrics = $this->calculateProductionMetrics($entriesForMetrics);
+        $feedMetrics = $this->calculateFeedMetrics($entriesForMetrics);
+        $revenueMetrics = $this->calculateRevenueMetrics($entriesForMetrics);
 
         // Calculate production rate
-        $avgProductionRate = $this->calculateProductionRate($dailyEntries, $currentBirds);
+        $avgProductionRate = $this->calculateProductionRate($entriesForMetrics, $currentBirds);
 
         // Drug usage - count days with drugs administered
-        $totalDrugUsage = $dailyEntries->where('drugs', '!=', 'Nil')
+        $totalDrugUsage = $entriesForMetrics->where('drugs', '!=', 'Nil')
             ->where('drugs', '!=', '')
             ->whereNotNull('drugs')
             ->count();
@@ -126,7 +156,7 @@ class DashboardController extends Controller
         $capitalValue = $netIncome > 0 ? $netIncome / 0.1 : 0;
 
         // Chart Data - Weekly aggregation
-        $chartData = $dailyEntries->groupBy(function($entry) {
+        $chartData = $entriesForMetrics->groupBy(function($entry) {
             return $entry->created_at->format('Y-W');
         })->map(function($weekEntries) {
             $weekProduction = 0;
@@ -194,7 +224,7 @@ class DashboardController extends Controller
         }
 
         // Data quality metrics
-        $daysWithProduction = $dailyEntries->filter(function($entry) {
+        $daysWithProduction = $entriesForMetrics->filter(function($entry) {
             $eggData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
             return $eggData['total_pieces'] > 0;
         })->count();
@@ -202,7 +232,7 @@ class DashboardController extends Controller
         $avgDailyProduction = $daysWithProduction > 0 ? $productionMetrics['total_egg_pieces'] / $daysWithProduction : 0;
         
         // Calculate average daily birds from entries with positive bird count
-        $entriesWithBirds = $dailyEntries->filter(function($entry) {
+        $entriesWithBirds = $entriesForMetrics->filter(function($entry) {
             return $entry->current_birds > 0;
         });
         $avgDailyBirds = $entriesWithBirds->count() > 0 ? $entriesWithBirds->avg('current_birds') : 0;
@@ -256,6 +286,11 @@ class DashboardController extends Controller
 
         $totalEggMortality = $productionMetrics['total_broken_eggs'];
 
+        // Calculate metrics for inactive flocks for comparison
+        $inactiveProductionMetrics = $this->calculateProductionMetrics($inactiveDailyEntries);
+        $inactiveFeedMetrics = $this->calculateFeedMetrics($inactiveDailyEntries);
+        $inactiveRevenueMetrics = $this->calculateRevenueMetrics($inactiveDailyEntries);
+
         // Prepare data for view
         return view('dashboards.dashboard', compact(
             'pagetitle',
@@ -267,6 +302,11 @@ class DashboardController extends Controller
             'productionMetrics',
             'feedMetrics', 
             'revenueMetrics',
+            
+            // Inactive flock metrics
+            'inactiveProductionMetrics',
+            'inactiveFeedMetrics',
+            'inactiveRevenueMetrics',
             
             // Individual production variables for the view
             'totalEggProductionCrates',
@@ -398,36 +438,6 @@ class DashboardController extends Controller
             'totalMortalityAll' => $totalMortalityAll,
             'flockCount' => count($flocks),
             'totalEntries' => $dailyEntries->count(),
-        ];
-    }
-
-    /**
-     * Filter flock analysis by status
-     */
-    private function filterFlockAnalysisByStatus($flockAnalysis, $flocks)
-    {
-        $filteredFlockIds = $flocks->pluck('id')->toArray();
-        
-        $filteredFlocks = array_filter($flockAnalysis['flocks'], function($flockId) use ($filteredFlockIds) {
-            return in_array($flockId, $filteredFlockIds);
-        }, ARRAY_FILTER_USE_KEY);
-        
-        $totalBirdsAll = 0;
-        $currentBirdsAll = 0;
-        $totalMortalityAll = 0;
-        
-        foreach ($filteredFlocks as $flockId => $flockData) {
-            $totalBirdsAll += $flockData['totalBirds'];
-            $currentBirdsAll += $flockData['currentBirds'];
-            $totalMortalityAll += $flockData['totalMortality'];
-        }
-        
-        return [
-            'flocks' => $filteredFlocks,
-            'totalBirdsAll' => $totalBirdsAll,
-            'currentBirdsAll' => $currentBirdsAll,
-            'totalMortalityAll' => $totalMortalityAll,
-            'flockCount' => count($filteredFlocks),
         ];
     }
 
