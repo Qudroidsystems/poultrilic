@@ -46,6 +46,39 @@ class DashboardController extends Controller
         $flockId = $request->input('flock_id');
         $flocks = Flock::all();
         
+        // Get all flocks with their current data if no flock selected
+        if (!$flockId) {
+            $allFlockMetrics = [];
+            $totalBirdsAll = 0;
+            $currentBirdsAll = 0;
+            $totalMortalityAll = 0;
+            
+            foreach ($flocks as $flock) {
+                $flockMetrics = FlockAnalyticsService::calculateMetrics($flock->id, $startDate, $endDate);
+                $allFlockMetrics[$flock->id] = $flockMetrics;
+                
+                // Sum for combined view
+                $totalBirdsAll += $flockMetrics['totalBirds'];
+                $currentBirdsAll += $flockMetrics['currentBirds'];
+                $totalMortalityAll += $flockMetrics['totalMortality'];
+            }
+            
+            $totalBirds = $totalBirdsAll;
+            $currentBirds = $currentBirdsAll;
+            $totalMortality = $totalMortalityAll;
+            
+            // For combined view, we need to get aggregated metrics
+            $combinedMetrics = FlockAnalyticsService::calculateCombinedMetrics($startDate, $endDate);
+        } else {
+            // Single flock selected
+            $flockMetrics = FlockAnalyticsService::calculateMetrics($flockId, $startDate, $endDate);
+            $allFlockMetrics = [$flockId => $flockMetrics];
+            
+            $totalBirds = $flockMetrics['totalBirds'];
+            $currentBirds = $flockMetrics['currentBirds'];
+            $totalMortality = $flockMetrics['totalMortality'];
+        }
+
         // Base query with date filtering
         $query = DailyEntry::whereBetween('created_at', [$startDate, $endDate])
                           ->with('weekEntry.flock');
@@ -63,37 +96,38 @@ class DashboardController extends Controller
         $unrealisticEntries = $this->validateEggProduction($dailyEntries);
         $hasDataQualityIssues = count($unrealisticEntries) > 0;
 
-        // Calculate flock metrics using service
-        $flockMetrics = FlockAnalyticsService::calculateMetrics($flockId, $startDate, $endDate);
-        $totalBirds = $flockMetrics['totalBirds'];
-        $currentBirds = $flockMetrics['currentBirds'];
-        $totalMortality = $flockMetrics['totalMortality'];
+        // Use the appropriate metrics based on selection
+        if (!$flockId && isset($combinedMetrics)) {
+            $metrics = $combinedMetrics;
+        } else {
+            $metrics = $flockMetrics ?? $combinedMetrics;
+        }
 
-        // Egg production calculations - using service data
-        $totalEggProductionCrates = $flockMetrics['total_egg_crates'];
-        $totalEggProductionPieces = $flockMetrics['total_egg_pieces_remainder'];
-        $totalEggProductionTotalPieces = $flockMetrics['total_egg_pieces'];
+        // Egg production calculations
+        $totalEggProductionCrates = $metrics['total_egg_crates'];
+        $totalEggProductionPieces = $metrics['total_egg_pieces_remainder'];
+        $totalEggProductionTotalPieces = $metrics['total_egg_pieces'];
         $totalEggProduction = $totalEggProductionTotalPieces;
 
         // Feed calculations
-        $totalFeedBags = $flockMetrics['total_feed_bags'];
-        $totalFeedKg = $flockMetrics['total_feed_kg'];
+        $totalFeedBags = $metrics['total_feed_bags'];
+        $totalFeedKg = $metrics['total_feed_kg'];
         $totalFeedConsumed = $totalFeedBags;
 
         // Egg Mortality = Broken Eggs
-        $totalEggMortality = $flockMetrics['total_broken_eggs'];
+        $totalEggMortality = $metrics['total_broken_eggs'];
 
         // Total sold eggs
-        $totalEggsSoldCrates = $flockMetrics['total_sold_crates'];
-        $totalEggsSoldPieces = $flockMetrics['total_sold_pieces_remainder'];
-        $totalEggsSoldTotalPieces = $flockMetrics['total_sold_pieces'];
+        $totalEggsSoldCrates = $metrics['total_sold_crates'];
+        $totalEggsSoldPieces = $metrics['total_sold_pieces_remainder'];
+        $totalEggsSoldTotalPieces = $metrics['total_sold_pieces'];
         $totalEggsSold = $totalEggsSoldTotalPieces;
 
         // Calculate production rate
         $avgProductionRate = $this->calculateProductionRate($dailyEntries, $currentBirds);
 
         // Revenue calculation in Naira
-        $totalRevenue = $flockMetrics['total_revenue'];
+        $totalRevenue = $metrics['total_revenue'];
 
         // Drug usage - count days with drugs administered
         $totalDrugUsage = $dailyEntries->where('drugs', '!=', 'Nil')
@@ -209,6 +243,19 @@ class DashboardController extends Controller
         });
         $avgDailyBirds = $entriesWithBirds->count() > 0 ? $entriesWithBirds->avg('current_birds') : 0;
 
+        // Get flock details for display
+        $selectedFlock = $flockId ? Flock::find($flockId) : null;
+        
+        // Calculate flock ages
+        $flockAges = [];
+        if ($flockId) {
+            $flockAges[$flockId] = $this->calculateFlockAge($flockId);
+        } else {
+            foreach ($flocks as $flock) {
+                $flockAges[$flock->id] = $this->calculateFlockAge($flock->id);
+            }
+        }
+
         return view('dashboards.dashboard', compact(
             'pagetitle',
             'totalBirds',
@@ -259,8 +306,30 @@ class DashboardController extends Controller
             'unrealisticEntries',
             'daysWithProduction',
             'avgDailyProduction',
-            'avgDailyBirds'
+            'avgDailyBirds',
+            'selectedFlock',
+            'flockAges',
+            'allFlockMetrics'
         ));
+    }
+
+    /**
+     * Calculate flock age in weeks
+     */
+    private function calculateFlockAge($flockId)
+    {
+        $firstEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
+            $q->where('flock_id', $flockId);
+        })->orderBy('created_at', 'asc')->first();
+        
+        if (!$firstEntry) {
+            return 0;
+        }
+        
+        $firstDate = Carbon::parse($firstEntry->created_at);
+        $now = Carbon::now();
+        
+        return $firstDate->diffInWeeks($now);
     }
 
     /**
@@ -282,7 +351,8 @@ class DashboardController extends Controller
                         'birds' => $entry->current_birds,
                         'eggs' => $eggData['total_pieces'],
                         'rate' => ($eggData['total_pieces'] / $entry->current_birds) * 100,
-                        'date' => $entry->created_at->format('Y-m-d')
+                        'date' => $entry->created_at->format('Y-m-d'),
+                        'flock_id' => $entry->weekEntry->flock_id ?? null
                     ];
                 }
             }
@@ -398,7 +468,13 @@ class DashboardController extends Controller
     private function prepareExportData($startDate, $endDate, $flockId, $data)
     {
         // Calculate flock metrics using service
-        $flockMetrics = FlockAnalyticsService::calculateMetrics($flockId, $startDate, $endDate);
+        $flockMetrics = $flockId 
+            ? FlockAnalyticsService::calculateMetrics($flockId, $startDate, $endDate)
+            : FlockAnalyticsService::calculateCombinedMetrics($startDate, $endDate);
+        
+        // Get flock details
+        $flocks = Flock::all();
+        $selectedFlock = $flockId ? Flock::find($flockId) : null;
         
         // Calculate summary metrics from data
         $summaryMetrics = $this->calculateExportSummary($data, $flockId);
@@ -408,11 +484,12 @@ class DashboardController extends Controller
             'totalBirds' => $flockMetrics['totalBirds'],
             'currentBirds' => $flockMetrics['currentBirds'],
             'totalMortality' => $flockMetrics['totalMortality'],
+            'totalEggProduction' => $flockMetrics['total_egg_pieces'],
+            'totalEggsSold' => $flockMetrics['total_sold_pieces'],
+            'totalRevenue' => $flockMetrics['total_revenue'],
+            'totalFeedBags' => $flockMetrics['total_feed_bags'],
         ]);
 
-        // Get selected flock if any
-        $selectedFlock = $flockId ? Flock::find($flockId) : null;
-        
         // Prepare the data array matching your template structure
         return [
             'pagetitle' => 'Poultry Analytics Report',
@@ -452,7 +529,9 @@ class DashboardController extends Controller
             // Main data table
             'studentpaymentbill' => $this->preparePoultryDataTable($data),
             
-            // Date range
+            // Additional info
+            'flocks' => $flocks,
+            'selectedFlock' => $selectedFlock,
             'startDate' => $startDate,
             'endDate' => $endDate,
             'flockId' => $flockId,

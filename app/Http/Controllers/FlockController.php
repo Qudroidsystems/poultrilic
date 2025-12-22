@@ -91,8 +91,12 @@ public function store(Request $request)
         Log::info('Store request received', $request->all());
 
         $validated = $request->validate([
+            'name' => 'nullable|string|max:255',
+            'breed' => 'nullable|string|max:255',
             'initial_bird_count' => 'required|integer|min:0',
             'current_bird_count' => 'required|integer|min:0',
+            'date_of_arrival' => 'nullable|date',
+            'age_in_weeks' => 'nullable|integer|min:0',
             'status' => 'required|in:active,inactive,sold,ended'
         ]);
 
@@ -104,8 +108,12 @@ public function store(Request $request)
 
         return response()->json([
             'id' => $flock->id,
+            'name' => $flock->name,
+            'breed' => $flock->breed,
             'initial_bird_count' => $flock->initial_bird_count,
             'current_bird_count' => $flock->current_bird_count,
+            'date_of_arrival' => $flock->date_of_arrival,
+            'age_in_weeks' => $flock->age_in_weeks,
             'status' => $flock->status,
             'created_at' => $flock->created_at->toIso8601String()
         ], 201);
@@ -114,12 +122,15 @@ public function store(Request $request)
         return response()->json(['message' => 'Failed to create flock: ' . $e->getMessage()], 500);
     }
 }
-
 public function update(Request $request, Flock $flock)
 {
     $validated = $request->validate([
+        'name' => 'nullable|string|max:255',
+        'breed' => 'nullable|string|max:255',
         'initial_bird_count' => 'required|integer|min:0',
         'current_bird_count' => 'required|integer|min:0',
+        'date_of_arrival' => 'nullable|date',
+        'age_in_weeks' => 'nullable|integer|min:0',
         'status' => 'required|in:active,inactive,sold,ended'
     ]);
 
@@ -127,8 +138,12 @@ public function update(Request $request, Flock $flock)
 
     return response()->json([
         'id' => $flock->id,
+        'name' => $flock->name,
+        'breed' => $flock->breed,
         'initial_bird_count' => $flock->initial_bird_count,
         'current_bird_count' => $flock->current_bird_count,
+        'date_of_arrival' => $flock->date_of_arrival,
+        'age_in_weeks' => $flock->age_in_weeks,
         'status' => $flock->status,
         'created_at' => $flock->created_at->toIso8601String()
     ]);
