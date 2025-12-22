@@ -200,13 +200,7 @@
                         </div>
                     </div>
                 </div>
-{{-- Debug section --}}
-@if(app()->environment('local'))
-    <div class="debug-section">
-        <h4>Debug: Flock Analysis</h4>
-        <pre>{{ print_r($flockAnalysis, true) }}</pre>
-    </div>
-@endif
+
                 <!-- Current Birds Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card">

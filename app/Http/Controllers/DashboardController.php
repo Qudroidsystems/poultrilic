@@ -302,85 +302,85 @@ class DashboardController extends Controller
     ));
 }
 
- /**
- * Analyze flock data from ALL daily entries to get accurate counts
- */
-private function analyzeFlockData($dailyEntries)
-{
-    $flocks = [];
-    $totalBirdsAll = 0;
-    $currentBirdsAll = 0;
-    $totalMortalityAll = 0;
-    
-    // Get all flock IDs from the entries
-    $flockIds = $dailyEntries->pluck('weekEntry.flock_id')->unique()->filter();
-    
-    foreach ($flockIds as $flockId) {
-        if ($flockId == 0) continue;
-        
-        // Get ALL entries for this flock (no date filter) 
-        $allEntriesForFlock = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
-            $q->where('flock_id', $flockId);
-        })->orderBy('created_at')->get();
-        
-        if ($allEntriesForFlock->isEmpty()) continue;
-        
-        $earliestEntry = $allEntriesForFlock->first();
-        $latestEntry = $allEntriesForFlock->last(); // Get TRUE latest from ALL entries
-        
-        // Get maximum bird count from ALL historical entries (should be initial)
-        $maxBirds = $allEntriesForFlock->max('current_birds');
-        
-        // Get current birds from TRUE latest entry (not filtered)
-        $currentBirds = $latestEntry->current_birds ?? 0;
-        
-        // For Flock 1, check if we should use 1000 as initial (from SQL dump)
-        if ($flockId == 1) {
-            $initialBirds = 1000; // From SQL dump
-            $currentBirds = 959; // From SQL dump - ID 506 shows 959 birds
-        } 
-        // For Flock 2, check if we should use 650 as initial
-        else if ($flockId == 2) {
-            $initialBirds = 650; // From SQL dump
-            $currentBirds = 642; // From SQL dump
-        }
-        // For other flocks, use calculated values
-        else {
-            $initialBirds = $maxBirds;
-        }
-        
-        // Calculate mortality
-        $mortality = max(0, $initialBirds - $currentBirds);
-        
-        $flocks[$flockId] = [
-            'totalBirds' => $initialBirds,
-            'currentBirds' => $currentBirds,
-            'totalMortality' => $mortality,
-            'maxBirds' => $maxBirds,
-            'minBirds' => $allEntriesForFlock->min('current_birds'),
-            'entryCount' => $dailyEntries->where('weekEntry.flock_id', $flockId)->count(),
-            'totalEntryCount' => $allEntriesForFlock->count(),
-            'firstDate' => $earliestEntry->created_at->format('Y-m-d'),
-            'lastDate' => $latestEntry->created_at->format('Y-m-d'),
-            'trueInitialBirds' => $initialBirds,
-            'trueCurrentBirds' => $currentBirds,
-        ];
-        
-        $totalBirdsAll += $initialBirds;
-        $currentBirdsAll += $currentBirds;
-        $totalMortalityAll += $mortality;
-    }
-    
-    return [
-        'flocks' => $flocks,
-        'totalBirdsAll' => $totalBirdsAll,
-        'currentBirdsAll' => $currentBirdsAll,
-        'totalMortalityAll' => $totalMortalityAll,
-        'flockCount' => count($flocks),
-        'totalEntries' => $dailyEntries->count(),
-    ];
-}
     /**
+     * Analyze flock data from ALL daily entries to get accurate counts
+     */
+    private function analyzeFlockData($dailyEntries)
+    {
+        $flocks = [];
+        $totalBirdsAll = 0;
+        $currentBirdsAll = 0;
+        $totalMortalityAll = 0;
+        
+        // Get all flock IDs from the entries
+        $flockIds = $dailyEntries->pluck('weekEntry.flock_id')->unique()->filter();
+        
+        foreach ($flockIds as $flockId) {
+            if ($flockId == 0) continue;
+            
+            // Get ALL entries for this flock (no date filter) 
+            $allEntriesForFlock = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
+                $q->where('flock_id', $flockId);
+            })->orderBy('created_at')->get();
+            
+            if ($allEntriesForFlock->isEmpty()) continue;
+            
+            $earliestEntry = $allEntriesForFlock->first();
+            $latestEntry = $allEntriesForFlock->last(); // Get TRUE latest from ALL entries
+            
+            // Get maximum bird count from ALL historical entries (should be initial)
+            $maxBirds = $allEntriesForFlock->max('current_birds');
+            
+            // Get current birds from TRUE latest entry (not filtered)
+            $currentBirds = $latestEntry->current_birds ?? 0;
+            
+            // For Flock 1, check if we should use 1000 as initial (from SQL dump)
+            if ($flockId == 1) {
+                $initialBirds = 1000; // From SQL dump
+                $currentBirds = 959; // From SQL dump - ID 506 shows 959 birds
+            } 
+            // For Flock 2, check if we should use 650 as initial
+            else if ($flockId == 2) {
+                $initialBirds = 650; // From SQL dump
+                $currentBirds = 642; // From SQL dump
+            }
+            // For other flocks, use calculated values
+            else {
+                $initialBirds = $maxBirds;
+            }
+            
+            // Calculate mortality
+            $mortality = max(0, $initialBirds - $currentBirds);
+            
+            $flocks[$flockId] = [
+                'totalBirds' => $initialBirds,
+                'currentBirds' => $currentBirds,
+                'totalMortality' => $mortality,
+                'maxBirds' => $maxBirds,
+                'minBirds' => $allEntriesForFlock->min('current_birds'),
+                'entryCount' => $dailyEntries->where('weekEntry.flock_id', $flockId)->count(),
+                'totalEntryCount' => $allEntriesForFlock->count(),
+                'firstDate' => $earliestEntry->created_at->format('Y-m-d'),
+                'lastDate' => $latestEntry->created_at->format('Y-m-d'),
+                'trueInitialBirds' => $initialBirds,
+                'trueCurrentBirds' => $currentBirds,
+            ];
+            
+            $totalBirdsAll += $initialBirds;
+            $currentBirdsAll += $currentBirds;
+            $totalMortalityAll += $mortality;
+        }
+        
+        return [
+            'flocks' => $flocks,
+            'totalBirdsAll' => $totalBirdsAll,
+            'currentBirdsAll' => $currentBirdsAll,
+            'totalMortalityAll' => $totalMortalityAll,
+            'flockCount' => count($flocks),
+            'totalEntries' => $dailyEntries->count(),
+        ];
+    }
+        /**
      * Calculate production metrics from daily entries
      */
     private function calculateProductionMetrics($dailyEntries)
