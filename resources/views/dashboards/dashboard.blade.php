@@ -1,33 +1,6 @@
 @extends('layouts.master')
 @section('content')
 
-<style>
-    /* Fix chart container overflow */
-    .chart-container {
-        position: relative;
-        height: 300px;
-        width: 100%;
-        overflow: hidden;
-    }
-    
-    /* Fix card layout */
-    .card-body {
-        overflow-x: hidden;
-    }
-    
-    /* Ensure container doesn't overflow */
-    .container-fluid {
-        max-width: 100%;
-        overflow-x: hidden;
-    }
-    
-    /* Fix chart canvas sizing */
-    canvas {
-        max-width: 100%;
-        height: auto !important;
-    }
-</style>
-
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -119,58 +92,8 @@
                 </div>
             </div>
 
-            <!-- Flock Info Summary -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="card-title">Flock Information</h6>
-                            <div class="row">
-                                <div class="col-6">
-                                    <p class="mb-1"><strong>Total Birds (Initial):</strong></p>
-                                    <h4 class="text-primary">{{ number_format($totalBirds, 0) }}</h4>
-                                </div>
-                                <div class="col-6">
-                                    <p class="mb-1"><strong>Current Birds:</strong></p>
-                                    <h4 class="text-success">{{ number_format($currentBirds, 0) }}</h4>
-                                </div>
-                            </div>
-                            <div class="row mt-2">
-                                <div class="col-12">
-                                    <p class="mb-1"><strong>Total Mortality:</strong></p>
-                                    <h4 class="text-danger">{{ number_format($totalMortality, 0) }}</h4>
-                                    <small class="text-muted">Calculated: {{ number_format($totalBirds, 0) }} - {{ number_format($currentBirds, 0) }} = {{ number_format($totalMortality, 0) }}</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="card-title">Data Quality Summary</h6>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Total Days:</span>
-                                <strong>{{ $daysWithProduction }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Avg Daily Birds:</span>
-                                <strong>{{ number_format($avgDailyBirds, 0) }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Avg Daily Eggs:</span>
-                                <strong>{{ number_format($avgDailyProduction, 0) }}</strong>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span>Data Issues:</span>
-                                <strong class="{{ $hasDataQualityIssues ? 'text-warning' : 'text-success' }}">
-                                    {{ $hasDataQualityIssues ? count($unrealisticEntries) . ' entries' : 'None' }}
-                                </strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- REMOVED the old debug section that was causing the error -->
+            <!-- The d-none section with $dailyEntries->count() has been removed -->
 
             <!-- First Row - Key Metrics -->
             <div class="row">
@@ -218,7 +141,7 @@
                     </div>
                 </div>
 
-                <!-- Bird Mortality Card - FIXED -->
+                <!-- Bird Mortality Card -->
                 <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
@@ -226,10 +149,7 @@
                                 <div class="flex-grow-1">
                                     <p class="fs-md text-muted mb-4">Bird Mortality</p>
                                     <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $totalMortality }}">{{ number_format($totalMortality, 0) }}</span></h3>
-                                    <small class="text-muted">
-                                        {{ number_format($birdMortalityRate, 1) }}% of flock
-                                        <br>{{ number_format($totalBirds, 0) }} - {{ number_format($currentBirds, 0) }}
-                                    </small>
+                                    <small class="text-muted">Total losses</small>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="avatar-sm">
@@ -377,7 +297,104 @@
                 </div>
             </div>
 
-            <!-- Charts Section - FIXED CONTAINER -->
+            <!-- Third Row - Feed and Resources -->
+            <div class="row">
+                <!-- Feed Consumed Card - CORRECTED (Bags not kg) -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Feed Consumed</p>
+                                    <h3 class="mb-0 mt-auto">
+                                        <span class="counter-value" data-target="{{ $totalFeedBags }}">
+                                            {{ number_format($totalFeedBags, 1) }}
+                                        </span> Bags
+                                    </h3>
+                                    <small class="text-muted">({{ number_format($totalFeedKg, 1) }} kg equivalent)</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-warning-subtle text-warning rounded fs-3">
+                                            <i class="bi bi-basket"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Drug Usage Card -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Drug Usage</p>
+                                    <h3 class="mb-0 mt-auto"><span class="counter-value" data-target="{{ $totalDrugUsage }}">{{ number_format($totalDrugUsage, 0) }}</span></h3>
+                                    <small class="text-muted">Treatment days</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-primary-subtle text-primary rounded fs-3">
+                                            <i class="bi bi-capsule"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Revenue Card -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Total Revenue</p>
+                                    <h3 class="mb-0 mt-auto">$<span class="counter-value" data-target="{{ $totalRevenue }}">{{ number_format($totalRevenue, 2) }}</span></h3>
+                                    <small class="text-muted">From egg sales ($0.05 per egg)</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title bg-success-subtle text-success rounded fs-3">
+                                            <i class="bi bi-currency-dollar"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Net Income Card -->
+                <div class="col-xxl-3 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <div class="flex-grow-1">
+                                    <p class="fs-md text-muted mb-4">Net Income</p>
+                                    <h3 class="mb-0 mt-auto {{ $netIncome < 0 ? 'text-danger' : 'text-success' }}">
+                                        $<span class="counter-value" data-target="{{ abs($netIncome) }}">{{ number_format($netIncome, 2) }}</span>
+                                    </h3>
+                                    <small class="text-muted">After all expenses</small>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-sm">
+                                        <span class="avatar-title {{ $netIncome < 0 ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success' }} rounded fs-3">
+                                            <i class="bi bi-graph-up-arrow"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
             <div class="row">
                 <div class="col-xxl-6">
                     <div class="card">
@@ -385,9 +402,7 @@
                             <h5 class="card-title mb-0">Feed Consumption - Last 4 Weeks</h5>
                         </div>
                         <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="feedConsumptionChart"></canvas>
-                            </div>
+                            <canvas id="feedConsumptionChart" height="300"></canvas>
                             <div class="text-center mt-2">
                                 <small class="text-muted">Feed consumption in bags</small>
                             </div>
@@ -400,9 +415,7 @@
                             <h5 class="card-title mb-0">Drug Usage - Treatment Days</h5>
                         </div>
                         <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="drugUsageChart"></canvas>
-                            </div>
+                            <canvas id="drugUsageChart" height="300"></canvas>
                             <div class="text-center mt-2">
                                 <small class="text-muted">Number of days with medication administered</small>
                             </div>
@@ -418,9 +431,7 @@
                             <h5 class="card-title mb-0">Egg Production vs. Sold</h5>
                         </div>
                         <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="eggProductionVsSoldChart"></canvas>
-                            </div>
+                            <canvas id="eggProductionVsSoldChart" height="300"></canvas>
                             <div class="text-center mt-2">
                                 <small class="text-muted">Comparison of eggs produced vs eggs sold</small>
                             </div>
@@ -433,9 +444,7 @@
                             <h5 class="card-title mb-0">Production Rate & Egg Mortality</h5>
                         </div>
                         <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="productionRateAndEggMortalityChart"></canvas>
-                            </div>
+                            <canvas id="productionRateAndEggMortalityChart" height="300"></canvas>
                             <div class="text-center mt-2">
                                 <small class="text-muted">Production rate (%) vs Broken eggs count</small>
                             </div>
@@ -545,8 +554,79 @@
                                 <span class="text-info">${{ number_format($capitalValue, 2) }}</span>
                                 <small class="text-muted d-block">Based on income approach (10% capitalization rate)</small>
                             </div>
-                            <div class="chart-container" style="height: 250px;">
-                                <canvas id="flockCapitalChart"></canvas>
+                            <canvas id="flockCapitalChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Indicators -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Key Performance Indicators</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <h3 class="text-primary">{{ number_format($avgProductionRate, 1) }}%</h3>
+                                        <p class="text-muted mb-0">Production Rate</p>
+                                        <small class="text-muted">Eggs per bird per day</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <h3 class="text-info">{{ number_format($birdMortalityRate, 2) }}%</h3>
+                                        <p class="text-muted mb-0">Bird Mortality Rate</p>
+                                        <small class="text-muted">{{ $totalMortality }} / {{ $totalBirds }} birds</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <h3 class="text-success">${{ number_format($revenuePerBird, 2) }}</h3>
+                                        <p class="text-muted mb-0">Revenue per Bird</p>
+                                        <small class="text-muted">Based on {{ $currentBirds }} current birds</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <h3 class="text-warning">{{ number_format($feedPerBird, 3) }} bags</h3>
+                                        <p class="text-muted mb-0">Feed per Bird</p>
+                                        <small class="text-muted">{{ number_format($totalFeedBags, 1) }} bags total</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <h3 class="text-dark">{{ number_format($feedEfficiency, 4) }} bags</h3>
+                                        <p class="text-muted mb-0">Feed per Egg</p>
+                                        <small class="text-muted">Bags per egg produced</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <h3 class="text-secondary">${{ number_format($costPerEgg, 4) }}</h3>
+                                        <p class="text-muted mb-0">Cost per Egg</p>
+                                        <small class="text-muted">Operational cost per egg sold</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <h3 class="text-success">{{ number_format($eggDisposalRate, 1) }}%</h3>
+                                        <p class="text-muted mb-0">Egg Disposal Rate</p>
+                                        <small class="text-muted">Sold + Broken vs Produced</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <div class="mb-3">
+                                        <h3 class="text-info">{{ number_format($eggSalesEfficiency, 1) }}%</h3>
+                                        <p class="text-muted mb-0">Sales Efficiency</p>
+                                        <small class="text-muted">Sold vs (Sold + Broken)</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -568,17 +648,9 @@
                                     @if($flockId)
                                         Flock {{ $flockId }} 
                                     @else
-                                        all flocks combined
+                                        all flocks
                                     @endif
-                                    started with <strong>{{ number_format($totalBirds, 0) }} birds</strong> and currently has 
-                                    <strong>{{ number_format($currentBirds, 0) }} birds</strong>.
-                                </p>
-                                <p>
-                                    <strong>Mortality:</strong> {{ number_format($totalMortality, 0) }} birds 
-                                    ({{ number_format($birdMortalityRate, 1) }}% of flock).
-                                </p>
-                                <p>
-                                    The flock produced <strong>{{ number_format($totalEggProductionTotalPieces, 0) }} eggs</strong> 
+                                    produced <strong>{{ number_format($totalEggProductionTotalPieces, 0) }} eggs</strong> 
                                     ({{ $totalEggProductionCrates }} crates {{ $totalEggProductionPieces }} pieces).
                                 </p>
                                 <p>
@@ -701,8 +773,7 @@
 
         // Initialize Feed Consumption Chart (in BAGS)
         try {
-            const feedCtx = document.getElementById('feedConsumptionChart').getContext('2d');
-            new Chart(feedCtx, {
+            new Chart(document.getElementById('feedConsumptionChart'), {
                 type: 'bar',
                 data: {
                     labels: {!! json_encode($weeks->map(function($week) {
@@ -756,8 +827,7 @@
 
         // Initialize Drug Usage Chart
         try {
-            const drugCtx = document.getElementById('drugUsageChart').getContext('2d');
-            new Chart(drugCtx, {
+            new Chart(document.getElementById('drugUsageChart'), {
                 type: 'line',
                 data: {
                     labels: {!! json_encode($weeks->map(function($week) {
@@ -815,8 +885,7 @@
 
         // Initialize Egg Production vs. Sold Chart
         try {
-            const eggVsSoldCtx = document.getElementById('eggProductionVsSoldChart').getContext('2d');
-            new Chart(eggVsSoldCtx, {
+            new Chart(document.getElementById('eggProductionVsSoldChart'), {
                 type: 'bar',
                 data: {
                     labels: {!! json_encode($weeks->map(function($week) {
@@ -882,8 +951,7 @@
 
         // Initialize Production Rate & Egg Mortality Chart
         try {
-            const productionRateCtx = document.getElementById('productionRateAndEggMortalityChart').getContext('2d');
-            new Chart(productionRateCtx, {
+            new Chart(document.getElementById('productionRateAndEggMortalityChart'), {
                 type: 'line',
                 data: {
                     labels: {!! json_encode($weeks->map(function($week) {
@@ -981,8 +1049,7 @@
 
         // Initialize Flock Capital Chart
         try {
-            const capitalCtx = document.getElementById('flockCapitalChart').getContext('2d');
-            new Chart(capitalCtx, {
+            new Chart(document.getElementById('flockCapitalChart'), {
                 type: 'doughnut',
                 data: {
                     labels: ['Capital Investment', 'Operational Expenses', 'Net Income'],
