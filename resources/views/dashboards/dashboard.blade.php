@@ -99,7 +99,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-xxl-3 col-md-6">
+                {{-- <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex">
@@ -122,7 +122,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> --}}
                 <div class="col-xxl-3 col-md-6">
                     <div class="card">
                         <div class="card-body">
