@@ -256,17 +256,20 @@ class DashboardController extends Controller
             $flockData = $flockAnalysis['flocks'][$flock->id] ?? null;
             
             if ($flockData) {
+                // CORRECTED: Use the calculated mortality from analyzeFlockData
+                $mortality = $flockData['totalMortality'] ?? 0;
+                
                 if ($flock->status === 'active') {
                     $activeFlockAnalysis['flocks'][$flock->id] = $flockData;
                     $activeFlockAnalysis['totalBirdsAll'] += $flockData['totalBirds'];
                     $activeFlockAnalysis['currentBirdsAll'] += $flockData['currentBirds'];
-                    $activeFlockAnalysis['totalMortalityAll'] += $flockData['totalMortality'];
+                    $activeFlockAnalysis['totalMortalityAll'] += $mortality; // Use corrected mortality
                     $activeFlockAnalysis['flockCount']++;
                 } else {
                     $inactiveFlockAnalysis['flocks'][$flock->id] = $flockData;
                     $inactiveFlockAnalysis['totalBirdsAll'] += $flockData['totalBirds'];
                     $inactiveFlockAnalysis['currentBirdsAll'] += $flockData['currentBirds'];
-                    $inactiveFlockAnalysis['totalMortalityAll'] += $flockData['totalMortality'];
+                    $inactiveFlockAnalysis['totalMortalityAll'] += $mortality; // Use corrected mortality
                     $inactiveFlockAnalysis['flockCount']++;
                 }
             }
@@ -396,11 +399,6 @@ class DashboardController extends Controller
         foreach ($flockIds as $flockId) {
             if ($flockId == 0) continue;
             
-            // Get ALL entries for this flock (not filtered by date) for accurate initial count
-            $allEntriesForFlock = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
-                $q->where('flock_id', $flockId);
-            })->orderBy('created_at')->get();
-            
             $flock = Flock::find($flockId);
             if (!$flock) continue;
             
@@ -411,8 +409,13 @@ class DashboardController extends Controller
             $latestEntry = $dailyEntries->where('weekEntry.flock_id', $flockId)->sortByDesc('created_at')->first();
             $currentBirds = $latestEntry ? $latestEntry->current_birds : $initialBirds;
             
-            // Calculate mortality
+            // CORRECTED: Calculate mortality properly
             $mortality = max(0, $initialBirds - $currentBirds);
+            
+            // Get ALL entries for this flock for historical data
+            $allEntriesForFlock = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
+                $q->where('flock_id', $flockId);
+            })->orderBy('created_at')->get();
             
             // Get max birds from all entries
             $maxBirds = $allEntriesForFlock->isNotEmpty() ? $allEntriesForFlock->max('current_birds') : $initialBirds;
@@ -425,7 +428,7 @@ class DashboardController extends Controller
             $flocks[$flockId] = [
                 'totalBirds' => $initialBirds,
                 'currentBirds' => $currentBirds,
-                'totalMortality' => $mortality,
+                'totalMortality' => $mortality, // This is now correct
                 'maxBirds' => $maxBirds,
                 'minBirds' => $minBirds,
                 'entryCount' => $dailyEntries->where('weekEntry.flock_id', $flockId)->count(),
@@ -439,7 +442,7 @@ class DashboardController extends Controller
             
             $totalBirdsAll += $initialBirds;
             $currentBirdsAll += $currentBirds;
-            $totalMortalityAll += $mortality;
+            $totalMortalityAll += $mortality; // This will now be correct
         }
         
         return [
