@@ -889,24 +889,40 @@ class DashboardController extends Controller
     /**
      * Prepare poultry data for the table
      */
-    private function preparePoultryDataTable($data)
-    {
-        $tableData = [];
+    /**
+ * Prepare poultry data for the table
+ */
+private function preparePoultryDataTable($data)
+{
+    $tableData = [];
+    
+    foreach ($data as $index => $row) {
+        // Use null coalescing with proper defaults
+        $productionRate = $row['production_rate'] ?? 0;
+        $totalProduction = $row['total_egg_production'] ?? 0;
+        $eggsSold = $row['eggs_sold'] ?? 0;
         
-        foreach ($data as $index => $row) {
-            $tableData[] = (object)[
-                'title' => $row['week'] ?? 'N/A',
-                'description' => 'Weekly Analytics',
-                'amount' => $row['total_egg_production'] ?? 0,
-                'amount_paid' => $row['eggs_sold'] ?? 0,
-                'balance' => ($row['total_egg_production'] ?? 0) - ($row['eggs_sold'] ?? 0),
-                'payment_method' => 'Egg Production',
-                'payment_date' => $row['date'] ?? now()->format('Y-m-d'),
-                'payment_status' => $row['production_rate'] >= 70 ? 'Good' : ($row['production_rate'] >= 50 ? 'Average' : 'Poor'),
-                'received_by' => 'System',
-            ];
+        // Determine payment status based on production rate
+        $paymentStatus = 'Poor'; // default
+        if ($productionRate >= 70) {
+            $paymentStatus = 'Good';
+        } elseif ($productionRate >= 50) {
+            $paymentStatus = 'Average';
         }
         
-        return collect($tableData);
+        $tableData[] = (object)[
+            'title' => $row['week'] ?? 'Week ' . ($index + 1),
+            'description' => 'Weekly Analytics',
+            'amount' => $totalProduction,
+            'amount_paid' => $eggsSold,
+            'balance' => $totalProduction - $eggsSold,
+            'payment_method' => 'Egg Production',
+            'payment_date' => $row['date'] ?? now()->format('Y-m-d'),
+            'payment_status' => $paymentStatus,
+            'received_by' => 'System',
+        ];
     }
+    
+    return collect($tableData);
+}
 }
