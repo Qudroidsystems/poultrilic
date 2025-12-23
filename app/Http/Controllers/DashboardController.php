@@ -284,6 +284,8 @@ class DashboardController extends Controller
         $avgLifetimeDailyRevenue = $totalLifetimeDays > 0 ? $lifetimeRevenue / $totalLifetimeDays : 0;
         $avgLifetimeDailyFeedCost = $totalLifetimeDays > 0 ? $lifetimeFeedCost / $totalLifetimeDays : 0;
         $avgLifetimeDailyDrugCost = $totalLifetimeDays > 0 ? $lifetimeDrugCost / $totalLifetimeDays : 0;
+        
+        $totalLifetimeDays = $this->calculateLifetimeDays($flockId);
 
         // Prepare data for view
         return view('dashboards.dashboard', compact(
@@ -309,7 +311,7 @@ class DashboardController extends Controller
             'lifetimeOperationalExpenses',
             'lifetimeNetIncome',
             'lifetimeEggMortalityRate',
-            
+            'totalLifetimeDays', // Add this line
             // DATE RANGE TOTALS
             'dateRangeProduction',
             'dateRangeFeed',

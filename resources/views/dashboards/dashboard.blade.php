@@ -647,6 +647,7 @@
                 </div>
 
                 <!-- Labor Cost Card -->
+                <!-- Labor Cost Card -->
                 <div class="col-xxl-4 col-md-6">
                     <div class="card">
                         <div class="card-body">
@@ -662,10 +663,7 @@
                                         ₦{{ number_format($lifetimeLaborCost, 2) }}
                                     </div>
                                     <p class="text-muted mb-0">
-                                        @php
-                                            $lifetimeDays = $this->calculateLifetimeDays($flockId);
-                                        @endphp
-                                        {{ $lifetimeDays }} days @ ₦10,000/day
+                                        {{ $totalLifetimeDays }} days @ ₦10,000/day
                                     </p>
                                 </div>
                                 <div class="col-6 date-range-data">
