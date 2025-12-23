@@ -24,7 +24,7 @@ class DashboardController extends Controller
     // Constants
     const EGGS_PER_CRATE = 30;
     const BAG_WEIGHT_KG = 50;
-    const EGG_PRICE_NAIRA = 100;
+    const EGG_PRICE_NAIRA = 250;
     const FEED_COST_PER_BAG = 15000;
     const BIRD_COST = 2000;
     const DRUG_COST_PER_DAY = 5000;
