@@ -1,5 +1,5 @@
   <!--====== Start Footer ======-->
-      
+
   <script>
 // Smooth scrolling for all anchor links with #
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -67,7 +67,7 @@ window.addEventListener('load', () => {
                         <li><a href="#about">About Us</a></li>
                         <li><a href="#products">Our Products</a></li>
                         <li><a href="#contact">Contact</a></li>
-                        <li><a href="https://primefarm.ng/login">Admin</a></li>
+                        <li><a href="{{ route('login') }}">Admin</a></li>
                     </ul>
                 </div>
             </div>

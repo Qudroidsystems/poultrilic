@@ -16,7 +16,7 @@ namespace App\Models {
      * @property string|null $othernames
      * @property string|null $lastname
      * @property string|null $firstname
-     * @property int $user_id
+     * @property mixed $user_id
      * @property int $id
      * @property-read \App\Models\User $staffId
      * @method static \Illuminate\Database\Eloquent\Builder<BioModel>|BioModel whereId($value)
@@ -337,7 +337,7 @@ namespace App\Models {
      *
      * @property \Illuminate\Support\Carbon|null $updated_at
      * @property \Illuminate\Support\Carbon|null $created_at
-     * @property decimal:2|null $reorder_feeds
+     * @property float|null $reorder_feeds
      * @property string|null $drugs
      * @property string $total_egg_in_farm
      * @property string $outstanding_egg
@@ -350,10 +350,10 @@ namespace App\Models {
      * @property integer $sick_bay
      * @property integer $daily_mortality
      * @property integer $total_feeds_consumed
-     * @property decimal:2 $available_feeds
-     * @property decimal:2 $daily_feeds
+     * @property float $available_feeds
+     * @property float $daily_feeds
      * @property integer $day_number
-     * @property int $week_entry_id
+     * @property mixed $week_entry_id
      * @property int $id
      * @property-read \App\Models\WeekEntry $weekEntry
      * @method static \Illuminate\Database\Eloquent\Builder<DailyEntry>|DailyEntry whereId($value)
@@ -681,8 +681,13 @@ namespace App\Models {
      *
      * @property \Illuminate\Support\Carbon|null $updated_at
      * @property \Illuminate\Support\Carbon|null $created_at
+     * @property mixed $status
+     * @property integer $age_in_weeks
+     * @property \Illuminate\Support\Carbon|null $date_of_arrival
      * @property integer $current_bird_count
      * @property integer $initial_bird_count
+     * @property string|null $breed
+     * @property string|null $name
      * @property int $id
      * @property-read mixed $total_mortality
      * @property-read mixed $mortality_rate
@@ -690,14 +695,19 @@ namespace App\Models {
      * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WeekEntry> $weekEntries
      * @property-read int|null $weekEntries_count
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereId($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereName($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereBreed($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereInitialBirdCount($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereCurrentBirdCount($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereDateOfArrival($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereAgeInWeeks($value)
+     * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereStatus($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereCreatedAt($value)
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock whereUpdatedAt($value)
-     * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock active()
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock newModelQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock newQuery()
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock query()
+     * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock active()
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock select(mixed $columns)
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock selectSub(\Closure|\Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder<mixed>|string $query, string $as)
      * @method static \Illuminate\Database\Eloquent\Builder<Flock>|Flock selectRaw(string $expression)
@@ -1001,7 +1011,7 @@ namespace App\Models {
      * @property \Illuminate\Support\Carbon|null $updated_at
      * @property \Illuminate\Support\Carbon|null $created_at
      * @property string $week_name
-     * @property int $flock_id
+     * @property mixed $flock_id
      * @property int $id
      * @property-read mixed $total_egg_in_farm
      * @property-read mixed $total_feed_consumed

@@ -24,11 +24,14 @@ class UserTableSeeder extends Seeder
     public function run()
     {
         $user = User::create([
-            'name' => 'Ilemobayo Eliab',
+            'first_name' => 'Ilemobayo',
+            'last_name'=> 'Eliab',
+            'username'=>'eliabsiji@gmail.com',
             'email' => 'eliabsiji@gmail.com',
             'avatar' => 'unnamed.png',
             'password' => FacadesHash::make('12345678'),
             // 'wpassword' => '12345678',
+            // 'role'=>'staff'
         ]);
 
         BioModel::updateOrCreate(['user_id'=>$user->id],

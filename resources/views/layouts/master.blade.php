@@ -54,8 +54,8 @@
     @if (Route::is('daily-entries.*'))
          @include('layouts.pages-assets.css.daily-list-css')
     @endif
-     
-    
+
+
 </head>
 
 <body>
@@ -105,7 +105,7 @@
                                     @can('dashboard')
                                         <li class="nav-item">
                                             <a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics"> Administration Analytics </a>
-                                        </li> 
+                                        </li>
                                     @endcan
                                     @can('finance dashboard')
                                     <li class="nav-item">
@@ -117,7 +117,7 @@
                                         <a href="index.html" class="nav-link" data-key="t-ecommerce"> Academics Analytics </a>
                                     </li>
                                     @endcan
-                                    
+
                                 </ul>
                             </div>
                         </li>
@@ -131,11 +131,11 @@
                                 </a>
                                 <div class="collapse menu-dropdown" id="sidebarusers">
                                     <ul class="nav nav-sm flex-column">
-                                    
+
                                             <li class="nav-item">
                                             <a href="{{ route('users.index') }}" class="nav-link" role="button" data-key="t-signin"> Users </a>
                                         </li>
-                                    
+
                                     </ul>
                                 </div>
                             </li>
@@ -157,12 +157,12 @@
                                         <a href="{{ route('permissions.index') }}" class="nav-link" data-key="t-profile"> Permissions </a>
                                     </li>
                                    @endcan
-                                   
+
                                 </ul>
                             </div>
                         </li>
                         @endcan
-                      
+
 
                         <li class="nav-item">
                             <a class="nav-link menu-link collapsed" href="#sidebaraccount" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebaraccoun">
@@ -171,7 +171,7 @@
                             <div class="collapse menu-dropdown" id="sidebaraccount">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="pages-starter.html" class="nav-link" data-key="t-starter"> My Account </a>
+                                        <a href="{{ auth()->user() ? route('users.overview', auth()->id()) : '#' }}" class="nav-link" data-key="t-starter"> My Account </a>
                                     </li>
                                 </ul>
                             </div>
@@ -185,11 +185,11 @@
                                 </a>
                                 <div class="collapse menu-dropdown" id="sidebarflock">
                                     <ul class="nav nav-sm flex-column">
-                                    
+
                                             <li class="nav-item">
                                             <a href="{{ route('flocks.index') }}" class="nav-link" role="button" data-key="t-signin"> Flock </a>
                                         </li>
-                                    
+
                                     </ul>
                                 </div>
                             </li>
@@ -211,7 +211,7 @@
                                         <a href="{{ route('permissions.index') }}" class="nav-link" data-key="t-profile"> Permissions </a>
                                     </li>
                                    @endcan
-                                   
+
                                 </ul>
                             </div>
                         </li>
@@ -273,7 +273,7 @@
                                     <div class="dropdown-header">
                                         <h6 class="text-overflow text-muted mb-0 text-uppercase">Recent Searches</h6>
                                     </div>
-                
+
                                     <div class="dropdown-item bg-transparent text-wrap">
                                         <a href="index.html" class="btn btn-subtle-secondary btn-sm btn-rounded">how to setup <i class="mdi mdi-magnify ms-1"></i></a>
                                         <a href="index.html" class="btn btn-subtle-secondary btn-sm btn-rounded">buttons <i class="mdi mdi-magnify ms-1"></i></a>
@@ -282,30 +282,30 @@
                                     <div class="dropdown-header mt-2">
                                         <h6 class="text-overflow text-muted mb-1 text-uppercase">Pages</h6>
                                     </div>
-                
+
                                     <!-- item-->
                                     <a href="javascript:void(0);" class="dropdown-item notify-item">
                                         <i class="ri-bubble-chart-line align-middle fs-18 text-muted me-2"></i>
                                         <span>Analytics Dashboard</span>
                                     </a>
-                
+
                                     <!-- item-->
                                     <a href="javascript:void(0);" class="dropdown-item notify-item">
                                         <i class="ri-lifebuoy-line align-middle fs-18 text-muted me-2"></i>
                                         <span>Help Center</span>
                                     </a>
-                
+
                                     <!-- item-->
                                     <a href="javascript:void(0);" class="dropdown-item notify-item">
                                         <i class="ri-user-settings-line align-middle fs-18 text-muted me-2"></i>
                                         <span>My account settings</span>
                                     </a>
-                
+
                                     <!-- item-->
                                     <div class="dropdown-header mt-2">
                                         <h6 class="text-overflow text-muted mb-2 text-uppercase">Members</h6>
                                     </div>
-                
+
                                     <div class="notification-list">
                                         <!-- item -->
                                         <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
@@ -339,7 +339,7 @@
                                         </a>
                                     </div>
                                 </div>
-                
+
                                 <div class="text-center pt-3 pb-1">
                                     <a href="#" class="btn btn-primary btn-sm">View All Results <i class="ri-arrow-right-line ms-1"></i></a>
                                 </div>
@@ -414,7 +414,7 @@
 
 
 
-                       
+
 
                         {{-- <div class="ms-1 header-item d-none d-sm-flex">
                             <button type="button" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" data-toggle="fullscreen">
@@ -583,58 +583,68 @@
                             </div>
                         </div> --}}
 
-                        <div class="dropdown ms-sm-3 header-item topbar-user">
+                           <!-- User Profile Dropdown -->
+                      <div class="dropdown ms-sm-3 header-item topbar-user">
                             <button type="button" class="btn shadow-none" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="d-flex align-items-center">
-                                      @php
-                                      use App\Models\User;
-                                        $userdata = User::find(Auth::id())
-                                        
-                                      @endphp
-                                       <?php $image = "";?>
-                                       <?php
-                                          if ($userdata->avatar == NULL || $userdata->avatar =="" || !isset($userdata->avatar) ){
-                                                  $image =  'unnamed.png';
-                                          }else {
-                                              $image =  $userdata->avatar;
-                                          }
-                                       ?>
-                                   
-                                    <img class="rounded-circle header-profile-user" src="{{ Storage::url('images/staffavatar/'.$image)}}" alt="{{ $userdata->name }}">
-                                    {{-- <img src="{{ $student->picture ? asset('storage/' . $student->picture) : asset('theme/layouts/assets/media/avatars/blank.png') }}" alt=""  class="avatar-xs"/> --}}
                                     @php
-                                    $userdata = Auth::user();
-                                @endphp
-                                
-                                @if ($userdata)
-                                    <span class="text-start ms-xl-2">
-                                        <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{ $userdata->name }}</span>
-                                        <span class="d-none d-xl-block ms-1 fs-sm user-name-sub-text">Founder</span>
-                                    </span>
+                                        use App\Models\User;
+                                        $userdata = User::find(Auth::id());
+                                    @endphp
+
+                                    <?php
+                                        $image = "unnamed.png";
+                                        if ($userdata && $userdata->avatar) {
+                                            $image = $userdata->avatar;
+                                        }
+                                    ?>
+
+                                    @if($userdata)
+                                        <img class="rounded-circle header-profile-user" src="{{ asset('storage/' . $userdata->profile_image) }}"  alt="{{ $userdata->name }}">
+                                        <span class="text-start ms-xl-2">
+                                            <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{ $userdata->name }}</span>
+                                            <span class="d-none d-xl-block ms-1 fs-sm user-name-sub-text">{{ $userdata->roles->first()->name ?? 'User' }}</span>
+                                        </span>
+                                    @else
+                                        <img class="rounded-circle header-profile-user" src="{{ asset('theme/layouts/assets/images/users/user-dummy-img.jpg') }}" alt="User">
+                                        <span class="text-start ms-xl-2">
+                                            <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">Guest</span>
+                                            <span class="d-none d-xl-block ms-1 fs-sm user-name-sub-text">Not logged in</span>
+                                        </span>
+                                    @endif
                                 </span>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-end">
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                @if($userdata)
                                     <h6 class="dropdown-header">Welcome {{ $userdata->name }}!</h6>
-                                    <a class="dropdown-item" href="{{ route('user.overview', $userdata->id) }}">
-                                        <i class="mdi mdi-account-circle text-muted fs-lg align-middle me-1"></i> 
+                                    <a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}">
+                                        <i class="mdi mdi-account-circle text-muted fs-lg align-middle me-1"></i>
                                         <span class="align-middle">Profile</span>
                                     </a>
-                                    <div class="dropdown-divider"></div>
+                                    {{-- <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{{ route('user.settings', $userdata->id) }}">
+                                        <i class="mdi mdi-cog text-muted fs-lg align-middle me-1"></i>
+                                        <span class="align-middle">Settings</span>
+                                    </a> --}}
                                     <a class="dropdown-item" href="auth-lockscreen.html">
-                                        <i class="mdi mdi-lock text-muted fs-lg align-middle me-1"></i> 
+                                        <i class="mdi mdi-lock text-muted fs-lg align-middle me-1"></i>
                                         <span class="align-middle">Lock screen</span>
                                     </a>
-                                
+
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">
-                                            <i class="mdi mdi-logout text-muted fs-lg align-middle me-1"></i> 
+                                            <i class="mdi mdi-logout text-muted fs-lg align-middle me-1"></i>
                                             <span class="align-middle" data-key="t-logout">Logout</span>
                                         </a>
                                     </form>
-                                </div>
+                                @else
+                                    <a class="dropdown-item" href="{{ route('login') }}">
+                                        <i class="mdi mdi-login text-muted fs-lg align-middle me-1"></i>
+                                        <span class="align-middle">Login</span>
+                                    </a>
                                 @endif
-                                
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -691,20 +701,20 @@
       </footer>
       </div>
       <!-- end main content-->
-      
+
       </div>
       <!-- END layout-wrapper -->
-      
-      
 
 
-      
+
+
+
       <!--start back-to-top-->
       <button class="btn btn-dark btn-icon" id="back-to-top">
       <i class="bi bi-caret-up fs-3xl"></i>
       </button>
       <!--end back-to-top-->
-      
+
       <!--preloader-->
       <div id="preloader">
       <div id="status">
@@ -714,7 +724,7 @@
       </div>
       </div>
 
-      
+
 
 
 
@@ -724,7 +734,7 @@
       <i class="bi bi-gear mb-1"></i> Customizer
       </div>
       </div>
-      
+
       <!-- Theme Settings -->
       <div class="offcanvas offcanvas-end border-0" tabindex="-1" id="theme-settings-offcanvas">
             <div class="d-flex align-items-center bg-primary bg-gradient p-3 offcanvas-header">
@@ -732,7 +742,7 @@
                 <h5 class="mb-1 text-white">Steex Builder</h5>
                 <p class="text-white text-opacity-75 mb-0">Choose your themes & layouts etc.</p>
             </div>
-            
+
             <button type="button" class="btn-close btn-close-white ms-auto" id="customizerclose-btn" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body p-0">
@@ -740,7 +750,7 @@
                 <div class="p-4">
                     <h6 class="fs-md mb-1">Layout</h6>
                     <p class="text-muted fs-sm">Choose your layout</p>
-            
+
                     <div class="row">
                         <div class="col-4">
                             <div class="form-check card-radio">
@@ -817,10 +827,10 @@
                         </div>
                         <!-- end col -->
                     </div>
-            
+
                     <h6 class="mt-4 fs-md mb-1">Theme</h6>
                     <p class="text-muted fs-sm">Choose your suitable Theme.</p>
-            
+
                     <div class="row">
                         <div class="col-6">
                             <div class="form-check card-radio">
@@ -878,10 +888,10 @@
                             <h5 class="fs-sm text-center fw-medium mt-2">Interaction</h5>
                         </div><!-- end col -->
                     </div>
-            
+
                     <h6 class="mt-4 fs-md mb-1">Color Scheme</h6>
                     <p class="text-muted fs-sm">Choose Light or Dark Scheme.</p>
-            
+
                     <div class="colorscheme-cardradio">
                         <div class="row g-3">
                             <div class="col-6">
@@ -893,7 +903,7 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Light</h5>
                             </div>
-            
+
                             <div class="col-6">
                                 <div class="form-check card-radio dark">
                                     <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-mode-dark" value="dark">
@@ -903,15 +913,15 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
                             </div>
-            
-                            
+
+
                         </div>
                     </div>
-            
+
                     <div id="layout-width">
                         <h6 class="mt-4 fs-md mb-1">Layout Width</h6>
                         <p class="text-muted fs-sm">Choose Fluid or Boxed layout.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check card-radio">
@@ -963,23 +973,23 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <div id="layout-position">
                         <h6 class="mt-4 fs-md mb-1">Layout Position</h6>
                         <p class="text-muted fs-sm">Choose Fixed or Scrollable Layout Position.</p>
-            
+
                         <div class="btn-group radio" role="group">
                             <input type="radio" class="btn-check" name="data-layout-position" id="layout-position-fixed" value="fixed">
                             <label class="btn btn-light w-sm" for="layout-position-fixed">Fixed</label>
-            
+
                             <input type="radio" class="btn-check" name="data-layout-position" id="layout-position-scrollable" value="scrollable">
                             <label class="btn btn-light w-sm ms-0" for="layout-position-scrollable">Scrollable</label>
                         </div>
                     </div>
-            
+
                     <h6 class="mt-4 fs-md mb-1">Topbar Color</h6>
                     <p class="text-muted fs-sm">Choose Light or Dark Topbar Color.</p>
-            
+
                     <div class="row">
                         <div class="col-4">
                             <div class="form-check card-radio">
@@ -1030,11 +1040,11 @@
                             <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
                         </div>
                     </div>
-            
+
                     <div id="sidebar-size">
                         <h6 class="mt-4 fs-md mb-1">Sidebar Size</h6>
                         <p class="text-muted fs-sm">Choose a size of Sidebar.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
@@ -1060,7 +1070,7 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Default</h5>
                             </div>
-            
+
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
                                     <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-compact" value="md">
@@ -1085,7 +1095,7 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Compact</h5>
                             </div>
-            
+
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
                                     <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small" value="sm">
@@ -1110,7 +1120,7 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Small (Icon View)</h5>
                             </div>
-            
+
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
                                     <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small-hover" value="sm-hover">
@@ -1137,11 +1147,11 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <div id="sidebar-view">
                         <h6 class="mt-4 fs-md mb-1">Sidebar View</h6>
                         <p class="text-muted fs-sm">Choose Default or Detached Sidebar view.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
@@ -1197,7 +1207,7 @@
                     <div id="sidebar-color">
                         <h6 class="mt-4 fs-md mb-1">Sidebar Color</h6>
                         <p class="text-muted fs-sm">Choose a color of Sidebar.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient.show">
@@ -1270,10 +1280,10 @@
                             </div>
                         </div>
                         <!-- end row -->
-            
+
                         <div class="collapse" id="collapseBgGradient">
                             <div class="d-flex gap-2 flex-wrap img-switch p-2 px-3 bg-light rounded">
-            
+
                                 <div class="form-check sidebar-setting card-radio">
                                     <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient" value="gradient">
                                     <label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient">
@@ -1301,11 +1311,11 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <div id="sidebar-img">
                         <h6 class="mt-4 fw-semibold fs-base">Sidebar Images</h6>
                         <p class="text-muted fs-sm">Choose a image of Sidebar.</p>
-            
+
                         <div class="d-flex gap-2 flex-wrap img-switch">
                             <div class="form-check sidebar-setting card-radio">
                                 <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-none" value="none">
@@ -1315,14 +1325,14 @@
                                     </span>
                                 </label>
                             </div>
-            
+
                             <div class="form-check sidebar-setting card-radio">
                                 <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-01" value="img-1">
                                 <label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-01">
                                     <img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-1.jpg')}}" alt="" class="avatar-md w-auto object-cover">
                                 </label>
                             </div>
-            
+
                             <div class="form-check sidebar-setting card-radio">
                                 <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-02" value="img-2">
                                 <label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-02">
@@ -1343,11 +1353,11 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <div id="preloader-menu">
                         <h6 class="mt-4 fw-semibold fs-base">Preloader</h6>
                         <p class="text-muted fs-sm">Choose a preloader.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
@@ -1405,51 +1415,51 @@
                                 <h5 class="fs-sm text-center fw-medium mt-2">Disable</h5>
                             </div>
                         </div>
-            
+
                     </div><!-- end preloader-menu -->
                 </div>
             </div>
-            
+
             </div>
             <div class="offcanvas-footer border-top p-3 text-center">
             <div class="row">
                 <div class="col-6">
                     <button type="button" class="btn btn-light w-100" id="reset-layout">Reset</button>
                 </div>
-                
+
             </div>
             </div>
       </div>
-      
+
 
       @if (Route::is('dashboard'))
             @include('layouts.pages-assets.js.dashboard-list-js')
       @endif
-      
+
       @if (Route::is('users.*'))
             @include('layouts.pages-assets.js.users-list-js')
-      @endif 
+      @endif
 
       @if (Route::is('roles.*'))
              @include('layouts.pages-assets.js.role-list-js')
-      @endif 
+      @endif
 
       @if (Route::is('permissions.*'))
             @include('layouts.pages-assets.js.permissions-list-js')
-      @endif  
+      @endif
 
       @if (Route::is('flocks.*'))
            @include('layouts.pages-assets.js.flock-list-js')
-      @endif  
+      @endif
 
       @if (Route::is('week-entries.*'))
             @include('layouts.pages-assets.js.week-list-js')
-      @endif  
-       
+      @endif
+
       @if (Route::is('daily-entries.*'))
              @include('layouts.pages-assets.js.daily-list-js')
-      @endif  
-  
+      @endif
+
       </body>
-      
+
       </html>

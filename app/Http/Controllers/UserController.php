@@ -13,6 +13,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 
@@ -91,85 +93,83 @@ class UserController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-  public function store(Request $request): JsonResponse
-    {
-        \Log::debug("Creating user", $request->all());
 
+     public function store(Request $request): JsonResponse
+    {
         if (!auth()->user()->hasPermissionTo('Create user')) {
-            \Log::warning("User ID " . auth()->user()->id . " attempted to create user without 'Create user' permission");
             return response()->json([
                 'success' => false,
-                'message' => 'User does not have the right permissions',
+                'message' => 'You do not have permission to create users',
             ], 403);
         }
 
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email:rfc,dns|unique:users,email',
+                'name'     => 'required|string|max:255',
+                'email'    => 'required|email:rfc,dns|unique:users,email',
                 'password' => 'required|string|min:8|confirmed',
-                'roles' => 'required|array',
-                'roles.*' => 'exists:roles,name',
+                'roles'    => 'required|array|min:1',
+                'roles.*'  => 'exists:roles,name',
             ]);
+
+            // Split full name into first_name and last_name
+            $nameParts = explode(' ', trim($validated['name']), 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName  = isset($nameParts[1]) ? $nameParts[1] : '';
 
             $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
+                'first_name' => $firstName,
+                'last_name'  => $lastName,
+                'username'   => $validated['email'], // Set username = email on create
+                'email'      => $validated['email'],
+                'password'   => Hash::make($validated['password']),
             ]);
+
             $user->assignRole($validated['roles']);
 
-            \Log::debug("User created successfully: ID {$user->id}");
             return response()->json([
                 'success' => true,
                 'message' => 'User created successfully',
                 'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
+                    'id'    => $user->id,
+                    'name'  => $user->name,
                     'email' => $user->email,
                     'roles' => $user->roles->pluck('name')->toArray(),
                 ],
             ], 201);
+
         } catch (ValidationException $e) {
-            \Log::error("Validation error creating user: " . json_encode($e->errors()));
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $e->errors(),
+                'errors'  => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            \Log::error("Create user error: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+            Log::error("User creation failed: " . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create user: ' . $e->getMessage(),
+                'message' => 'Failed to create user',
             ], 500);
         }
     }
 
 
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id): View
+     public function show($id): View
     {
+        $pagetitle = "User Management";
+        $user = User::with('roles')->findOrFail($id);
 
-        //page title
-        $pagetitle = "User Overview";
-
-        $user = User::find($id);
-        $userroles = $user->roles->all();
-        $userbio = $user->bio;
-        return view('users.useroverview',compact('user'),
-        compact('userroles'))
-        ->with("userbio",$userbio)
-        ->with("pagetitle",$pagetitle);
+        return view('users.show', compact('user','pagetitle'));
     }
 
+        public function overview($id): View
+    {
+        $pagetitle = "User Management";
+        $user = User::with('roles')->findOrFail($id);
 
+        return view('users.overview', compact('user','pagetitle'));
+    }
 
 
     /**
@@ -194,52 +194,101 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id): JsonResponse
+
+ public function update(Request $request, $id): JsonResponse
     {
-        \Log::debug("Updating user ID: {$id}", $request->all());
-        
         try {
-            $this->validate($request, [
-                'name' => 'required',
-                'email' => 'required|email|unique:users,email,'.$id,
-                'password' => 'nullable|same:confirm-password',
-                'roles' => 'required|array',
+            $user = User::findOrFail($id);
+
+            // Validation rules
+            $validated = $request->validate([
+                'first_name'       => 'required|string|max:255',
+                'last_name'        => 'nullable|string|max:255',
+                'email'            => 'required|email|unique:users,email,' . $id,
+                'phone_number'     => 'nullable|string|max:20',
+                'gender'           => 'nullable|in:male,female,other',
+                'date_of_birth'    => 'nullable|date|before:today',
+                'password'         => 'nullable|confirmed|min:8',
+                'profile_image'    => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // 2MB max
             ]);
 
-            $input = $request->all();
-            if (!empty($input['password'])) {
-                $input['password'] = Hash::make($input['password']);
-            } else {
-                $input = Arr::except($input, ['password']);
+            // Prepare input data
+            $input = [
+                'first_name'   => $validated['first_name'],
+                'last_name'    => $validated['last_name'] ?? '',
+                'email'        => $validated['email'],
+                'username'     => $validated['email'], // Keep username = email
+                'phone_number' => $validated['phone_number'] ?? null,
+                'gender'       => $validated['gender'] ?? null,
+                'date_of_birth'=> $validated['date_of_birth'] ?? null,
+            ];
+
+            // Handle password update
+            if ($request->filled('password')) {
+                $input['password'] = Hash::make($validated['password']);
             }
 
-            $user = User::findOrFail($id);
+            // Handle profile image upload
+            if ($request->hasFile('profile_image')) {
+                // Delete old image if exists
+                if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
+                    Storage::disk('public')->delete($user->profile_image);
+                }
+
+                // Store new image
+                $path = $request->file('profile_image')->store('profile_images', 'public');
+                $input['profile_image'] = $path;
+            }
+
+            // Update user
             $user->update($input);
-            \DB::table('model_has_roles')->where('model_id', $id)->delete();
 
-            $user->assignRole($request->input('roles'));
+            // Note: Roles are managed separately in your admin user list
+            // If you want to allow role changes here too, uncomment below:
+            // if ($request->has('roles')) {
+            //     $user->syncRoles($request->input('roles'));
+            // }
 
-            \Log::debug("User ID: {$id} updated successfully");
-            
+            // Reload roles for response
+            $user->load('roles');
+
             return response()->json([
                 'success' => true,
-                'message' => 'User updated successfully',
+                'message' => 'Profile updated successfully',
                 'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'roles' => $user->roles->pluck('name')->toArray(),
+                    'id'             => $user->id,
+                    'name'           => $user->name,
+                    'first_name'     => $user->first_name,
+                    'last_name'      => $user->last_name,
+                    'email'          => $user->email,
+                    'phone_number'   => $user->phone_number,
+                    'gender'         => $user->gender,
+                    'date_of_birth'  => $user->date_of_birth?->format('Y-m-d'),
+                    'profile_image'  => $user->profile_image ? asset('storage/' . $user->profile_image) : null,
+                    'roles'          => $user->roles->pluck('name')->toArray(),
+                    'updated_at'     => $user->updated_at->format('d M Y, H:i'),
                 ],
             ], 200);
-        } catch (\Exception $e) {
-            \Log::error("Update user error for ID {$id}: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update user: ' . $e->getMessage(),
+                'message' => 'Validation failed',
+                'errors'  => $e->errors(),
             ], 422);
+
+        } catch (\Exception $e) {
+            Log::error("User profile update failed (ID: $id): " . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update profile. Please try again.',
+            ], 500);
         }
     }
-        /**
+
+
+    /**
      * Show the form for creating a new user from student.
      *
      * @return \Illuminate\Http\Response
@@ -251,7 +300,7 @@ class UserController extends Controller
                         ->where('statusId', 1) // Assuming 1 is for active students
                         ->orderBy('admissionNo')
                         ->get();
-        
+
         return view('users.add-student-user', compact('roles', 'students'));
     }
 
@@ -272,7 +321,7 @@ class UserController extends Controller
 
         // Get student data
         $student = Student::findOrFail($request->student_id);
-        
+
         // Create user
         $user = new User();
         $user->name = $student->firstname . ' ' . $student->lastname;
@@ -280,10 +329,10 @@ class UserController extends Controller
         $user->password = Hash::make($request->password);
         $user->student_id = $student->id; // Link to student record
         $user->save();
-        
+
         // Assign role
         $user->assignRole($request->input('roles'));
-        
+
         // Also create or update the BioModel entry if necessary
         BioModel::updateOrCreate(
             ['user_id' => $user->id],
@@ -317,19 +366,19 @@ class UserController extends Controller
         Log::debug("Attempting to delete user ID: {$id}");
         try {
             $user = User::findOrFail($id);
-            
+
             // Delete related BioModel
             Log::debug("Deleting BioModel for user ID: {$id}");
             BioModel::where('user_id', $id)->delete();
-            
+
             // Remove roles (Spatie)
             Log::debug("Removing roles for user ID: {$id}");
             $user->roles()->detach();
-            
+
             // Delete the user
             Log::debug("Deleting user ID: {$id}");
             $user->delete();
-            
+
             Log::debug("User ID: {$id} deleted successfully");
             return response()->json([
                 'success' => true,

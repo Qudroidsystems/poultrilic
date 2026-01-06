@@ -29,6 +29,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::get('/users/all', [UserController::class, 'allUsers'])->name('users.all');
     Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');
+    Route::get('/users/{user}/overview', [UserController::class, 'overview'])->name('users.overview');
     Route::get('/users/roles', [UserController::class, 'roles']);
     Route::resource('permissions', PermissionController::class);
 
@@ -65,5 +66,5 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/{id}', [DailyEntryController::class, 'show'])->name('daily-entries.show');
 });
 
-    
+
 });
