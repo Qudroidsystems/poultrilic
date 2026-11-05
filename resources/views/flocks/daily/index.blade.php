@@ -41,22 +41,13 @@
             @endif
 
             @php
-                // Helper function to parse egg string (e.g., "11 Cr 12PC") to total pieces
-                function parseEggString($eggString) {
-                    if (!$eggString || !is_string($eggString)) {
-                        return 0;
-                    }
-                    $match = preg_match('/(\d+)\s*Cr\s*(\d+)PC/', $eggString, $matches);
-                    return $match ? (int)$matches[1] * 30 + (int)$matches[2] : 0;
-                }
-
-                // Helper function to format total pieces to crates and pieces
-                function formatEggString($totalPieces) {
-                    $totalPieces = max(0, (int)$totalPieces);
-                    $crates = floor($totalPieces / 30);
-                    $pieces = $totalPieces % 30;
-                    return "$crates cr $pieces pcs ($totalPieces pieces)";
-                }
+                // Eggs are stored as integer pieces; format them for display only.
+                $eggLabel = fn($pieces) => sprintf(
+                    '%d cr %d pcs (%d pieces)',
+                    \App\Support\Eggs::crates($pieces),
+                    \App\Support\Eggs::remainder($pieces),
+                    max(0, (int) $pieces)
+                );
             @endphp
 
             <div id="dailyList">
@@ -124,7 +115,7 @@
                                                 <th scope="col">Broken Eggs</th>
                                                 <th scope="col">Outstanding Eggs</th>
                                                 <th scope="col">Total Eggs in Farm</th>
-                                                <th scope="col">Created At</th>
+                                                <th scope="col">Date</th>
                                                 <th scope="col">Action</th>
                                             </tr>
                                         </thead>
@@ -142,21 +133,21 @@
                                                     <td class="daily_mortality">{{ $entry->daily_mortality }}</td>
                                                     <td class="current_birds">{{ $entry->current_birds }}</td>
                                                     <td class="daily_egg_production">
-                                                        {{ $entry->daily_egg_production ?: '0 cr 0 pcs' }} ({{ parseEggString($entry->daily_egg_production) }} pieces)
+                                                        {{ $entry->daily_egg_production ?: '0 cr 0 pcs' }} ({{ (int) $entry->eggs_produced }} pieces)
                                                     </td>
                                                     <td class="daily_sold_egg">
-                                                        {{ $entry->daily_sold_egg ?: '0 cr 0 pcs' }} ({{ parseEggString($entry->daily_sold_egg) }} pieces)
+                                                        {{ $entry->daily_sold_egg ?: '0 cr 0 pcs' }} ({{ (int) $entry->eggs_sold }} pieces)
                                                     </td>
                                                     <td class="broken_egg">
-                                                        {{ formatEggString($entry->broken_egg) }}
+                                                        {{ $eggLabel($entry->broken_egg) }}
                                                     </td>
                                                     <td class="outstanding_egg">
-                                                        {{ $entry->outstanding_egg ?: '0 cr 0 pcs' }} ({{ parseEggString($entry->outstanding_egg) }} pieces)
+                                                        {{ $entry->outstanding_egg ?: '0 cr 0 pcs' }} ({{ (int) $entry->eggs_outstanding }} pieces)
                                                     </td>
                                                     <td class="total_egg_in_farm">
-                                                        {{ $entry->total_egg_in_farm ?: '0 cr 0 pcs' }} ({{ parseEggString($entry->total_egg_in_farm) }} pieces)
+                                                        {{ $entry->total_egg_in_farm ?: '0 cr 0 pcs' }} ({{ \App\Support\Eggs::parse($entry->total_egg_in_farm) }} pieces)
                                                     </td>
-                                                    <td class="created_at">{{ $entry->created_at->format('Y-m-d') }}</td>
+                                                    <td class="created_at">{{ ($entry->entry_date ?? $entry->created_at)->format('Y-m-d') }}</td>
                                                     <td>
                                                         <div class="hstack gap-2">
                                                             <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit entry"><i class="ph-pencil"></i></button>
@@ -247,6 +238,11 @@
                                             <option value="{{ $i }}">Day {{ $i }}</option>
                                         @endfor
                                     </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="entry_date" class="form-label">Date</label>
+                                    <input type="date" id="entry_date" name="entry_date" class="form-control" value="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
+                                    <div class="form-text">The day these figures are for (one entry per flock per date).</div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="daily_feeds" class="form-label">Daily Feeds (kg)</label>
@@ -345,6 +341,10 @@
                                             <option value="{{ $i }}">Day {{ $i }}</option>
                                         @endfor
                                     </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_entry_date" class="form-label">Date</label>
+                                    <input type="date" id="edit_entry_date" name="entry_date" class="form-control" max="{{ now()->toDateString() }}" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit_daily_feeds" class="form-label">Daily Feeds (kg)</label>

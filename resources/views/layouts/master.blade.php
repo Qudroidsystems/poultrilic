@@ -55,6 +55,10 @@
          @include('layouts.pages-assets.css.daily-list-css')
     @endif
 
+    @if (Route::is('expenses.*', 'settings.*', 'feed.*'))
+         @include('layouts.pages-assets.css.finance-css')
+    @endif
+
 
 </head>
 
@@ -194,6 +198,33 @@
                                 </div>
                             </li>
                         @endcan
+                        @canany(['View expense', 'View feed', 'View settings'])
+                            <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">Finance</span></li>
+                            <li class="nav-item">
+                                <a class="nav-link menu-link collapsed" href="#sidebarfinance" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarfinance">
+                                    <i class="ph-coins"></i> <span data-key="t-finance">Finance</span>
+                                </a>
+                                <div class="collapse menu-dropdown" id="sidebarfinance">
+                                    <ul class="nav nav-sm flex-column">
+                                        @can('View expense')
+                                            <li class="nav-item">
+                                                <a href="{{ route('expenses.index') }}" class="nav-link" data-key="t-expenses"> Expenses </a>
+                                            </li>
+                                        @endcan
+                                        @can('View feed')
+                                            <li class="nav-item">
+                                                <a href="{{ route('feed.index') }}" class="nav-link" data-key="t-feed"> Feed Stock </a>
+                                            </li>
+                                        @endcan
+                                        @can('View settings')
+                                            <li class="nav-item">
+                                                <a href="{{ route('settings.index') }}" class="nav-link" data-key="t-settings"> Prices &amp; Costs </a>
+                                            </li>
+                                        @endcan
+                                    </ul>
+                                </div>
+                            </li>
+                        @endcanany
                         {{-- @can('View flock')
                               <li class="nav-item">
                             <a class="nav-link menu-link collapsed" href="#sidebarroles" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPages">
@@ -1458,6 +1489,10 @@
 
       @if (Route::is('daily-entries.*'))
              @include('layouts.pages-assets.js.daily-list-js')
+      @endif
+
+      @if (Route::is('expenses.*', 'settings.*', 'feed.*'))
+             @include('layouts.pages-assets.js.finance-js')
       @endif
 
       </body>

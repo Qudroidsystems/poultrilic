@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\BioModel;
-use App\Models\Student;
 use App\Models\User;
 use DB;
 use Hash;
@@ -287,71 +286,6 @@ class UserController extends Controller
         }
     }
 
-
-    /**
-     * Show the form for creating a new user from student.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function createFromStudentForm(): View
-    {
-        $roles = Role::pluck('name','name')->all();
-        $students = Student::select('id', 'admissionNo', 'firstname', 'lastname')
-                        ->where('statusId', 1) // Assuming 1 is for active students
-                        ->orderBy('admissionNo')
-                        ->get();
-
-        return view('users.add-student-user', compact('roles', 'students'));
-    }
-
-    /**
-     * Store a newly created user from student in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function createFromStudent(Request $request): RedirectResponse
-    {
-        $this->validate($request, [
-            'student_id' => 'required|exists:studentregistration,id',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|same:confirm-password',
-            'roles' => 'required'
-        ]);
-
-        // Get student data
-        $student = Student::findOrFail($request->student_id);
-
-        // Create user
-        $user = new User();
-        $user->name = $student->firstname . ' ' . $student->lastname;
-        $user->email = $request->email;
-        $user->password = Hash::make($request->password);
-        $user->student_id = $student->id; // Link to student record
-        $user->save();
-
-        // Assign role
-        $user->assignRole($request->input('roles'));
-
-        // Also create or update the BioModel entry if necessary
-        BioModel::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'firstname' => $student->firstname,
-                'lastname' => $student->lastname,
-                'othernames' => $student->othername ?? '',
-                'phone' => '', // You could add these fields to your form if needed
-                'address' => $student->home_address ?? '',
-                'gender' => $student->gender ?? '',
-                'maritalstatus' => '',
-                'nationality' => $student->nationlity ?? '',
-                'dob' => $student->dateofbirth ?? ''
-            ]
-        );
-
-        return redirect()->route('users.index')
-                        ->with('success', 'Student added as user successfully');
-    }
 
     /**
      * Remove the specified resource from storage.

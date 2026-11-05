@@ -282,6 +282,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const payload = {
                 _token: formData.get('_token'),
                 day_number: parseInt(formData.get('day_number')) || 0,
+                entry_date: formData.get('entry_date') || null,
                 daily_feeds: dailyFeeds,
                 available_feeds: availableFeeds,
                 daily_mortality: parseInt(formData.get('daily_mortality')) || 0,
@@ -373,6 +374,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 document.getElementById('edit-id-field').value = data.id || '';
                 document.getElementById('edit_day_number').value = data.day_number || '';
+                document.getElementById('edit_entry_date').value = data.entry_date || data.created_at || '';
                 document.getElementById('edit_daily_feeds').value = formatDecimal(data.daily_feeds || 0);
                 document.getElementById('edit_available_feeds').value = formatDecimal(data.available_feeds || 0);
                 document.getElementById('edit_daily_mortality').value = data.daily_mortality || 0;
@@ -466,6 +468,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 _method: 'PUT',
                 id: parseInt(formData.get('id')),
                 day_number: parseInt(formData.get('day_number')) || 0,
+                entry_date: formData.get('entry_date') || null,
                 daily_feeds: dailyFeeds,
                 available_feeds: availableFeeds,
                 daily_mortality: parseInt(formData.get('daily_mortality')) || 0,

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\FarmSettings;
 use Carbon\Carbon;
 use App\Models\Flock;
 use App\Models\WeekEntry;
 use App\Models\DailyEntry;
+use App\Models\Expense;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
@@ -23,12 +25,6 @@ class DashboardController extends Controller
 
     // Constants
     const EGGS_PER_CRATE = 30;
-    const BAG_WEIGHT_KG = 50;
-    const EGG_PRICE_NAIRA = 250;
-    const FEED_COST_PER_BAG = 15000;
-    const BIRD_COST = 2000;
-    const DRUG_COST_PER_DAY = 5000;
-    const DAILY_LABOR_COST = 10000;
 
     public function index(Request $request)
     {
@@ -54,13 +50,9 @@ class DashboardController extends Controller
         $flockAnalysis = $this->getCurrentFlockStatus($flockId);
         
         // Get daily entries for date range calculations
-        $dailyEntries = DailyEntry::whereBetween('created_at', [$startDate, $endDate])
+        $dailyEntries = DailyEntry::betweenDates($startDate, $endDate)
             ->with('weekEntry.flock')
-            ->when($flockId, function($query, $flockId) {
-                return $query->whereHas('weekEntry', function($q) use ($flockId) {
-                    $q->where('flock_id', $flockId);
-                });
-            })
+            ->when($flockId, fn($query, $flockId) => $query->forFlock($flockId))
             ->get();
 
         // Use the current flock status for LIFETIME metrics
@@ -87,7 +79,7 @@ class DashboardController extends Controller
             $lifetimeFeedConsumed = $flockData['totalFeedConsumed'];
             $lifetimeBrokenEggs = $flockData['totalBrokenEggs'];
             $lifetimeDrugUsage = $flockData['totalDrugUsage'];
-            $lifetimeRevenue = $lifetimeEggsSold * self::EGG_PRICE_NAIRA;
+            $lifetimeRevenue = $lifetimeEggsSold * FarmSettings::eggPrice();
         } else {
             // All flocks combined
             $totalBirds = $flockAnalysis['totalBirdsAll'];
@@ -100,13 +92,13 @@ class DashboardController extends Controller
             $lifetimeFeedConsumed = $flockAnalysis['totalFeedConsumedAll'];
             $lifetimeBrokenEggs = $flockAnalysis['totalBrokenEggsAll'];
             $lifetimeDrugUsage = $flockAnalysis['totalDrugUsageAll'];
-            $lifetimeRevenue = $lifetimeEggsSold * self::EGG_PRICE_NAIRA;
+            $lifetimeRevenue = $lifetimeEggsSold * FarmSettings::eggPrice();
         }
 
         // Calculate DATE RANGE metrics
         $dateRangeProduction = $this->calculateDateRangeProduction($dailyEntries);
         $dateRangeFeed = $this->calculateDateRangeFeed($dailyEntries);
-        $dateRangeRevenue = $dateRangeProduction['total_sold_pieces'] * self::EGG_PRICE_NAIRA;
+        $dateRangeRevenue = $dateRangeProduction['total_sold_pieces'] * FarmSettings::eggPrice();
         
         // Calculate production rate for date range
         $avgProductionRate = $this->calculateProductionRate($dailyEntries, $currentBirds);
@@ -118,14 +110,25 @@ class DashboardController extends Controller
             ->count();
 
         // Flock Capital Analysis - in Naira
-        $capitalInvestment = $totalBirds * self::BIRD_COST;
-        $lifetimeFeedCost = $lifetimeFeedConsumed * self::FEED_COST_PER_BAG;
-        $lifetimeDrugCost = $lifetimeDrugUsage * self::DRUG_COST_PER_DAY;
+        $capitalInvestment = $totalBirds * FarmSettings::birdCost();
+        $lifetimeFeedCost = $lifetimeFeedConsumed * FarmSettings::feedCostPerBag();
+        $lifetimeDrugCost = $lifetimeDrugUsage * FarmSettings::drugCostPerDay();
         $daysCount = $startDate->diffInDays($endDate) ?: 30;
-        $dateRangeLaborCost = self::DAILY_LABOR_COST * $daysCount;
+        $dateRangeLaborCost = FarmSettings::dailyLaborCost() * $daysCount;
         $lifetimeLaborCost = $this->calculateLifetimeLaborCost($flockId);
         
-        $lifetimeOperationalExpenses = $lifetimeFeedCost + $lifetimeDrugCost + $lifetimeLaborCost;
+        // Optionally replace the estimates above with the expenses actually recorded on the Expenses page.
+        $usingRecordedExpenses = FarmSettings::useRecordedExpenses();
+        $lifetimeOtherExpenses = 0;
+        if ($usingRecordedExpenses) {
+            $recorded = $this->recordedExpenseTotals($flockId);
+            $lifetimeFeedCost = $recorded['feed'];
+            $lifetimeDrugCost = $recorded['drugs'];
+            $lifetimeLaborCost = $recorded['labor'];
+            $lifetimeOtherExpenses = $recorded['other'];
+        }
+
+        $lifetimeOperationalExpenses = $lifetimeFeedCost + $lifetimeDrugCost + $lifetimeLaborCost + $lifetimeOtherExpenses;
         $lifetimeNetIncome = $lifetimeRevenue - $lifetimeOperationalExpenses;
         $capitalValue = $lifetimeNetIncome > 0 ? $lifetimeNetIncome / 0.1 : 0;
 
@@ -139,7 +142,7 @@ class DashboardController extends Controller
 
         // Chart Data - Weekly aggregation (WITHIN DATE RANGE)
         $chartData = $dailyEntries->groupBy(function($entry) {
-            return $entry->created_at->format('Y-W');
+            return $entry->entry_date->format('Y-W');
         })->map(function($weekEntries) {
             $weekProduction = 0;
             $weekSales = 0;
@@ -148,10 +151,8 @@ class DashboardController extends Controller
             $entryCount = $weekEntries->count();
             
             foreach ($weekEntries as $entry) {
-                $productionData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
-                $salesData = FlockAnalyticsService::parseEggData($entry->daily_sold_egg);
-                $weekProduction += $productionData['total_pieces'];
-                $weekSales += $salesData['total_pieces'];
+                $weekProduction += (int) $entry->eggs_produced;
+                $weekSales += (int) $entry->eggs_sold;
                 $weekBroken += $entry->broken_egg;
                 $weekBirds += $entry->current_birds;
             }
@@ -216,9 +217,17 @@ class DashboardController extends Controller
         $lifetimeCostPerEgg = $lifetimeEggsSold > 0 ? $lifetimeOperationalExpenses / $lifetimeEggsSold : 0;
         
         // Calculate date range expenses
-        $dateRangeFeedCost = $dateRangeFeed['total_feed_bags'] * self::FEED_COST_PER_BAG;
-        $dateRangeDrugCost = $dateRangeDrugUsage * self::DRUG_COST_PER_DAY;
-        $dateRangeTotalExpenses = $dateRangeFeedCost + $dateRangeDrugCost + $dateRangeLaborCost;
+        $dateRangeFeedCost = $dateRangeFeed['total_feed_bags'] * FarmSettings::feedCostPerBag();
+        $dateRangeDrugCost = $dateRangeDrugUsage * FarmSettings::drugCostPerDay();
+        $dateRangeOtherExpenses = 0;
+        if ($usingRecordedExpenses) {
+            $recorded = $this->recordedExpenseTotals($flockId, $startDate, $endDate);
+            $dateRangeFeedCost = $recorded['feed'];
+            $dateRangeDrugCost = $recorded['drugs'];
+            $dateRangeLaborCost = $recorded['labor'];
+            $dateRangeOtherExpenses = $recorded['other'];
+        }
+        $dateRangeTotalExpenses = $dateRangeFeedCost + $dateRangeDrugCost + $dateRangeLaborCost + $dateRangeOtherExpenses;
         $dateRangeCostPerEgg = $dateRangeProduction['total_sold_pieces'] > 0 ? $dateRangeTotalExpenses / $dateRangeProduction['total_sold_pieces'] : 0;
         $dateRangeNetIncome = $dateRangeRevenue - $dateRangeTotalExpenses;
         
@@ -236,10 +245,7 @@ class DashboardController extends Controller
         $dateRangeEggsProducedPieces = $dateRangeProduction['total_egg_pieces_remainder'];
 
         // Data quality metrics
-        $daysWithProduction = $dailyEntries->filter(function($entry) {
-            $eggData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
-            return $eggData['total_pieces'] > 0;
-        })->count();
+        $daysWithProduction = $dailyEntries->filter(fn($entry) => $entry->eggs_produced > 0)->count();
         
         $avgDailyProduction = $daysWithProduction > 0 ? $dateRangeProduction['total_egg_pieces'] / $daysWithProduction : 0;
         
@@ -287,6 +293,8 @@ class DashboardController extends Controller
         
         $totalLifetimeDays = $this->calculateLifetimeDays($flockId);
 
+        $feedStock = app(\App\Services\FeedStockService::class)->snapshot();
+
         // Prepare data for view
         return view('dashboards.dashboard', compact(
             'pagetitle',
@@ -309,6 +317,10 @@ class DashboardController extends Controller
             'lifetimeDrugCost',
             'lifetimeLaborCost',
             'lifetimeOperationalExpenses',
+            'lifetimeOtherExpenses',
+            'dateRangeOtherExpenses',
+            'usingRecordedExpenses',
+            'feedStock',
             'lifetimeNetIncome',
             'lifetimeEggMortalityRate',
             'totalLifetimeDays', // Add this line
@@ -416,9 +428,7 @@ class DashboardController extends Controller
         
         foreach ($allFlocks as $flock) {
             // Get the MOST RECENT daily entry for this flock
-            $latestEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flock) {
-                $q->where('flock_id', $flock->id);
-            })->orderBy('created_at', 'desc')->first();
+            $latestEntry = DailyEntry::forFlock($flock->id)->latestFirst()->first();
             
             if (!$latestEntry) {
                 // No entries for this flock
@@ -442,17 +452,15 @@ class DashboardController extends Controller
             }
             
             // Get ALL entries for this flock to calculate totals
-            $allEntriesForFlock = DailyEntry::whereHas('weekEntry', function($q) use ($flock) {
-                $q->where('flock_id', $flock->id);
-            })->get();
+            $allEntriesForFlock = DailyEntry::forFlock($flock->id)->get();
             
             // Get maximum bird count
             $maxBirds = $allEntriesForFlock->max('current_birds');
             $minBirds = $allEntriesForFlock->min('current_birds');
             
-            // Calculate TOTAL eggs sold from the latest entry's total_sold_egg field
-            $totalSoldData = FlockAnalyticsService::parseEggData($latestEntry->total_sold_egg);
-            $totalEggsSold = $totalSoldData['total_pieces'];
+            // TOTAL eggs sold = sum of every day's sales. (This used to read the latest entry's
+            // total_sold_egg, which only accumulates within a single week.)
+            $totalEggsSold = (int) $allEntriesForFlock->sum('eggs_sold');
             
             // Calculate TOTAL eggs produced and broken eggs (need to sum all daily_egg_production)
             $totalEggsProduced = 0;
@@ -461,8 +469,7 @@ class DashboardController extends Controller
             $totalDrugUsage = 0;
             
             foreach ($allEntriesForFlock as $entry) {
-                $productionData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
-                $totalEggsProduced += $productionData['total_pieces'];
+                $totalEggsProduced += (int) $entry->eggs_produced;
                 $totalFeedConsumed += $entry->total_feeds_consumed ?? 0;
                 $totalBrokenEggs += $entry->broken_egg ?? 0;
                 
@@ -546,34 +553,15 @@ class DashboardController extends Controller
      */
     private function calculateTotalEggsProducedForFlock($flockId)
     {
-        $entries = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
-            $q->where('flock_id', $flockId);
-        })->get();
-        
-        $totalEggs = 0;
-        foreach ($entries as $entry) {
-            $productionData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
-            $totalEggs += $productionData['total_pieces'];
-        }
-        
-        return $totalEggs;
+        return (int) DailyEntry::forFlock($flockId)->sum('eggs_produced');
     }
 
     /**
-     * Calculate total eggs sold for a specific flock
+     * Calculate total eggs sold for a specific flock (sum of daily sales)
      */
     private function calculateTotalEggsSoldForFlock($flockId)
     {
-        $latestEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
-            $q->where('flock_id', $flockId);
-        })->orderBy('created_at', 'desc')->first();
-        
-        if (!$latestEntry) {
-            return 0;
-        }
-        
-        $soldData = FlockAnalyticsService::parseEggData($latestEntry->total_sold_egg);
-        return $soldData['total_pieces'];
+        return (int) DailyEntry::forFlock($flockId)->sum('eggs_sold');
     }
 
     /**
@@ -581,11 +569,7 @@ class DashboardController extends Controller
      */
     private function calculateTotalBrokenEggsForFlock($flockId)
     {
-        $entries = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
-            $q->where('flock_id', $flockId);
-        })->get();
-        
-        return $entries->sum('broken_egg');
+        return (int) DailyEntry::forFlock($flockId)->sum('broken_egg');
     }
 
     /**
@@ -593,10 +577,8 @@ class DashboardController extends Controller
      */
     private function calculateTotalDrugUsageForFlock($flockId)
     {
-        $entries = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
-            $q->where('flock_id', $flockId);
-        })->get();
-        
+        $entries = DailyEntry::forFlock($flockId)->get();
+
         $drugDays = 0;
         foreach ($entries as $entry) {
             if ($entry->drugs && $entry->drugs !== 'Nil' && $entry->drugs !== '') {
@@ -617,11 +599,8 @@ class DashboardController extends Controller
         $totalBrokenEggs = 0;
         
         foreach ($dailyEntries as $entry) {
-            $eggData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
-            $soldData = FlockAnalyticsService::parseEggData($entry->daily_sold_egg);
-            
-            $totalEggPieces += $eggData['total_pieces'];
-            $totalSoldPieces += $soldData['total_pieces'];
+            $totalEggPieces += (int) $entry->eggs_produced;
+            $totalSoldPieces += (int) $entry->eggs_sold;
             $totalBrokenEggs += $entry->broken_egg ?? 0;
         }
         
@@ -650,7 +629,7 @@ class DashboardController extends Controller
     private function calculateDateRangeFeed($dailyEntries)
     {
         $totalFeedBags = $dailyEntries->sum('daily_feeds');
-        $totalFeedKg = $totalFeedBags * self::BAG_WEIGHT_KG;
+        $totalFeedKg = $totalFeedBags * FarmSettings::bagWeightKg();
         
         return [
             'total_feed_bags' => $totalFeedBags,
@@ -663,15 +642,13 @@ class DashboardController extends Controller
      */
     private function calculateFlockAge($flockId)
     {
-        $firstEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
-            $q->where('flock_id', $flockId);
-        })->orderBy('created_at', 'asc')->first();
-        
+        $firstEntry = DailyEntry::forFlock($flockId)->oldestFirst()->first();
+
         if (!$firstEntry) {
             return 0;
         }
-        
-        $firstDate = Carbon::parse($firstEntry->created_at);
+
+        $firstDate = Carbon::parse($firstEntry->entry_date);
         $now = Carbon::now();
         
         return $firstDate->diffInWeeks($now);
@@ -700,8 +677,7 @@ class DashboardController extends Controller
         $totalBirdsDays = 0;
         
         foreach ($validEntries as $entry) {
-            $eggData = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
-            $totalEggs += $eggData['total_pieces'];
+            $totalEggs += (int) $entry->eggs_produced;
             $totalBirdsDays += $entry->current_birds;
         }
         
@@ -724,30 +700,60 @@ class DashboardController extends Controller
     }
 
     /**
+     * Operating expenses recorded on the Expenses page, grouped for the dashboard.
+     *
+     * Bird purchases are excluded (they are capital, shown separately). With a flock selected only
+     * that flock's expenses count; with none selected everything counts, including whole-farm items.
+     * Pass dates to limit to a period, omit for lifetime.
+     */
+    private function recordedExpenseTotals($flockId = null, $start = null, $end = null): array
+    {
+        $query = Expense::query()->where('category', '!=', 'birds');
+
+        if ($flockId) {
+            $query->where('flock_id', $flockId);
+        }
+        if ($start && $end) {
+            $query->betweenDates($start, $end);
+        }
+
+        $byCategory = $query->selectRaw('category, SUM(amount) as total')->groupBy('category')->pluck('total', 'category');
+
+        $feed = (float) ($byCategory['feed'] ?? 0);
+        $drugs = (float) ($byCategory['drugs'] ?? 0);
+        $labor = (float) ($byCategory['labor'] ?? 0);
+
+        return [
+            'feed' => $feed,
+            'drugs' => $drugs,
+            'labor' => $labor,
+            'other' => (float) $byCategory->sum() - $feed - $drugs - $labor,
+        ];
+    }
+
+    /**
      * Calculate lifetime labor cost
      */
     private function calculateLifetimeLaborCost($flockId = null)
     {
         $query = DailyEntry::query();
-        
+
         if ($flockId) {
-            $query->whereHas('weekEntry', function($q) use ($flockId) {
-                $q->where('flock_id', $flockId);
-            });
+            $query->forFlock($flockId);
         }
-        
-        $firstEntry = $query->orderBy('created_at', 'asc')->first();
-        $lastEntry = $query->orderBy('created_at', 'desc')->first();
-        
+
+        $firstEntry = (clone $query)->oldestFirst()->first();
+        $lastEntry = (clone $query)->latestFirst()->first();
+
         if (!$firstEntry || !$lastEntry) {
             return 0;
         }
-        
-        $firstDate = Carbon::parse($firstEntry->created_at);
-        $lastDate = Carbon::parse($lastEntry->created_at);
+
+        $firstDate = Carbon::parse($firstEntry->entry_date);
+        $lastDate = Carbon::parse($lastEntry->entry_date);
         $totalDays = $firstDate->diffInDays($lastDate) + 1; // +1 to include both start and end days
         
-        return $totalDays * self::DAILY_LABOR_COST;
+        return $totalDays * FarmSettings::dailyLaborCost();
     }
 
     /**
@@ -756,22 +762,20 @@ class DashboardController extends Controller
     private function calculateLifetimeDays($flockId = null)
     {
         $query = DailyEntry::query();
-        
+
         if ($flockId) {
-            $query->whereHas('weekEntry', function($q) use ($flockId) {
-                $q->where('flock_id', $flockId);
-            });
+            $query->forFlock($flockId);
         }
-        
-        $firstEntry = $query->orderBy('created_at', 'asc')->first();
-        $lastEntry = $query->orderBy('created_at', 'desc')->first();
-        
+
+        $firstEntry = (clone $query)->oldestFirst()->first();
+        $lastEntry = (clone $query)->latestFirst()->first();
+
         if (!$firstEntry || !$lastEntry) {
             return 0;
         }
-        
-        $firstDate = Carbon::parse($firstEntry->created_at);
-        $lastDate = Carbon::parse($lastEntry->created_at);
+
+        $firstDate = Carbon::parse($firstEntry->entry_date);
+        $lastDate = Carbon::parse($lastEntry->entry_date);
         
         return $firstDate->diffInDays($lastDate) + 1; // +1 to include both start and end days
     }
@@ -820,13 +824,9 @@ class DashboardController extends Controller
         $flockAnalysis = $this->getCurrentFlockStatus($flockId);
         
         // Get daily entries for date range
-        $dailyEntries = DailyEntry::whereBetween('created_at', [$startDate, $endDate])
+        $dailyEntries = DailyEntry::betweenDates($startDate, $endDate)
             ->with('weekEntry.flock')
-            ->when($flockId, function($query, $flockId) {
-                return $query->whereHas('weekEntry', function($q) use ($flockId) {
-                    $q->where('flock_id', $flockId);
-                });
-            })
+            ->when($flockId, fn($query, $flockId) => $query->forFlock($flockId))
             ->get();
         
         // Calculate date range metrics
@@ -838,7 +838,7 @@ class DashboardController extends Controller
             $flockAnalysis,
             $dateRangeProduction,
             $dateRangeFeed,
-            ['total_revenue' => ($flockAnalysis['totalEggsSoldAll'] ?? 0) * self::EGG_PRICE_NAIRA]
+            ['total_revenue' => ($flockAnalysis['totalEggsSoldAll'] ?? 0) * FarmSettings::eggPrice()]
         );
 
         // Get flock details

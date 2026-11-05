@@ -59,7 +59,7 @@ public function index(Request $request)
         'avg_current_bird_count' => Flock::avg('current_bird_count') ?? 0,
         'total_weeks' => WeekEntry::distinct('week_name')->count(),
         'total_daily_entries' => DailyEntry::count(),
-        'total_egg_production' => DailyEntry::sum('daily_egg_production'),
+        'total_egg_production' => DailyEntry::sum('eggs_produced'),
         'total_mortality' => DailyEntry::sum('daily_mortality'),
         'total_feeds_consumed' => DailyEntry::sum('total_feeds_consumed')
     ];
@@ -168,10 +168,10 @@ public function update(Request $request, Flock $flock)
     $flockStats = [
         'total_weeks' => $weekEntries->count(),
         'total_daily_entries' => DailyEntry::whereIn('week_entry_id', $weekEntries->pluck('id'))->count(),
-        'total_egg_production' => DailyEntry::whereIn('week_entry_id', $weekEntries->pluck('id'))->sum('daily_egg_production'),
+        'total_egg_production' => DailyEntry::whereIn('week_entry_id', $weekEntries->pluck('id'))->sum('eggs_produced'),
         'total_mortality' => DailyEntry::whereIn('week_entry_id', $weekEntries->pluck('id'))->sum('daily_mortality'),
         'total_feeds_consumed' => DailyEntry::whereIn('week_entry_id', $weekEntries->pluck('id'))->sum('total_feeds_consumed'),
-        'avg_daily_egg_production' => DailyEntry::whereIn('week_entry_id', $weekEntries->pluck('id'))->avg('daily_egg_production') ?? 0,
+        'avg_daily_egg_production' => DailyEntry::whereIn('week_entry_id', $weekEntries->pluck('id'))->avg('eggs_produced') ?? 0,
         'avg_daily_mortality' => DailyEntry::whereIn('week_entry_id', $weekEntries->pluck('id'))->avg('daily_mortality') ?? 0,
         'avg_daily_feeds' => DailyEntry::whereIn('week_entry_id', $weekEntries->pluck('id'))->avg('total_feeds_consumed') ?? 0
     ];

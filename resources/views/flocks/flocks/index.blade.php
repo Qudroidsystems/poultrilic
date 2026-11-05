@@ -190,7 +190,7 @@
                                             <td>
                                                 <div class="hstack gap-2">
                                                     @can('View flock')
-                                                        <a href="/flocks/{id}/week-entries" class="btn btn-subtle-primary btn-icon btn-sm" title="View week entries"><i class="ph-eye"></i></a>
+                                                        <a href="/flocks/{id}/weeks" class="btn btn-subtle-primary btn-icon btn-sm" title="View week entries"><i class="ph-eye"></i></a>
                                                     @endcan
                                                     @can('Update flock')
                                                         <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" title="Edit flock"><i class="ph-pencil"></i></button>

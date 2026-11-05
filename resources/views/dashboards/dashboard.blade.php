@@ -131,6 +131,22 @@
             </div>
             <!-- End page title -->
 
+            @if (($feedStock['tracking'] ?? false) && $feedStock['needs_reorder'])
+                <div class="alert alert-danger d-flex justify-content-between align-items-center" role="alert">
+                    <span>
+                        <strong>Feed running low.</strong>
+                        @if ($feedStock['on_hand'] <= 0)
+                            Recorded feed stock has run out.
+                        @else
+                            {{ number_format($feedStock['on_hand'], 1) }} bags left, about {{ $feedStock['days_remaining'] }} days at the current rate.
+                        @endif
+                    </span>
+                    @can('View feed')
+                        <a href="{{ route('feed.index') }}" class="btn btn-sm btn-danger">Feed stock</a>
+                    @endcan
+                </div>
+            @endif
+
             <!-- Date Range Info -->
             <div class="row mb-3">
                 <div class="col-12">
@@ -663,7 +679,7 @@
                                         ₦{{ number_format($lifetimeLaborCost, 2) }}
                                     </div>
                                     <p class="text-muted mb-0">
-                                        {{ $totalLifetimeDays }} days @ ₦10,000/day
+                                        {{ $totalLifetimeDays }} days @if ($usingRecordedExpenses)(recorded labor expenses)@else @ ₦{{ number_format(\App\Support\FarmSettings::dailyLaborCost()) }}/day @endif
                                     </p>
                                 </div>
                                 <div class="col-6 date-range-data">
@@ -672,7 +688,7 @@
                                         ₦{{ number_format($dateRangeLaborCost, 2) }}
                                     </div>
                                     <p class="text-muted mb-0">
-                                        {{ $daysCount }} days @ ₦10,000/day
+                                        {{ $daysCount }} days @if ($usingRecordedExpenses)(recorded labor expenses)@else @ ₦{{ number_format(\App\Support\FarmSettings::dailyLaborCost()) }}/day @endif
                                     </p>
                                 </div>
                             </div>
@@ -863,12 +879,13 @@
                             <div class="mb-3">
                                 <strong>Capital Investment:</strong><br>
                                 <span class="text-primary">₦{{ number_format($capitalInvestment, 2) }}</span>
-                                <small class="text-muted d-block">{{ number_format($totalBirds, 0) }} birds × ₦2,000 each</small>
+                                <small class="text-muted d-block">{{ number_format($totalBirds, 0) }} birds × ₦{{ number_format(\App\Support\FarmSettings::birdCost()) }} each</small>
                             </div>
                             <div class="mb-3">
                                 <strong>Lifetime Operational Expenses:</strong><br>
                                 <span class="text-danger">₦{{ number_format($lifetimeOperationalExpenses, 2) }}</span>
-                                <small class="text-muted d-block">Feed: ₦{{ number_format($lifetimeFeedCost, 2) }}, Drugs: ₦{{ number_format($lifetimeDrugCost, 2) }}, Labor: ₦{{ number_format($lifetimeLaborCost, 2) }}</small>
+                                <small class="text-muted d-block">Feed: ₦{{ number_format($lifetimeFeedCost, 2) }}, Drugs: ₦{{ number_format($lifetimeDrugCost, 2) }}, Labor: ₦{{ number_format($lifetimeLaborCost, 2) }}@if ($usingRecordedExpenses), Other: ₦{{ number_format($lifetimeOtherExpenses, 2) }}@endif</small>
+                                <small class="text-muted d-block">{{ $usingRecordedExpenses ? 'Based on recorded expenses' : 'Estimated from feed bags, drug days and labor days' }}</small>
                             </div>
                             <div class="mb-3">
                                 <strong>Lifetime Net Income:</strong><br>

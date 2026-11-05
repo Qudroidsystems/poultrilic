@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Support\FarmSettings;
 use Carbon\Carbon;
 use App\Models\Flock;
 use App\Models\DailyEntry;
@@ -26,14 +27,13 @@ class PoultryAnalyticsExport implements FromCollection, WithHeadings, WithMappin
     public function collection()
     {
         $query = DailyEntry::with(['weekEntry.flock'])
-            ->whereBetween('created_at', [$this->startDate, $this->endDate]);
-            
+            ->betweenDates($this->startDate, $this->endDate)
+            ->oldestFirst();
+
         if ($this->flockId) {
-            $query->whereHas('weekEntry', function($q) {
-                $q->where('flock_id', $this->flockId);
-            });
+            $query->forFlock($this->flockId);
         }
-        
+
         return $query->get();
     }
     
@@ -57,22 +57,22 @@ class PoultryAnalyticsExport implements FromCollection, WithHeadings, WithMappin
     
     public function map($entry): array
     {
-        $eggProduction = FlockAnalyticsService::parseEggData($entry->daily_egg_production);
-        $eggSales = FlockAnalyticsService::parseEggData($entry->daily_sold_egg);
-        $revenue = $eggSales['total_pieces'] * FlockAnalyticsService::EGG_PRICE_NAIRA;
-        
+        $eggsProduced = (int) $entry->eggs_produced;
+        $eggsSold = (int) $entry->eggs_sold;
+        $revenue = $eggsSold * FarmSettings::eggPrice();
+
         // Calculate production rate for this day
         $productionRate = 0;
-        if ($entry->current_birds > 0 && $eggProduction['total_pieces'] > 0) {
-            $productionRate = min(100, ($eggProduction['total_pieces'] / $entry->current_birds) * 100);
+        if ($entry->current_birds > 0 && $eggsProduced > 0) {
+            $productionRate = min(100, ($eggsProduced / $entry->current_birds) * 100);
         }
-        
+
         return [
-            $entry->created_at->format('Y-m-d'),
+            ($entry->entry_date ?? $entry->created_at)->format('Y-m-d'),
             $entry->weekEntry->flock->name ?? 'N/A',
             $entry->current_birds,
-            $eggProduction['total_pieces'],
-            $eggSales['total_pieces'],
+            $eggsProduced,
+            $eggsSold,
             $entry->broken_egg ?? 0,
             $entry->daily_feeds,
             $entry->drugs != 'Nil' && !empty($entry->drugs) ? 'Yes' : 'No',

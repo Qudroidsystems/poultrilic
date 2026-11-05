@@ -50,6 +50,19 @@ class PermissionTableSeeder extends Seeder
            'Update daily-entry',
            'Delete daily-entry',
 
+           'View expense',
+           'Create expense',
+           'Update expense',
+           'Delete expense',
+
+           'View feed',
+           'Create feed',
+           'Update feed',
+           'Delete feed',
+
+           'View settings',
+           'Update settings',
+
         ];
 
         foreach ($permissions as $permission) {
@@ -78,6 +91,15 @@ class PermissionTableSeeder extends Seeder
 
                 if($word == "daily-entry")
                 Permission::Create(['name' => $permission,'title'=>"Daily Entry Management"]);
+
+                if($word == "expense")
+                Permission::Create(['name' => $permission,'title'=>"Expense Management"]);
+
+                if($word == "feed")
+                Permission::Create(['name' => $permission,'title'=>"Feed Management"]);
+
+                if($word == "settings")
+                Permission::Create(['name' => $permission,'title'=>"Settings Management"]);
 
                
 

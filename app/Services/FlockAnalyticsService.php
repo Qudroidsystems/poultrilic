@@ -2,16 +2,16 @@
 
 namespace App\Services;
 
+use App\Support\FarmSettings;
 use Carbon\Carbon;
 use App\Models\Flock;
 use App\Models\WeekEntry;
 use App\Models\DailyEntry;
+use App\Support\Eggs;
 
 class FlockAnalyticsService
 {
     const EGGS_PER_CRATE = 30;
-    const BAG_WEIGHT_KG = 50;
-    const EGG_PRICE_NAIRA = 100; // ₦100 per egg
     
     /**
      * Calculate metrics for single or multiple flocks
@@ -123,11 +123,8 @@ class FlockAnalyticsService
         $totalBrokenEggs = 0;
         
         foreach ($dailyEntries as $entry) {
-            $eggData = self::parseEggData($entry->daily_egg_production);
-            $soldData = self::parseEggData($entry->daily_sold_egg);
-            
-            $totalEggPieces += $eggData['total_pieces'];
-            $totalSoldPieces += $soldData['total_pieces'];
+            $totalEggPieces += (int) $entry->eggs_produced;
+            $totalSoldPieces += (int) $entry->eggs_sold;
             $totalBrokenEggs += $entry->broken_egg ?? 0;
         }
         
@@ -156,7 +153,7 @@ class FlockAnalyticsService
     private static function calculateFeedMetrics($dailyEntries)
     {
         $totalFeedBags = $dailyEntries->sum('daily_feeds');
-        $totalFeedKg = $totalFeedBags * self::BAG_WEIGHT_KG;
+        $totalFeedKg = $totalFeedBags * FarmSettings::bagWeightKg();
         
         return [
             'total_feed_bags' => $totalFeedBags,
@@ -171,87 +168,52 @@ class FlockAnalyticsService
     {
         $totalSoldPieces = 0;
         foreach ($dailyEntries as $entry) {
-            $soldData = self::parseEggData($entry->daily_sold_egg);
-            $totalSoldPieces += $soldData['total_pieces'];
+            $totalSoldPieces += (int) $entry->eggs_sold;
         }
         
-        $revenue = $totalSoldPieces * self::EGG_PRICE_NAIRA;
+        $revenue = $totalSoldPieces * FarmSettings::eggPrice();
         
         return [
             'total_revenue' => $revenue,
-            'revenue_per_egg' => self::EGG_PRICE_NAIRA,
+            'revenue_per_egg' => FarmSettings::eggPrice(),
         ];
     }
     
     /**
-     * Parse egg data string
+     * Parse a legacy egg string such as "11 Cr 12PC".
+     *
+     * Kept for callers that still hold a text value; new code should read the
+     * integer eggs_* columns on DailyEntry instead.
      */
     public static function parseEggData($eggString)
     {
-        if (empty($eggString) || $eggString === '0 Cr 0PC' || $eggString === '0 Cr 0PC') {
-            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
-        }
+        $total = Eggs::parse($eggString);
 
-        try {
-            if (strpos($eggString, ',') !== false) {
-                preg_match('/([\d,]+)\s*CR?/', $eggString, $matches);
-                if (count($matches) === 2) {
-                    $crates = (int)str_replace(',', '', $matches[1]);
-                    return [
-                        'crates' => $crates,
-                        'pieces' => 0,
-                        'total_pieces' => $crates * self::EGGS_PER_CRATE
-                    ];
-                }
-            } else {
-                preg_match('/(\d+)\s*Cr\s*(\d+)PC/', $eggString, $matches);
-                if (count($matches) === 3) {
-                    $crates = (int)$matches[1];
-                    $pieces = (int)$matches[2];
-                    return [
-                        'crates' => $crates,
-                        'pieces' => $pieces,
-                        'total_pieces' => ($crates * self::EGGS_PER_CRATE) + $pieces
-                    ];
-                }
-                
-                preg_match('/(\d+)\s*CR/', $eggString, $matches);
-                if (count($matches) === 2) {
-                    $crates = (int)$matches[1];
-                    return [
-                        'crates' => $crates,
-                        'pieces' => 0,
-                        'total_pieces' => $crates * self::EGGS_PER_CRATE
-                    ];
-                }
-            }
-            
-            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
-        } catch (\Exception $e) {
-            return ['crates' => 0, 'pieces' => 0, 'total_pieces' => 0];
-        }
+        return [
+            'crates' => Eggs::crates($total),
+            'pieces' => Eggs::remainder($total),
+            'total_pieces' => $total,
+        ];
     }
-    
+
     /**
      * Get daily entries for a flock or all flocks
      */
     private static function getDailyEntries($flockId = null, $startDate = null, $endDate = null)
     {
         $query = DailyEntry::with('weekEntry.flock');
-        
+
         if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+            $query->betweenDates($startDate, $endDate);
         }
-        
+
         if ($flockId) {
-            $query->whereHas('weekEntry', function($q) use ($flockId) {
-                $q->where('flock_id', $flockId);
-            });
+            $query->forFlock($flockId);
         }
-        
+
         return $query->get();
     }
-    
+
     /**
      * Return empty metrics array
      */
@@ -321,11 +283,9 @@ class FlockAnalyticsService
                 return false;
             }
             
-            $eggData = self::parseEggData($entry->daily_egg_production);
-            
             // Cap unrealistic production at 110% of bird count
             $maxPossible = $entry->current_birds * 1.1;
-            if ($eggData['total_pieces'] > $maxPossible) {
+            if ($entry->eggs_produced > $maxPossible) {
                 return false;
             }
             
@@ -341,11 +301,9 @@ class FlockAnalyticsService
         $daysWithProduction = 0;
         
         foreach ($validEntries as $entry) {
-            $eggData = self::parseEggData($entry->daily_egg_production);
-            
             // Only count days with egg production data
-            if ($eggData['total_pieces'] > 0) {
-                $totalEggs += $eggData['total_pieces'];
+            if ($entry->eggs_produced > 0) {
+                $totalEggs += $entry->eggs_produced;
                 $daysWithProduction++;
             }
         }
@@ -381,22 +339,15 @@ class FlockAnalyticsService
             return null;
         }
         
-        // Get first and last entries to determine age
-        $firstEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
-            $q->where('flock_id', $flockId);
-        })->orderBy('created_at', 'asc')->first();
-        
-        $lastEntry = DailyEntry::whereHas('weekEntry', function($q) use ($flockId) {
-            $q->where('flock_id', $flockId);
-        })->orderBy('created_at', 'desc')->first();
-        
+        // Get first and last entries (by the date they describe) to determine age
+        $firstEntry = DailyEntry::forFlock($flockId)->oldestFirst()->first();
+        $lastEntry = DailyEntry::forFlock($flockId)->latestFirst()->first();
+
         $ageInWeeks = 0;
         if ($firstEntry) {
-            $firstDate = Carbon::parse($firstEntry->created_at);
-            $now = Carbon::now();
-            $ageInWeeks = $firstDate->diffInWeeks($now);
+            $ageInWeeks = Carbon::parse($firstEntry->entry_date)->diffInWeeks(Carbon::now());
         }
-        
+
         return [
             'id' => $flock->id,
             'name' => $flock->name,
@@ -404,8 +355,8 @@ class FlockAnalyticsService
             'current_birds' => $flock->current_bird_count,
             'mortality' => $flock->calculateMortality(),
             'age_in_weeks' => $ageInWeeks,
-            'first_entry_date' => $firstEntry ? $firstEntry->created_at->format('Y-m-d') : null,
-            'last_entry_date' => $lastEntry ? $lastEntry->created_at->format('Y-m-d') : null,
+            'first_entry_date' => $firstEntry ? $firstEntry->entry_date->format('Y-m-d') : null,
+            'last_entry_date' => $lastEntry ? $lastEntry->entry_date->format('Y-m-d') : null,
             'status' => $flock->status,
         ];
     }

@@ -3,43 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailyEntry;
+use App\Support\Eggs;
 use App\Models\WeekEntry;
 use App\Models\Flock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class DailyEntryController extends Controller
 {
-    /**
-     * Parse egg string (e.g., "11 Cr 12PC") to total pieces.
-     *
-     * @param  string|null  $eggString
-     * @return int
-     */
-    private function parseEggString($eggString)
-    {
-        if (!$eggString || !is_string($eggString)) {
-            return 0;
-        }
-        $match = preg_match('/(\d+)\s*Cr\s*(\d+)PC/', $eggString, $matches);
-        return $match ? (int)$matches[1] * 30 + (int)$matches[2] : 0;
-    }
-
-    /**
-     * Format total pieces to egg string (e.g., "11 Cr 12PC").
-     *
-     * @param  int  $totalPieces
-     * @return string
-     */
-    private function formatEggString($totalPieces)
-    {
-        $totalPieces = max(0, (int)$totalPieces); // Ensure non-negative
-        $crates = floor($totalPieces / 30);
-        $pieces = $totalPieces % 30;
-        return "{$crates} Cr {$pieces}PC";
-    }
-
     /**
      * Display a listing of the daily entries for a given week.
      *
@@ -73,10 +46,10 @@ class DailyEntryController extends Controller
 
             $chartData = [
                 'labels' => $dailyEntries->pluck('day_number')->map(fn($day) => "Day $day")->toArray(),
-                'daily_egg_production' => $dailyEntries->map(fn($entry) => $this->parseEggString($entry->daily_egg_production))->toArray(),
+                'daily_egg_production' => $dailyEntries->map(fn($entry) => (int) $entry->eggs_produced)->toArray(),
             ];
 
-            $totalEggInFarm = $week->dailyEntries()->get()->sum(fn($entry) => $this->parseEggString($entry->outstanding_egg));
+            $totalEggInFarm = (int) $week->dailyEntries()->sum('eggs_outstanding');
 
             if ($request->ajax()) {
                 return response()->json([
@@ -91,18 +64,19 @@ class DailyEntryController extends Controller
                             'current_birds' => $entry->current_birds,
                             'daily_egg_production' => $entry->daily_egg_production ?: '0 Cr 0PC',
                             'daily_sold_egg' => $entry->daily_sold_egg ?: '0 Cr 0PC',
-                            'broken_egg' => $this->formatEggString($entry->broken_egg),
+                            'broken_egg' => Eggs::format($entry->broken_egg),
                             'outstanding_egg' => $entry->outstanding_egg ?: '0 Cr 0PC',
                             'total_egg_in_farm' => $entry->total_egg_in_farm ?: '0 Cr 0PC',
                             'drugs' => $entry->drugs,
                             'reorder_feeds' => $entry->reorder_feeds !== null ? number_format($entry->reorder_feeds, 2) : null,
-                            'created_at' => $entry->created_at->format('Y-m-d'),
+                            'created_at' => ($entry->entry_date ?? $entry->created_at)->format('Y-m-d'),
+                            'entry_date' => ($entry->entry_date ?? $entry->created_at)->format('Y-m-d'),
                         ];
                     })->toArray(),
                     'pagination' => (string) $dailyEntries->links(),
                     'total' => $dailyEntries->total(),
                     'chartData' => $chartData,
-                    'total_egg_in_farm' => $this->formatEggString($totalEggInFarm),
+                    'total_egg_in_farm' => Eggs::format($totalEggInFarm),
                 ]);
             }
 
@@ -163,6 +137,8 @@ class DailyEntryController extends Controller
                 'daily_sold_egg_pieces' => 'required|integer|min:0|max:29',
                 'broken_egg_crates' => 'required|integer|min:0',
                 'broken_egg_pieces' => 'required|integer|min:0|max:29',
+                'entry_date' => ['nullable', 'date', 'before_or_equal:today',
+                    Rule::unique('daily_entries', 'entry_date')->where('flock_id', $flock->id)],
                 'drugs' => 'nullable|string',
                 'reorder_feeds' => 'required|numeric|min:0',
             ]);
@@ -191,6 +167,8 @@ class DailyEntryController extends Controller
 
             $entry = DailyEntry::create([
                 'week_entry_id' => $weekId,
+                'flock_id' => $flock->id,
+                'entry_date' => $validated['entry_date'] ?? now()->toDateString(),
                 'day_number' => $validated['day_number'],
                 'daily_feeds' => $validated['daily_feeds'],
                 'available_feeds' => $validated['available_feeds'],
@@ -199,15 +177,18 @@ class DailyEntryController extends Controller
                 'sick_bay' => $validated['sick_bay'],
                 'total_mortality' => $totalMortality,
                 'current_birds' => max(0, $flock->initial_bird_count - $totalMortality),
-                'daily_egg_production' => $this->formatEggString($dailyEggProduction),
-                'daily_sold_egg' => $this->formatEggString($dailySoldEgg),
-                'total_sold_egg' => $this->formatEggString(
-                    $weekEntry->dailyEntries()->get()->sum(fn($entry) => $this->parseEggString($entry->daily_sold_egg)) + $dailySoldEgg
+                'eggs_produced' => $dailyEggProduction,
+                'eggs_sold' => $dailySoldEgg,
+                'eggs_outstanding' => $outstandingEgg,
+                'daily_egg_production' => Eggs::format($dailyEggProduction),
+                'daily_sold_egg' => Eggs::format($dailySoldEgg),
+                'total_sold_egg' => Eggs::format(
+                    (int) $weekEntry->dailyEntries()->sum('eggs_sold') + $dailySoldEgg
                 ),
                 'broken_egg' => $brokenEgg,
-                'outstanding_egg' => $this->formatEggString($outstandingEgg),
-                'total_egg_in_farm' => $this->formatEggString(
-                    $weekEntry->dailyEntries()->get()->sum(fn($entry) => $this->parseEggString($entry->outstanding_egg)) + $outstandingEgg
+                'outstanding_egg' => Eggs::format($outstandingEgg),
+                'total_egg_in_farm' => Eggs::format(
+                    (int) $weekEntry->dailyEntries()->sum('eggs_outstanding') + $outstandingEgg
                 ),
                 'drugs' => $validated['drugs'],
                 'reorder_feeds' => $validated['reorder_feeds'],
@@ -230,12 +211,13 @@ class DailyEntryController extends Controller
                     'current_birds' => $entry->current_birds,
                     'daily_egg_production' => $entry->daily_egg_production,
                     'daily_sold_egg' => $entry->daily_sold_egg,
-                    'broken_egg' => $this->formatEggString($entry->broken_egg),
+                    'broken_egg' => Eggs::format($entry->broken_egg),
                     'outstanding_egg' => $entry->outstanding_egg,
                     'total_egg_in_farm' => $entry->total_egg_in_farm,
                     'drugs' => $entry->drugs,
                     'reorder_feeds' => $entry->reorder_feeds !== null ? number_format($entry->reorder_feeds, 2) : null,
-                    'created_at' => $entry->created_at->format('Y-m-d'),
+                    'created_at' => ($entry->entry_date ?? $entry->created_at)->format('Y-m-d'),
+                    'entry_date' => ($entry->entry_date ?? $entry->created_at)->format('Y-m-d'),
                 ],
                 'total_egg_in_farm' => $entry->total_egg_in_farm,
             ], 201);
@@ -282,12 +264,13 @@ class DailyEntryController extends Controller
                 'current_birds' => $entry->current_birds,
                 'daily_egg_production' => $entry->daily_egg_production ?: '0 Cr 0PC',
                 'daily_sold_egg' => $entry->daily_sold_egg ?: '0 Cr 0PC',
-                'broken_egg' => $this->formatEggString($entry->broken_egg),
+                'broken_egg' => Eggs::format($entry->broken_egg),
                 'outstanding_egg' => $entry->outstanding_egg ?: '0 Cr 0PC',
                 'total_egg_in_farm' => $entry->total_egg_in_farm ?: '0 Cr 0PC',
                 'drugs' => $entry->drugs,
                 'reorder_feeds' => $entry->reorder_feeds !== null ? number_format($entry->reorder_feeds, 2) : null,
-                'created_at' => $entry->created_at->format('Y-m-d'),
+                'created_at' => ($entry->entry_date ?? $entry->created_at)->format('Y-m-d'),
+                            'entry_date' => ($entry->entry_date ?? $entry->created_at)->format('Y-m-d'),
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             Log::error('Daily entry not found: ' . $e->getMessage(), [
@@ -334,6 +317,13 @@ class DailyEntryController extends Controller
 
             $dailyEntry = DailyEntry::where('week_entry_id', $weekId)->findOrFail($id);
 
+            // Only enforce one-entry-per-flock-per-date when the date is being changed, so legacy
+            // rows whose backfilled date collides can still be edited without touching the date.
+            $dateRules = ['nullable', 'date', 'before_or_equal:today'];
+            if ($request->filled('entry_date') && $request->input('entry_date') !== optional($dailyEntry->entry_date)->format('Y-m-d')) {
+                $dateRules[] = Rule::unique('daily_entries', 'entry_date')->where('flock_id', $flock->id)->ignore($id);
+            }
+
             $validated = $request->validate([
                 'day_number' => 'required|integer|between:1,7|unique:daily_entries,day_number,' . $id . ',id,week_entry_id,' . $weekId,
                 'daily_feeds' => 'required|numeric|min:0',
@@ -346,6 +336,7 @@ class DailyEntryController extends Controller
                 'daily_sold_egg_pieces' => 'required|integer|min:0|max:29',
                 'broken_egg_crates' => 'required|integer|min:0',
                 'broken_egg_pieces' => 'required|integer|min:0|max:29',
+                'entry_date' => $dateRules,
                 'drugs' => 'nullable|string',
                 'reorder_feeds' => 'nullable|numeric|min:0',
             ]);
@@ -373,6 +364,8 @@ class DailyEntryController extends Controller
             DB::beginTransaction();
 
             $dailyEntry->update([
+                'flock_id' => $flock->id,
+                'entry_date' => $validated['entry_date'] ?? ($dailyEntry->entry_date ?? now())->format('Y-m-d'),
                 'day_number' => $validated['day_number'],
                 'daily_feeds' => $validated['daily_feeds'],
                 'available_feeds' => $validated['available_feeds'],
@@ -381,15 +374,18 @@ class DailyEntryController extends Controller
                 'sick_bay' => $validated['sick_bay'],
                 'total_mortality' => $totalMortality,
                 'current_birds' => max(0, $flock->initial_bird_count - $totalMortality),
-                'daily_egg_production' => $this->formatEggString($dailyEggProduction),
-                'daily_sold_egg' => $this->formatEggString($dailySoldEgg),
-                'total_sold_egg' => $this->formatEggString(
-                    $weekEntry->dailyEntries()->where('id', '!=', $id)->get()->sum(fn($entry) => $this->parseEggString($entry->daily_sold_egg)) + $dailySoldEgg
+                'eggs_produced' => $dailyEggProduction,
+                'eggs_sold' => $dailySoldEgg,
+                'eggs_outstanding' => $outstandingEgg,
+                'daily_egg_production' => Eggs::format($dailyEggProduction),
+                'daily_sold_egg' => Eggs::format($dailySoldEgg),
+                'total_sold_egg' => Eggs::format(
+                    (int) $weekEntry->dailyEntries()->where('id', '!=', $id)->sum('eggs_sold') + $dailySoldEgg
                 ),
                 'broken_egg' => $brokenEgg,
-                'outstanding_egg' => $this->formatEggString($outstandingEgg),
-                'total_egg_in_farm' => $this->formatEggString(
-                    $weekEntry->dailyEntries()->where('id', '!=', $id)->get()->sum(fn($entry) => $this->parseEggString($entry->outstanding_egg)) + $outstandingEgg
+                'outstanding_egg' => Eggs::format($outstandingEgg),
+                'total_egg_in_farm' => Eggs::format(
+                    (int) $weekEntry->dailyEntries()->where('id', '!=', $id)->sum('eggs_outstanding') + $outstandingEgg
                 ),
                 'drugs' => $validated['drugs'],
                 'reorder_feeds' => $validated['reorder_feeds'],
@@ -412,12 +408,13 @@ class DailyEntryController extends Controller
                     'current_birds' => $dailyEntry->current_birds,
                     'daily_egg_production' => $dailyEntry->daily_egg_production,
                     'daily_sold_egg' => $dailyEntry->daily_sold_egg,
-                    'broken_egg' => $this->formatEggString($dailyEntry->broken_egg),
+                    'broken_egg' => Eggs::format($dailyEntry->broken_egg),
                     'outstanding_egg' => $dailyEntry->outstanding_egg,
                     'total_egg_in_farm' => $dailyEntry->total_egg_in_farm,
                     'drugs' => $dailyEntry->drugs,
                     'reorder_feeds' => $dailyEntry->reorder_feeds !== null ? number_format($dailyEntry->reorder_feeds, 2) : null,
-                    'created_at' => $dailyEntry->created_at->format('Y-m-d'),
+                    'created_at' => ($dailyEntry->entry_date ?? $dailyEntry->created_at)->format('Y-m-d'),
+                    'entry_date' => ($dailyEntry->entry_date ?? $dailyEntry->created_at)->format('Y-m-d'),
                 ],
                 'total_egg_in_farm' => $dailyEntry->total_egg_in_farm,
             ], 200);

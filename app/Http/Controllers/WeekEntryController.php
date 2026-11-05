@@ -50,13 +50,13 @@ class WeekEntryController extends Controller
             $allWeeksStats = [
                 'total_daily_entries' => $flock->weekEntries()->withCount('dailyEntries')->get()->sum('daily_entries_count'),
                 'total_egg_production' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
-                    ->sum('daily_entries.daily_egg_production'),
+                    ->sum('daily_entries.eggs_produced'),
                 'total_mortality' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
                     ->sum('daily_entries.daily_mortality'),
                 'total_feeds_consumed' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
                     ->sum('daily_entries.daily_feeds'),
                 'avg_daily_egg_production' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
-                    ->avg('daily_entries.daily_egg_production') ?? 0,
+                    ->avg('daily_entries.eggs_produced') ?? 0,
                 'avg_daily_mortality' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
                     ->avg('daily_entries.daily_mortality') ?? 0,
                 'avg_daily_feeds' => $flock->weekEntries()->join('daily_entries', 'week_entries.id', '=', 'daily_entries.week_entry_id')
@@ -100,16 +100,16 @@ class WeekEntryController extends Controller
 
             $dailyChartData = [
                 'labels' => $dailyEntries->pluck('day_number')->map(fn($day) => "Day $day")->toArray(),
-                'daily_egg_production' => $dailyEntries->pluck('daily_egg_production')->toArray(),
+                'daily_egg_production' => $dailyEntries->pluck('eggs_produced')->toArray(),
                 'daily_mortality' => $dailyEntries->pluck('daily_mortality')->toArray(),
                 'daily_feeds' => $dailyEntries->pluck('daily_feeds')->toArray(),
             ];
 
             $weekStats = [
-                'total_egg_production' => $dailyEntries->sum('daily_egg_production'),
+                'total_egg_production' => $dailyEntries->sum('eggs_produced'),
                 'total_mortality' => $dailyEntries->sum('daily_mortality'),
                 'total_feeds_consumed' => $dailyEntries->sum('daily_feeds'),
-                'avg_daily_egg_production' => $dailyEntries->avg('daily_egg_production') ?? 0,
+                'avg_daily_egg_production' => $dailyEntries->avg('eggs_produced') ?? 0,
                 'avg_daily_mortality' => $dailyEntries->avg('daily_mortality') ?? 0,
                 'avg_daily_feeds' => $dailyEntries->avg('daily_feeds') ?? 0,
             ];
