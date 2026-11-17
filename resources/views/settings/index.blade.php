@@ -57,6 +57,20 @@
                                 @endforeach
 
                                 <hr>
+                                <h6 class="mb-1">Business details</h6>
+                                <p class="text-muted small">Printed at the top of invoices and receipts.</p>
+                                @foreach ($textFields as $key => $meta)
+                                    <div class="row mb-3 align-items-center">
+                                        <label for="{{ $key }}" class="col-sm-4 col-form-label">{{ $meta['label'] }}</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" maxlength="255" class="form-control @error($key) is-invalid @enderror"
+                                                   id="{{ $key }}" name="{{ $key }}" value="{{ old($key, $texts[$key]) }}">
+                                            @error($key)<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                                <hr>
                                 <div class="form-check form-switch mb-1">
                                     <input type="hidden" name="use_recorded_expenses" value="0">
                                     <input class="form-check-input" type="checkbox" role="switch" id="use_recorded_expenses"

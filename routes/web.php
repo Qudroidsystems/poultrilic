@@ -7,6 +7,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\FlockController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\FeedController;
+use App\Http\Controllers\SaleController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\SalePaymentController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\BiodataController;
 use App\Http\Controllers\OverviewController;
@@ -46,6 +49,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('flocks', FlockController::class)->except(['create', 'show', 'edit']);
 
     Route::resource('expenses', ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('customers', CustomerController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('sales', SaleController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+    Route::get('sales/{sale}/invoice', [SaleController::class, 'invoice'])->name('sales.invoice');
+    Route::get('sales/{sale}/payments/{payment}/receipt', [SaleController::class, 'receipt'])->name('sales.receipt');
+    Route::post('sales/{sale}/payments', [SalePaymentController::class, 'store'])->name('sales.payments.store');
+    Route::delete('sales/{sale}/payments/{payment}', [SalePaymentController::class, 'destroy'])->name('sales.payments.destroy');
     Route::resource('feed', FeedController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');

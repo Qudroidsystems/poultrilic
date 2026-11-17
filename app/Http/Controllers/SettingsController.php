@@ -20,6 +20,8 @@ class SettingsController extends Controller
             'settings' => FarmSettings::all(),
             'fields' => FarmSettings::FIELDS,
             'defaults' => FarmSettings::DEFAULTS,
+            'textFields' => FarmSettings::TEXT_FIELDS,
+            'texts' => collect(FarmSettings::TEXT_FIELDS)->mapWithKeys(fn ($m, $k) => [$k => FarmSettings::text($k)])->all(),
         ]);
     }
 
@@ -30,9 +32,15 @@ class SettingsController extends Controller
             $rules[$key] = 'required|numeric|min:0|max:1000000000';
         }
         $rules['use_recorded_expenses'] = 'nullable|boolean';
+        foreach (array_keys(FarmSettings::TEXT_FIELDS) as $key) {
+            $rules[$key] = 'nullable|string|max:255';
+        }
 
         $validated = $request->validate($rules);
         $validated['use_recorded_expenses'] = $request->boolean('use_recorded_expenses') ? 1 : 0;
+        foreach (array_keys(FarmSettings::TEXT_FIELDS) as $key) {
+            $validated[$key] = trim((string) ($validated[$key] ?? ''));
+        }
 
         FarmSettings::set($validated);
 

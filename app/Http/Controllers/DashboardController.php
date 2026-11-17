@@ -294,6 +294,9 @@ class DashboardController extends Controller
         $totalLifetimeDays = $this->calculateLifetimeDays($flockId);
 
         $feedStock = app(\App\Services\FeedStockService::class)->snapshot();
+        $receivables = \Illuminate\Support\Facades\Schema::hasTable('sales')
+            ? \App\Models\Sale::receivables()
+            : ['outstanding' => 0.0, 'invoices' => 0];
 
         // Prepare data for view
         return view('dashboards.dashboard', compact(
@@ -321,6 +324,7 @@ class DashboardController extends Controller
             'dateRangeOtherExpenses',
             'usingRecordedExpenses',
             'feedStock',
+            'receivables',
             'lifetimeNetIncome',
             'lifetimeEggMortalityRate',
             'totalLifetimeDays', // Add this line

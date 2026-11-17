@@ -55,7 +55,7 @@
          @include('layouts.pages-assets.css.daily-list-css')
     @endif
 
-    @if (Route::is('expenses.*', 'settings.*', 'feed.*'))
+    @if (Route::is('expenses.*', 'settings.*', 'feed.*', 'sales.*', 'customers.*'))
          @include('layouts.pages-assets.css.finance-css')
     @endif
 
@@ -198,6 +198,28 @@
                                 </div>
                             </li>
                         @endcan
+                        @canany(['View sale', 'View customer'])
+                            <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">Sales</span></li>
+                            <li class="nav-item">
+                                <a class="nav-link menu-link collapsed" href="#sidebarsales" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarsales">
+                                    <i class="ph-receipt"></i> <span data-key="t-sales">Sales</span>
+                                </a>
+                                <div class="collapse menu-dropdown" id="sidebarsales">
+                                    <ul class="nav nav-sm flex-column">
+                                        @can('View sale')
+                                            <li class="nav-item">
+                                                <a href="{{ route('sales.index') }}" class="nav-link" data-key="t-invoices"> Invoices </a>
+                                            </li>
+                                        @endcan
+                                        @can('View customer')
+                                            <li class="nav-item">
+                                                <a href="{{ route('customers.index') }}" class="nav-link" data-key="t-customers"> Customers </a>
+                                            </li>
+                                        @endcan
+                                    </ul>
+                                </div>
+                            </li>
+                        @endcanany
                         @canany(['View expense', 'View feed', 'View settings'])
                             <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-pages">Finance</span></li>
                             <li class="nav-item">
@@ -1491,7 +1513,7 @@
              @include('layouts.pages-assets.js.daily-list-js')
       @endif
 
-      @if (Route::is('expenses.*', 'settings.*', 'feed.*'))
+      @if (Route::is('expenses.*', 'settings.*', 'feed.*', 'sales.*', 'customers.*'))
              @include('layouts.pages-assets.js.finance-js')
       @endif
 

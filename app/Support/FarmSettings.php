@@ -38,6 +38,14 @@ class FarmSettings
         'daily_labor_cost'      => ['label' => 'Labor cost', 'unit' => '₦ per day'],
     ];
 
+    /** Business details printed on invoices and receipts (text, not numbers). */
+    public const TEXT_FIELDS = [
+        'farm_name'      => ['label' => 'Business name', 'default' => ''],
+        'farm_address'   => ['label' => 'Address', 'default' => ''],
+        'farm_phone'     => ['label' => 'Phone', 'default' => ''],
+        'invoice_footer' => ['label' => 'Invoice footer note', 'default' => 'Thank you for your patronage.'],
+    ];
+
     private static ?array $memo = null;
     private static ?int $memoApp = null;   // app instance the memo belongs to
 
@@ -48,11 +56,7 @@ class FarmSettings
             return self::$memo;
         }
 
-        try {
-            $stored = Cache::rememberForever(self::CACHE_KEY, fn () => Setting::pluck('value', 'key')->all());
-        } catch (\Throwable $e) {
-            $stored = []; // table missing (pre-migration) or cache unavailable
-        }
+        $stored = self::stored();
 
         $merged = self::DEFAULTS;
         foreach ($stored as $key => $value) {
@@ -66,6 +70,27 @@ class FarmSettings
         return self::$memo = $merged;
     }
 
+    /** Raw stored key => value pairs (empty if the settings table does not exist yet). */
+    private static function stored(): array
+    {
+        try {
+            return Cache::rememberForever(self::CACHE_KEY, fn () => Setting::pluck('value', 'key')->all());
+        } catch (\Throwable $e) {
+            return []; // table missing (pre-migration) or cache unavailable
+        }
+    }
+
+    /** A business-detail text value; the business name falls back to the app name. */
+    public static function text(string $key): string
+    {
+        $value = trim((string) (self::stored()[$key] ?? ''));
+        if ($value !== '') {
+            return $value;
+        }
+
+        return $key === 'farm_name' ? (string) config('app.name') : (self::TEXT_FIELDS[$key]['default'] ?? '');
+    }
+
     public static function get(string $key): float|int
     {
         return self::all()[$key] ?? self::DEFAULTS[$key];
@@ -77,7 +102,7 @@ class FarmSettings
     public static function set(array $values): void
     {
         foreach ($values as $key => $value) {
-            if (! array_key_exists($key, self::DEFAULTS)) {
+            if (! array_key_exists($key, self::DEFAULTS) && ! array_key_exists($key, self::TEXT_FIELDS)) {
                 continue;
             }
             Setting::updateOrCreate(['key' => $key], ['value' => (string) $value]);

@@ -55,6 +55,19 @@ class PermissionTableSeeder extends Seeder
            'Update expense',
            'Delete expense',
 
+           'View customer',
+           'Create customer',
+           'Update customer',
+           'Delete customer',
+
+           'View sale',
+           'Create sale',
+           'Update sale',
+           'Delete sale',
+
+           'Create payment',
+           'Delete payment',
+
            'View feed',
            'Create feed',
            'Update feed',
@@ -94,6 +107,12 @@ class PermissionTableSeeder extends Seeder
 
                 if($word == "expense")
                 Permission::Create(['name' => $permission,'title'=>"Expense Management"]);
+
+                if($word == "customer")
+                Permission::Create(['name' => $permission,'title'=>"Customer Management"]);
+
+                if($word == "sale" || $word == "payment")
+                Permission::Create(['name' => $permission,'title'=>"Sales Management"]);
 
                 if($word == "feed")
                 Permission::Create(['name' => $permission,'title'=>"Feed Management"]);

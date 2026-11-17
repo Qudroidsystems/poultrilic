@@ -131,6 +131,16 @@
             </div>
             <!-- End page title -->
 
+            @if (($receivables['outstanding'] ?? 0) > 0)
+                <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+                    <span><strong>Customers owe ₦{{ number_format($receivables['outstanding'], 2) }}</strong>
+                        across {{ $receivables['invoices'] }} {{ \Illuminate\Support\Str::plural('invoice', $receivables['invoices']) }}.</span>
+                    @can('View sale')
+                        <a href="{{ route('sales.index', ['status' => 'open', 'from' => '2000-01-01']) }}" class="btn btn-sm btn-warning">View who owes</a>
+                    @endcan
+                </div>
+            @endif
+
             @if (($feedStock['tracking'] ?? false) && $feedStock['needs_reorder'])
                 <div class="alert alert-danger d-flex justify-content-between align-items-center" role="alert">
                     <span>
