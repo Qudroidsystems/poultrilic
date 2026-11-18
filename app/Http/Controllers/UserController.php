@@ -25,7 +25,7 @@ class UserController extends Controller
     {
          $this->middleware('permission:View user|Create user|Update user|Delete user', ['only' => ['index','store']]);
          $this->middleware('permission:Create user', ['only' => ['create','store']]);
-         $this->middleware('permission:Update user', ['only' => ['edit','update']]);
+         $this->middleware('permission:Update user', ['only' => ['edit','update','sendResetLink']]);
          $this->middleware('permission:Delete user', ['only' => ['destroy']]);
     }
 
@@ -105,7 +105,7 @@ class UserController extends Controller
         try {
             $validated = $request->validate([
                 'name'     => 'required|string|max:255',
-                'email'    => 'required|email:rfc,dns|unique:users,email',
+                'email'    => 'required|email:rfc|unique:users,email',
                 'password' => 'required|string|min:8|confirmed',
                 'roles'    => 'required|array|min:1',
                 'roles.*'  => 'exists:roles,name',
@@ -332,5 +332,37 @@ class UserController extends Controller
                 'message' => 'Failed to delete user: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Account recovery by an administrator: make a one-time reset link for the user.
+     * It is emailed when mail is set up, and always returned so the admin can pass it
+     * on another way (WhatsApp, SMS) when the person can't get to their email.
+     */
+    public function sendResetLink(User $user): JsonResponse
+    {
+        $token = \Illuminate\Support\Facades\Password::broker()->createToken($user);
+        $link  = route('password.reset', ['token' => $token, 'email' => $user->email]);
+
+        $mailer  = config('mail.default');
+        $emailed = false;
+        if (! in_array($mailer, ['log', 'array'], true)) {
+            try {
+                $user->notify(new \App\Notifications\ResetPasswordNotification($token, auth()->user()->name));
+                $emailed = true;
+            } catch (\Throwable $e) {
+                Log::warning('Reset link email failed: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'emailed' => $emailed,
+            'link'    => $link,
+            'expires' => config('auth.passwords.users.expire', 60),
+            'message' => $emailed
+                ? "A reset link was emailed to {$user->email}."
+                : 'Email is not set up on this server, so nothing was sent. Copy the link and send it to the person yourself.',
+        ]);
     }
 }

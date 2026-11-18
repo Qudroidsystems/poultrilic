@@ -126,3 +126,32 @@ unit and month, and appears in the performance report and the report designer.
   group by day / week / month / flock-unit / whole period, period (relative periods end on the latest record),
   chart type, flocks/units, "one line per flock" and "pin to overview". Each report opens with chart + table and
   exports to Excel, PDF and CSV. *Add starter reports* creates six useful ones in one click.
+
+## Signing in, sign-up and account recovery
+
+- **Sign in** with an email address or a username. After 5 wrong tries the form locks for a minute.
+  Each person lands on the first page their role can open (Sales Officers go to Sales, for example).
+- **Sign up** (`/register`): new accounts get no role and see a "waiting for access" page until an
+  administrator gives them a role under Users & Privileges. Passwords need 8+ characters with upper-case,
+  lower-case and a number. Turn sign-up off with `ALLOW_REGISTRATION=false` in `.env`.
+- **Forgot password** (`/password/reset`): the person enters their email and gets a one-time link
+  (valid 60 minutes). The page gives the same answer whether or not the email has an account.
+- **Admin recovery**: in Users, the key button creates a one-time reset link for that person. It is
+  emailed when mail is set up, and always shown with a Copy button so it can be sent by WhatsApp or SMS.
+  Their old password keeps working until they choose a new one.
+- **Email setup** — reset and verification emails need real mail settings in `.env`; with
+  `MAIL_MAILER=log` (the default) nothing is delivered and the forgot-password page says so. Example (Gmail,
+  with an app password):
+
+  ```
+  MAIL_MAILER=smtp
+  MAIL_HOST=smtp.gmail.com
+  MAIL_PORT=587
+  MAIL_USERNAME=yourfarm@gmail.com
+  MAIL_PASSWORD="your-16-letter-app-password"
+  MAIL_SCHEME=null
+  MAIL_FROM_ADDRESS=yourfarm@gmail.com
+  MAIL_FROM_NAME="Your Farm Name"
+  APP_URL=http://your-server-address   # links in emails use this
+  ```
+  Then run `php artisan config:clear`.

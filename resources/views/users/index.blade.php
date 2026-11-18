@@ -522,6 +522,11 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
                                     data-roles="{{ $user->getRoleNames()->implode(',') }}">
                                     <i class="ph-pencil"></i>
                                 </button>
+                                <button type="button" class="u-action-btn key reset-link-btn" title="Send password reset link"
+                                    data-url="{{ route('users.reset-link', $user->id) }}"
+                                    data-name="{{ $user->name }}" data-email="{{ $user->email }}">
+                                    <i class="ph-key"></i>
+                                </button>
                                 @endcan
                                 @can('Delete user')
                                 <button type="button" class="u-action-btn del remove-item-btn" title="Delete"
@@ -817,6 +822,32 @@ document.addEventListener('DOMContentLoaded', function () {
         const removeBtn = document.getElementById('remove-actions');
         if (removeBtn) removeBtn.classList.toggle('d-none', count === 0);
     }
+
+    // Account recovery: one-time reset link, emailed when mail is set up and always shown to copy
+    document.addEventListener('click', async e => {
+        const btn = e.target.closest('.reset-link-btn');
+        if (!btn) return;
+        const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const ok = await AppleAlert.confirm('Send a password reset link?',
+            `${esc(btn.dataset.name)} (${esc(btn.dataset.email)}) gets a one-time link to choose a new password. Their current password keeps working until they do.`,
+            { confirmText: 'Create link', icon: 'question' });
+        if (!(ok === true || ok?.isConfirmed)) return;
+        try {
+            const { data } = await axios.post(btn.dataset.url, { _token: CSRF });
+            const html = `<p style="margin-bottom:10px">${esc(data.message)}</p>
+                <div style="display:flex;gap:6px"><input id="pl-reset-link" readonly value="${esc(data.link)}" style="flex:1;min-width:0;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px">
+                <button type="button" id="pl-copy-link" style="border:0;border-radius:8px;padding:0 14px;background:#2563eb;color:#fff;font-weight:600">Copy</button></div>
+                <p style="margin:8px 0 0;font-size:12px;color:#64748b">Works once, for ${data.expires} minutes. Only share it with this person.</p>`;
+            setTimeout(() => document.getElementById('pl-copy-link')?.addEventListener('click', () => {
+                const input = document.getElementById('pl-reset-link');
+                (navigator.clipboard ? navigator.clipboard.writeText(input.value) : Promise.reject()).catch(() => { input.select(); document.execCommand('copy'); });
+                AppleAlert.copied('Link copied');
+            }), 50);
+            AppleAlert.info(data.emailed ? 'Reset link sent' : 'Reset link ready', html);
+        } catch (err) {
+            AppleAlert.failed(err.response?.data?.message || 'Could not create the link');
+        }
+    });
 
     // Delete single
     document.addEventListener('click', e => {

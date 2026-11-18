@@ -27,8 +27,9 @@ use App\Http\Controllers\ReportController;
 Route::get('/', [WebsiteHomeController::class, 'index'])->name('websiteHome');
 
 
-Auth::routes();
-Route::get('/home', [HomeController::class, 'index'])->name('home');
+Auth::routes(['register' => config('poultrilic.allow_registration', true), 'verify' => true]);
+Route::get('/home', fn () => redirect(\App\Support\Landing::for(auth()->user())))->middleware('auth')->name('home');
+Route::view('/welcome', 'auth.pending')->middleware('auth')->name('account.pending');
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -38,6 +39,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('roles/bulk-remove-users', [RoleController::class, 'bulkRemoveUsers'])->name('roles.bulkremoveusers');
     Route::get('roles/{role}/users', [RoleController::class, 'getRoleUsers'])->name('roles.users');
     Route::resource('roles', RoleController::class);
+    Route::post('users/{user}/reset-link', [UserController::class, 'sendResetLink'])->name('users.reset-link');
     Route::resource('users', UserController::class);
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::get('/users/{user}/overview', [UserController::class, 'overview'])->name('users.overview');

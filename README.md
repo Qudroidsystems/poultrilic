@@ -64,6 +64,10 @@ the school parts (students, staff records, classes, parents) taken out.
 - Profile settings: anyone can edit their own profile, photo, email and password; editing
   someone else needs the "Update user" permission. Passwords are stored hashed only.
 
+Sign-in, sign-up, forgot / reset password and email verification use csskabba's sign-in
+design (`layouts/auth.blade.php`). See docs/GUIDE.md, "Signing in, sign-up and account recovery",
+for the reset flow, admin recovery links and email setup.
+
 ## Documentation
 
 - `docs/GUIDE.md` – how to use the platform and exactly how every figure is worked out

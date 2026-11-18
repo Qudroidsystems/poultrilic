@@ -393,3 +393,54 @@ it('updates a user name and roles from the users list, and guards profile change
     expect(\Illuminate\Support\Facades\Hash::check('newpass123', $plain->fresh()->password))->toBeTrue()
         ->and($plain->fresh()->wpassword)->toBeNull();
 });
+
+it('shows the csskabba-style sign-in pages and signs people in by email or username', function () {
+    $this->get('/login')->assertOk()->assertSee('apple-input', false)->assertSee('Forgot password?')->assertDontSee('Vite');
+    $this->get('/register')->assertOk()->assertSee('password_confirmation', false);
+    $this->get('/password/reset')->assertOk()->assertSee('Send Reset Link');
+
+    $u = plUser(['dashboard']);
+    $u->forceFill(['username' => 'gnakato', 'password' => \Illuminate\Support\Facades\Hash::make('Secret123')])->save();
+    $this->post('/login', ['email' => 'gnakato', 'password' => 'Secret123'])->assertRedirect(route('dashboard'));
+    $this->post('/logout');
+
+    // a role without the dashboard permission lands on the first page it can open
+    $sales = plUser(['View sale']);
+    $sales->forceFill(['password' => \Illuminate\Support\Facades\Hash::make('Secret123')])->save();
+    $this->post('/login', ['email' => $sales->email, 'password' => 'Secret123'])->assertRedirect(route('sales.index'));
+});
+
+it('registers a new person without a role and shows the waiting page', function () {
+    $this->post('/register', ['name' => 'Peter Okello', 'email' => 'peter@farm.test', 'password' => 'Weak', 'password_confirmation' => 'Weak'])
+        ->assertSessionHasErrors('password');
+    $this->post('/register', ['name' => 'Peter Okello', 'email' => 'peter@farm.test', 'password' => 'Strong123', 'password_confirmation' => 'Strong123'])
+        ->assertRedirect(route('account.pending'));
+    $u = User::where('email', 'peter@farm.test')->first();
+    expect($u->first_name)->toBe('Peter')->and($u->last_name)->toBe('Okello')->and($u->roles)->toBeEmpty();
+    $this->get(route('account.pending'))->assertOk()->assertSee('Hi Peter');
+});
+
+it('resets a forgotten password by email link, and lets an admin create a recovery link', function () {
+    \Illuminate\Support\Facades\Notification::fake();
+    $u = plUser(['dashboard']);
+
+    $this->post('/password/email', ['email' => 'nobody@farm.test'])->assertSessionHas('status');   // same answer, no account leak
+    $this->post('/password/email', ['email' => $u->email])->assertSessionHas('status');
+
+    $token = null;
+    \Illuminate\Support\Facades\Notification::assertSentTo($u, \App\Notifications\ResetPasswordNotification::class, function ($n) use (&$token) {
+        $token = $n->token;
+        return true;
+    });
+    $this->get(route('password.reset', ['token' => $token, 'email' => $u->email]))->assertOk()->assertSee($token);
+    $this->post('/password/reset', ['token' => $token, 'email' => $u->email, 'password' => 'NewPass123', 'password_confirmation' => 'NewPass123'])
+        ->assertRedirect(route('dashboard'));
+    expect(\Illuminate\Support\Facades\Hash::check('NewPass123', $u->fresh()->password))->toBeTrue();
+    $this->post('/logout');
+
+    // admin recovery link (mail is "array" in tests, so it is returned to copy, not emailed)
+    $admin = plUser(['View user', 'Update user']);
+    $this->actingAs($admin)->postJson(route('users.reset-link', $u->id))
+        ->assertOk()->assertJsonPath('emailed', false)->assertJson(fn ($j) => $j->where('link', fn ($l) => str_contains($l, '/password/reset/'))->etc());
+    $this->actingAs(plUser(['dashboard']))->postJson(route('users.reset-link', $u->id))->assertForbidden();
+});

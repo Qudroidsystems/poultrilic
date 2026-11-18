@@ -1,154 +1,97 @@
-<!doctype html>
-<html lang="en" data-layout="vertical" data-sidebar="dark" data-sidebar-size="lg" data-preloader="disable" data-theme="default" data-topbar="light" data-bs-theme="light">
-<head>
-    <meta charset="utf-8">
-    <title>Sign In | Poultritics Portal</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="Poultry Management Portal" name="description">
-    <meta content="Your Company" name="author">
+@extends('layouts.auth')
+@section('title', 'Sign In')
 
-    <!-- App favicon -->
-    <link rel="shortcut icon" href="{{ asset('theme/layouts/assets/images/favicon.ico') }}">
+@section('form')
+    @php $farmName = \App\Support\FarmSettings::text('farm_name'); @endphp
+    <div class="text-center mt-2">
+        <h5 class="fs-2xl fw-semibold" style="animation: fadeInScale 0.5s ease;">{{ $farmName ?: 'Farm' }} Portal</h5>
+        <p class="text-muted">Sign in to continue</p>
+    </div>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com/">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <div class="p-2 mt-3">
+        <form method="POST" action="{{ route('login') }}" id="loginForm" data-loading-text="Signing In...">
+            @csrf
 
-    <!-- Layout config Js -->
-    <script src="{{ asset('theme/layouts/assets/js/layout.js') }}"></script>
-
-    <!-- Bootstrap Css -->
-    <link href="{{ asset('theme/layouts/assets/css/bootstrap.min.css') }}" rel="stylesheet" type="text/css">
-    <!-- Icons Css -->
-    <link href="{{ asset('theme/layouts/assets/css/icons.min.css') }}" rel="stylesheet" type="text/css">
-    <!-- App Css-->
-    <link href="{{ asset('theme/layouts/assets/css/app.min.css') }}" rel="stylesheet" type="text/css">
-    <!-- custom Css-->
-    <link href="{{ asset('theme/layouts/assets/css/custom.min.css') }}" rel="stylesheet" type="text/css">
-
-    <style>
-        .auth-logo {
-            max-width: 180px;
-            height: auto;
-        }
-
-        @media (max-width: 576px) {
-            .auth-logo {
-                max-width: 150px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<section class="auth-page-wrapper position-relative d-flex align-items-center justify-content-center min-vh-100 bg-light">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-11">
-                <div class="card mb-0 border-0 shadow">
-                    <div class="row g-0 align-items-center">
-                        <div class="col-xxl-6 mx-auto">
-                            <div class="card mb-0 border-0 shadow-none">
-                                <div class="card-body p-4 p-sm-5 m-lg-4">
-                                    <!-- Logo & Title -->
-                                    <div class="text-center mb-5">
-                                        <img src="{{ asset('website/assets/images/logo/prime-farm-logo2.jpeg') }}" 
-                                             alt="Poultritics Portal Logo" 
-                                             class="auth-logo mb-4">
-
-                                        <h4 class="fs-2xl fw-bold">Prime Farm Portal</h4>
-                                        <p class="text-muted mt-2">Sign in to continue to your dashboard</p>
-                                    </div>
-
-                                    <!-- Login Form -->
-                                    <div class="p-2">
-                                        <form method="POST" action="{{ route('login') }}">
-                                            @csrf
-
-                                            <div class="mb-3">
-                                                <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-                                                <input type="email" 
-                                                       class="form-control @error('email') is-invalid @enderror" 
-                                                       id="email" 
-                                                       name="email" 
-                                                       placeholder="Enter your email" 
-                                                       value="{{ old('email') }}" 
-                                                       required 
-                                                       autocomplete="email" 
-                                                       autofocus>
-                                                @error('email')
-                                                    <span class="invalid-feedback" role="alert">
-                                                        <strong>{{ $message }}</strong>
-                                                    </span>
-                                                @enderror
-                                            </div>
-
-                                            <div class="mb-3">
-                                                @if (Route::has('password.request'))
-                                                    <div class="float-end">
-                                                        <a href="{{ route('password.request') }}" class="text-muted small">Forgot password?</a>
-                                                    </div>
-                                                @endif
-                                                <label class="form-label" for="password">Password <span class="text-danger">*</span></label>
-                                                <div class="position-relative auth-pass-inputgroup mb-3">
-                                                    <input type="password" 
-                                                           class="form-control pe-5 password-input @error('password') is-invalid @enderror" 
-                                                           name="password" 
-                                                           placeholder="Enter password" 
-                                                           id="password" 
-                                                           required 
-                                                           autocomplete="current-password">
-                                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" 
-                                                            type="button" 
-                                                            id="password-addon">
-                                                        <i class="ri-eye-fill align-middle"></i>
-                                                    </button>
-                                                </div>
-                                                @error('password')
-                                                    <span class="invalid-feedback" role="alert">
-                                                        <strong>{{ $message }}</strong>
-                                                    </span>
-                                                @enderror
-                                            </div>
-
-                                            <div class="form-check mb-4">
-                                                <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="remember">Remember me</label>
-                                            </div>
-
-                                            <div class="mt-4">
-                                                <button class="btn btn-primary w-100" type="submit">Sign In</button>
-                                            </div>
-                                        </form>
-
-                                        <div class="text-center mt-5">
-                                            <p class="mb-0 text-muted">
-                                                Don't have an account? 
-                                                <a href="{{ route('register') }}" class="fw-semibold text-primary text-decoration-underline"> Sign Up</a>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div><!-- end card body -->
-                            </div><!-- end card -->
+            @if (session('session_expired') || session('error') || request()->boolean('expired'))
+                <div id="sessionExpiredAlert" class="alert alert-warning alert-dismissible fade show mb-4" role="alert" style="border-left: 4px solid #f59e0b;">
+                    <div class="d-flex align-items-center">
+                        <i class="ri-alert-line me-2" style="font-size: 18px; color: #d97706;"></i>
+                        <div>
+                            <strong style="color: #92400e;">{{ session('error') ? 'Please sign in again' : 'Session Expired' }}</strong>
+                            <p class="mb-0 small" style="color: #78350f;">{{ session('error') ?? 'Your session has expired. Please login again.' }}</p>
                         </div>
-                        <!--end col-->
                     </div>
-                    <!--end row-->
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="border-left: 4px solid #ef4444;">
+                    <div class="d-flex align-items-center">
+                        <i class="ri-error-warning-line me-2" style="font-size: 18px;"></i>
+                        <div>
+                            <strong>We couldn't sign you in</strong>
+                            <ul class="mb-0 mt-1 ps-3 small">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            <div class="mb-4">
+                <label for="email" class="form-label">Email or username <span class="text-danger">*</span></label>
+                <div class="position-relative">
+                    <input type="text" class="form-control apple-input @error('email') is-invalid @enderror"
+                           id="email" name="email" placeholder="you@farm.com" value="{{ old('email') }}"
+                           required autocomplete="username" autofocus>
                 </div>
             </div>
-            <!--end col-->
-        </div>
-        <!--end row-->
+
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="form-label" for="password">Password <span class="text-danger">*</span></label>
+                    @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}" class="small text-muted text-decoration-none">Forgot password?</a>
+                    @endif
+                </div>
+                <div class="position-relative auth-pass-inputgroup">
+                    <input type="password" id="password" class="form-control apple-input pe-5 @error('password') is-invalid @enderror"
+                           name="password" autocomplete="current-password" placeholder="Enter your password" required>
+                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" id="password-addon" aria-label="Show password">
+                        <i class="ri-eye-fill align-middle"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-check mb-4">
+                <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                <label class="form-check-label" for="remember">Remember me</label>
+            </div>
+
+            <div class="mt-4">
+                <button class="btn btn-primary w-100 apple-button" type="submit" id="loginButton">
+                    <span>Sign In</span>
+                </button>
+            </div>
+        </form>
+
+        @if (Route::has('register'))
+            <div class="text-center mt-4">
+                <p class="mb-0 text-muted small">Don't have an account? <a href="{{ route('register') }}" class="fw-semibold text-primary text-decoration-none">Sign Up</a></p>
+            </div>
+        @endif
     </div>
-    <!--end container-->
-</section>
+@endsection
 
-<!-- JAVASCRIPT -->
-<script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
-<script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
-<script src="{{ asset('theme/layouts/assets/js/pages/password-addon.init.js') }}"></script>
-
-</body>
-</html>
+@push('auth-toasts')
+    @if ($errors->has('email') || $errors->has('password'))
+        showToast('Login Failed', {{ \Illuminate\Support\Js::from($errors->first('email') ?: $errors->first('password')) }}, 'error');
+    @endif
+    @if (session('session_expired') || request()->boolean('expired'))
+        showToast('Session Expired', 'Your session has expired. Please login again.', 'warning');
+    @endif
+@endpush
