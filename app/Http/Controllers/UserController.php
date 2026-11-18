@@ -41,7 +41,7 @@ class UserController extends Controller
         $pagetitle = "User Management";
 
         // Fetch paginated users (10 per page to match JavaScript)
-        $data = User::latest()->paginate(10);
+        $data = User::with('roles')->latest()->get();   // the page filters, sorts and pages in the browser
         $roles = Role::pluck('name', 'name')->toArray();
         $role_permissions = Role::all(); // Simplified, as permissions aren't used in view
 
@@ -166,8 +166,9 @@ class UserController extends Controller
     {
         $pagetitle = "User Management";
         $user = User::with('roles')->findOrFail($id);
+        $userbio = \App\Models\BioModel::where('user_id', $user->id)->first();
 
-        return view('users.overview', compact('user','pagetitle'));
+        return view('users.overview', compact('user', 'pagetitle', 'userbio'));
     }
 
 
@@ -199,8 +200,16 @@ class UserController extends Controller
         try {
             $user = User::findOrFail($id);
 
+            // The users list sends a full name and roles; the profile pages send first/last name.
+            if ($request->filled('name') && ! $request->filled('first_name')) {
+                $parts = explode(' ', trim((string) $request->input('name')), 2);
+                $request->merge(['first_name' => $parts[0], 'last_name' => $parts[1] ?? '']);
+            }
+
             // Validation rules
             $validated = $request->validate([
+                'roles'            => 'sometimes|array',
+                'roles.*'          => 'exists:roles,name',
                 'first_name'       => 'required|string|max:255',
                 'last_name'        => 'nullable|string|max:255',
                 'email'            => 'required|email|unique:users,email,' . $id,
@@ -217,9 +226,9 @@ class UserController extends Controller
                 'last_name'    => $validated['last_name'] ?? '',
                 'email'        => $validated['email'],
                 'username'     => $validated['email'], // Keep username = email
-                'phone_number' => $validated['phone_number'] ?? null,
-                'gender'       => $validated['gender'] ?? null,
-                'date_of_birth'=> $validated['date_of_birth'] ?? null,
+                'phone_number' => $validated['phone_number'] ?? $user->phone_number,
+                'gender'       => $validated['gender'] ?? $user->gender,
+                'date_of_birth'=> $validated['date_of_birth'] ?? $user->date_of_birth,
             ];
 
             // Handle password update
@@ -242,11 +251,9 @@ class UserController extends Controller
             // Update user
             $user->update($input);
 
-            // Note: Roles are managed separately in your admin user list
-            // If you want to allow role changes here too, uncomment below:
-            // if ($request->has('roles')) {
-            //     $user->syncRoles($request->input('roles'));
-            // }
+            if ($request->has('roles') && auth()->user()?->can('Update user')) {
+                $user->syncRoles($validated['roles'] ?? []);
+            }
 
             // Reload roles for response
             $user->load('roles');

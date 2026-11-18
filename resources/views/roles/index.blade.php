@@ -4,347 +4,478 @@
 use Spatie\Permission\Models\Role;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Str;
 ?>
 
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+:root {
+    --rol-primary:  #0f172a;
+    --rol-accent:   #6366f1;
+    --rol-accent2:  #8b5cf6;
+    --rol-success:  #10b981;
+    --rol-warning:  #f59e0b;
+    --rol-danger:   #ef4444;
+    --rol-info:     #0ea5e9;
+    --rol-border:   #e2e8f0;
+    --rol-surface:  #ffffff;
+    --rol-surface2: #f8fafc;
+    --rol-muted:    #64748b;
+    --rol-radius:   14px;
+    --rol-shadow:   0 4px 20px rgba(15,23,42,.07);
+    --rol-font:     'Plus Jakarta Sans', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{font-family:var(--rol-font);}
+
+/* ── Animations ─────────────────────────────────── */
+@keyframes slideDown  { from{opacity:0;transform:translateY(-22px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp     { from{opacity:0;transform:translateY(14px)}  to{opacity:1;transform:translateY(0)} }
+@keyframes scaleIn    { from{opacity:0;transform:scale(.9)}         to{opacity:1;transform:scale(1)} }
+@keyframes pulse      { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+@keyframes shimmer    { from{background-position:-400px 0} to{background-position:400px 0} }
+
+/* ── Hero ────────────────────────────────────────── */
+.rol-hero {
+    background: linear-gradient(135deg,#0f172a 0%,#1e1b4b 45%,#312e81 100%);
+    border-radius: var(--rol-radius);
+    padding: 30px 36px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    animation: slideDown .5s cubic-bezier(.22,1,.36,1);
+}
+.rol-hero::before {
+    content:''; position:absolute; top:-80px; right:-80px;
+    width:260px; height:260px; background:rgba(99,102,241,.14);
+    border-radius:50%; animation:pulse 4s ease-in-out infinite;
+}
+.rol-hero::after {
+    content:''; position:absolute; bottom:-50px; left:32%;
+    width:160px; height:160px; background:rgba(139,92,246,.1);
+    border-radius:50%; animation:pulse 4s ease-in-out infinite 2s;
+}
+.rol-hero h1 { font-size:24px; font-weight:800; color:#fff; margin:0 0 6px; position:relative; z-index:1; letter-spacing:-.3px; }
+.rol-hero p  { font-size:13.5px; color:rgba(255,255,255,.65); margin:0; position:relative; z-index:1; }
+.rol-hero-actions { position:relative; z-index:1; margin-top:20px; }
+
+/* ── Buttons ─────────────────────────────────────── */
+.rol-btn-primary {
+    background:linear-gradient(135deg,var(--rol-accent),var(--rol-accent2));
+    color:#fff; border:none; border-radius:9px;
+    padding:9px 18px; font-size:13px; font-weight:600;
+    cursor:pointer; font-family:var(--rol-font);
+    display:inline-flex; align-items:center; gap:6px;
+    transition:transform .15s,box-shadow .15s;
+    box-shadow:0 3px 12px rgba(99,102,241,.3);
+    text-decoration:none;
+}
+.rol-btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(99,102,241,.4); color:#fff; }
+
+/* ── Role cards ──────────────────────────────────── */
+.rol-card {
+    background:var(--rol-surface);
+    border:1px solid var(--rol-border);
+    border-radius:var(--rol-radius);
+    overflow:hidden;
+    box-shadow:var(--rol-shadow);
+    transition:transform .2s, box-shadow .2s, border-color .2s;
+    animation:fadeUp .4s ease both;
+    display:flex; flex-direction:column;
+}
+.rol-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(15,23,42,.12); border-color:#c7d2fe; }
+.rol-card:nth-child(1){animation-delay:.05s}
+.rol-card:nth-child(2){animation-delay:.10s}
+.rol-card:nth-child(3){animation-delay:.15s}
+.rol-card:nth-child(4){animation-delay:.20s}
+.rol-card:nth-child(5){animation-delay:.25s}
+
+.rol-card-top {
+    background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 80%,#312e81 100%);
+    padding:20px 18px 16px;
+    position:relative; overflow:hidden;
+}
+.rol-card-top::before {
+    content:''; position:absolute; top:-30px; right:-30px;
+    width:100px; height:100px; background:rgba(99,102,241,.18);
+    border-radius:50%;
+}
+.rol-card-icon {
+    width:46px; height:46px; border-radius:12px;
+    background:rgba(255,255,255,.14);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; color:#fff; margin-bottom:12px;
+    backdrop-filter:blur(4px);
+    position:relative; z-index:1;
+}
+.rol-card-name {
+    font-size:16px; font-weight:800; color:#fff;
+    position:relative; z-index:1; margin-bottom:4px;
+}
+.rol-card-count {
+    font-size:12px; color:rgba(255,255,255,.65);
+    position:relative; z-index:1;
+    display:flex; align-items:center; gap:5px;
+}
+.rol-card-count strong { color:rgba(255,255,255,.9); font-size:18px; }
+
+.rol-card-body { padding:14px 18px; flex:1; }
+.rol-perm-tag {
+    display:inline-flex; align-items:center; gap:4px;
+    background:#f0f4ff; color:#4338ca; border:1px solid #c7d2fe;
+    border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;
+    margin:2px; transition:background .15s;
+}
+.rol-perm-tag:hover { background:#e0e7ff; }
+.rol-perm-more { color:var(--rol-accent); font-size:11.5px; font-weight:600; text-decoration:none; }
+.rol-perm-more:hover { text-decoration:underline; }
+
+.rol-card-footer {
+    padding:12px 18px;
+    border-top:1px solid var(--rol-border);
+    background:var(--rol-surface2);
+    display:flex; align-items:center; justify-content:space-between;
+}
+.rol-users-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0;
+    border-radius:20px; padding:3px 12px; font-size:11.5px; font-weight:600;
+}
+.rol-view-link { font-size:12.5px; font-weight:600; color:var(--rol-accent); text-decoration:none; display:flex; align-items:center; gap:4px; }
+.rol-view-link:hover { color:var(--rol-accent2); }
+
+/* ── Dropdown ────────────────────────────────────── */
+.rol-dropdown .dropdown-toggle {
+    background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25);
+    color:#fff; border-radius:8px; padding:5px 9px; font-size:14px;
+    transition:background .15s;
+}
+.rol-dropdown .dropdown-toggle:hover { background:rgba(255,255,255,.25); }
+.rol-dropdown .dropdown-menu {
+    border-radius:10px; border:1px solid var(--rol-border);
+    box-shadow:0 8px 24px rgba(15,23,42,.12); padding:6px;
+    animation:scaleIn .15s ease;
+}
+.rol-dropdown .dropdown-item {
+    border-radius:7px; font-size:13px; font-weight:500; padding:8px 12px;
+    display:flex; align-items:center; gap:8px; transition:background .12s;
+}
+.rol-dropdown .dropdown-item:hover { background:#f0f4ff; color:var(--rol-accent); }
+.rol-dropdown .dropdown-item.text-danger:hover { background:#fef2f2; color:var(--rol-danger); }
+
+/* ── Modal ───────────────────────────────────────── */
+.rol-modal .modal-content {
+    border:none; border-radius:18px; overflow:hidden;
+    box-shadow:0 24px 64px rgba(15,23,42,.2);
+    font-family:var(--rol-font);
+    animation:scaleIn .25s cubic-bezier(.22,1,.36,1);
+    max-height: 90vh;
+}
+.rol-modal .modal-content form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+.rol-modal .modal-header {
+    background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 60%,#312e81 100%);
+    padding:20px 24px; border:none;
+    flex: 0 0 auto;
+}
+.rol-modal .modal-title { color:#fff; font-weight:700; font-size:16px; }
+.rol-modal .modal-header .btn-close { filter:invert(1); opacity:.8; }
+.rol-modal .modal-body  {
+    padding:22px 24px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.rol-modal .modal-footer {
+    padding:14px 24px; border-top:1px solid var(--rol-border); background:var(--rol-surface2);
+    flex: 0 0 auto;
+}
+
+.rol-form-label { font-size:11.5px; font-weight:700; color:var(--rol-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; display:block; }
+.rol-form-control {
+    border:1.5px solid var(--rol-border); border-radius:9px;
+    padding:9px 13px; font-size:13px; font-family:var(--rol-font);
+    width:100%; transition:border-color .2s, box-shadow .2s;
+}
+.rol-form-control:focus { border-color:var(--rol-accent); box-shadow:0 0 0 3px rgba(99,102,241,.12); outline:none; }
+
+/* ── Permission table ────────────────────────────── */
+.perm-table { width:100%; border-collapse:separate; border-spacing:0; }
+.perm-table thead th {
+    background:var(--rol-primary); color:#fff;
+    padding:10px 14px; font-size:11px; font-weight:700;
+    text-transform:uppercase; letter-spacing:.5px;
+}
+.perm-table thead th:first-child { border-radius:8px 0 0 0; }
+.perm-table thead th:last-child  { border-radius:0 8px 0 0; }
+.perm-table tbody tr:hover td { background:#f5f3ff; }
+.perm-table tbody td { padding:9px 14px; border-bottom:1px solid #f1f5f9; font-size:13px; vertical-align:middle; }
+.perm-table .perm-group { font-weight:700; color:var(--rol-primary); font-size:12.5px; }
+.perm-check { accent-color:var(--rol-accent); width:15px; height:15px; cursor:pointer; }
+.select-all-row td { background:#f0f4ff; }
+
+/* ── Alerts ──────────────────────────────────────── */
+.rol-alert-success { background:#f0fdf4; border:1px solid #bbf7d0; border-radius:9px; padding:10px 14px; font-size:13px; color:#16a34a; }
+.rol-alert-danger  { background:#fef2f2; border:1px solid #fecaca; border-radius:9px; padding:10px 14px; font-size:13px; color:#b91c1c; }
+
+/* ── Empty state ─────────────────────────────────── */
+.rol-empty {
+    text-align:center; padding:60px 24px;
+    animation:fadeUp .5s ease;
+}
+.rol-empty-icon { font-size:56px; opacity:.2; margin-bottom:14px; display:block; }
+.rol-empty h4   { font-weight:700; color:var(--rol-muted); font-size:17px; }
+.rol-empty p    { font-size:13px; color:var(--rol-muted); }
+</style>
+
 <div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-           <!-- start page title -->
-           <div class="row">
-            <div class="col-12">
-                <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                    <h4 class="mb-sm-0">Role Management</h4>
+<div class="page-content">
+<div class="container-fluid">
 
-                    <div class="page-title-right">
-                        <ol class="breadcrumb m-0">
-                            <li class="breadcrumb-item"><a href="javascript: void(0);">role Management</a></li>
-                            <li class="breadcrumb-item active">roles</li>
-                        </ol>
-                    </div>
+    {{-- Hero --}}
+    <div class="rol-hero">
+        <h1><i class="bi bi-shield-lock-fill me-2"></i>Role Management</h1>
+        <p>Define roles, assign permissions, and control what users can access across the system.</p>
+        <div class="rol-hero-actions">
+            <button type="button" class="rol-btn-primary" data-bs-toggle="modal" data-bs-target="#addRoleModalgrid">
+                <i class="bi bi-plus-circle"></i> Create Role
+            </button>
+        </div>
+    </div>
 
-                </div>
-            </div>
-        </div>
-        <!-- end page title -->
-            @if ($errors->any())
-            <div class="alert alert-danger">
-                <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-        
-        @if (\Session::has('status'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ \Session::get('status') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        @endif
-        @if (\Session::has('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ \Session::get('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        @endif
-        <div class="card">
-            <div class="card-body">
-                <div class="row align-items-center g-2">
-                    <div class="col-lg-3 me-auto">
-                        {{-- <h6 class="card-title mb-0">role<span class="badge bg-primary ms-1 align-baseline">1452</span></h6> --}}
-                    </div><!--end col-->
-                   
-                    <div class="col-lg-auto">
-                        <div class="hstack gap-2">
-                            <a href="#" data-bs-toggle="modal"  data-bs-target="#addRoleModalgrid" class="btn btn-secondary"><i class="bi bi-plus-circle align-baseline me-1"></i> Add Role</a>
-                           
-                        </div>
-                    </div><!--end col-->
-                </div>
-            </div>
-        </div><!--end card-->
+    {{-- Alerts --}}
+    @if ($errors->any())
+    <div class="rol-alert-danger mb-3">
+        <strong>Whoops!</strong>
+        <ul class="mb-0 mt-1">@foreach($errors->all() as $e)<li>{{$e}}</li>@endforeach</ul>
+    </div>
+    @endif
+    @if (session('success') || session('status'))
+    <div class="rol-alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') ?? session('status') }}
+    </div>
+    @endif
 
-        <div class="row row-cols-xxl-5">
-            @foreach ($roles as $role )
-                <div class="col">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                
-                                <div class="flex-shrink-0">
-                                    <div class="dropdown"> 
-                                        <button class="btn btn-light btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical"></i> 
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu">
-                                            @can('Update user-role')
-                                                 <li><a class="dropdown-item edit-list" href="{{ route('roles.adduser',$role->id) }}" ><i class="bi bi-pencil-square me-1 align-baseline"></i>Add user</a></li>
-                                            @endcan
-                    
-                                            @can('Remove user-role')
-                                                    <li>
-                                                        <form method="POST" action="{{ route('roles.destroy', $role->id) }}">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button class="dropdown-item edit-list" type="submit" ><i class="bi bi-trash3 me-1 align-baseline"></i>Delete Role</button>
-                                                        </form>
-                                                </li>  
-                                            @endcan
-                                           
-                                           
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="text-center mt-4 mb-2">
-                            
-                                <a href="apps-instructors-overview.html"><h6 class="fs-md mt-4 mb-1">{{ $role->name }}</h6></a>
-                              
-                                <h2 class="{{ $role->badge }}">Role Badge</h2>
-                            </div>
-                            <ul class="list-unstyled text-muted vstack gap-2 mb-0">
-                                <?php
-                                // $roles = Role::orderBy('name','DESC')->get();
-                                // foreach ($roles as $role => $value) {
-                                    $roles_num =  DB::table('model_has_roles')->where('role_id',$role->id)->count();
-                                    $role_permissions = $role->permissions->pluck('name')->take(3);
-                                // }
-                                ?>
+    {{-- Role cards --}}
+    @if($roles->count())
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xxl-4 g-3">
+        @foreach ($roles as $role)
+        @php
+            $roles_num = DB::table('model_has_roles')->where('role_id',$role->id)->count();
+            $role_permissions = $role->permissions->pluck('name')->take(4);
+            $icons = ['Super Admin'=>'bi-shield-lock','Admin'=>'bi-shield-check','Farm Manager'=>'bi-clipboard-data','Record Keeper'=>'bi-journal-text','Sales Officer'=>'bi-cart-check','Accountant'=>'bi-calculator','Viewer'=>'bi-eye'];
+            $icon  = $icons[$role->name] ?? 'bi-key';
+        @endphp
+        <div class="col">
+            <div class="rol-card">
+                {{-- Card top --}}
+                <div class="rol-card-top">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div class="rol-card-icon"><i class="bi {{ $icon }}"></i></div>
+                        @canany(['Update user-role','Remove user-role'])
+                        <div class="dropdown rol-dropdown">
+                            <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                @can('Update user-role')
                                 <li>
-                                    @foreach ($role_permissions as $role_permission)
-                                        <li>
-                                            <a href="#" class="text-reset"><i class="bi bi-telephone align-baseline me-1"></i> {{$role_permission}}</a>
-                                        </li>
-                                    @endforeach
+                                    <a class="dropdown-item" href="{{ route('roles.adduser', $role->id) }}">
+                                        <i class="bi bi-person-plus-fill text-primary"></i> Add User
+                                    </a>
                                 </li>
-                                @can('View role')<a href="{{ route('roles.show',$role->id) }}"> <em>...and more</a>@endcan</em>
+                                @endcan
+                                @can('View role')
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('roles.show', $role->id) }}">
+                                        <i class="bi bi-eye-fill text-success"></i> View Details
+                                    </a>
+                                </li>
+                                @endcan
+                                @can('Remove user-role')
+                                <li><hr class="dropdown-divider my-1"></li>
+                                <li>
+                                    <form method="POST" action="{{ route('roles.destroy', $role->id) }}"
+                                          data-confirm="Delete the role {{ $role->name }}? Users keep their accounts but lose this role.">
+                                        @csrf @method('DELETE')
+                                        <button class="dropdown-item text-danger" type="submit">
+                                            <i class="bi bi-trash3-fill"></i> Delete Role
+                                        </button>
+                                    </form>
+                                </li>
+                                @endcan
                             </ul>
                         </div>
-                        <div class="card-body border-top border-dashed d-flex align-items-center">
-                            <div class="flex-grow-1">
-                                <span class="badge bg-warning-subtle text-primary"><i class="bi bi-star-fill align-baseline me-1"></i>Total users: {{ $roles_num }}</span>
-                            </div>
-                            <div class="flex-shrink-0"></div>
-                            @can('View role')
-                                <a href="{{ route('roles.show',$role->id) }}" class="link-effect">View roles <i class="bi bi-arrow-right align-baseline ms-1"></i></a>
-                            @endcan
-                           
-                        </div>
-                    </div><!--end card-->
-                </div><!--end col-->
-            @endforeach
-          
-        </div><!--end row-->
-
-
-                <!-- Grids in modals -->
-                <div class="modal fade" id="addRoleModalgrid" tabindex="-1" aria-labelledby="exampleModalgridLabel" aria-modal="true">
-                    <div class="modal-dialog modal-xl">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="exampleModalgridLabel">Add role</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="kt_modal_add_role_form" class="form" action="{{ route('roles.store') }}" method="POST">
-                                    @csrf
-                                    <div class="row g-3">
-                                        <div class="col-xxl-6">
-                                            <div>
-                                                <label for="firstName" class="form-label">Role Name</label>
-                                                <input type="text" class="form-control" placeholder="Enter a role name" name="name">
-                                            </div>
-                                        </div><!--end col-->
-                                        <div class="col-xxl-6">
-                                            <div> 
-                                                <label for="firstName" class="form-label">Role Badge</label>
-                                                <!--begin::Input-->
-                                                <select name="badge" class="form-control" data-kt-select2="true" data-placeholder="Select option" data-allow-clear="true" data-kt-user-table-filter="two-step" data-hide-search="true">
-                                                    <option></option>
-                                                    <option value="badge bg-light">Light grey</option>
-                                                    <option value="badge bg-dark"> Dark</option>
-                                                    <option value="badge bg-primary">Blue</option>
-                                                    <option value="badge bg-secondary">Light blue</option>
-                                                    <option value="badge bg-success">Light green</option>
-                                                    <option value="badge bg-info">Purple</option>
-                                                    <option value="badge bg-warning">Yellow</option>
-                                                    <option value="badge bg-danger">Red</option>
-                                            </select>
-                                                <!--end::Input-->
-                                            </div>
-                                        </div><!--end col-->
-                                        <div class="col-lg-12">
-                                        
-                                    
-                                        <!--begin::Table wrapper-->
-                                        <div class="table-responsive">
-                                            <!--begin::Table-->
-                                            <table class="table align-middle table-row-dashed fs-6 gy-5">
-                                                <!--begin::Table body-->
-                                                <tbody class="text-gray-600 fw-semibold">
-                                                    <!--begin::Table row-->
-                                                    <tr>
-                                                        <td class="text-gray-800">
-                                                            Administrator Access
-
-                                                            <span class="ms-2" data-bs-toggle="popover" data-bs-trigger="hover" data-bs-html="true" data-bs-content="Allows a full access to the system">
-                                                                <i class="ki-duotone ki-information fs-7"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>                                                </span>
-                                                        </td>
-                                                        <td>
-                                                            <!--begin::Checkbox-->
-                                                            <label class="form-check form-check-custom form-check-solid me-9">
-                                                                <input class="form-check-input" type="checkbox" value="" id="kt_roles_select_all" />
-                                                                <span class="form-check-label" for="kt_roles_select_all">
-                                                                    Select all
-                                                                </span>
-                                                            </label>
-                                                            <!--end::Checkbox-->
-                                                        </td>
-                                                    </tr>
-                                                    <!--end::Table row-->
-
-
-                                                        @foreach (array_unique($perm_title) as $value)
-                                                                    <?php
-                                                                    $permission = Permission::where('title',$value)->get();
-                                                                    $word="";
-
-                                                                    ?>
-
-                                                            <tr>
-                                                                    <!--begin::Label-->
-                                                                    <td class="text-gray-800">{{ $value }}</td>
-                                                                    <!--end::Label-->
-
-
-                                                                    @foreach ($permission as $key => $v)
-                                                                                    <?php
-                                                                                        $word = ''; // default fallback
-                                                                                
-                                                                                        if (strpos($v->name, "View ") !== false) {
-                                                                                            $word = "View";
-                                                                                        } elseif (strpos($v->name, "Create ") !== false) {
-                                                                                            $word = "Create";
-                                                                                        } elseif (strpos($v->name, "Update ") !== false) {
-                                                                                            $word = "Edit";
-                                                                                        } elseif (strpos($v->name, "Delete ") !== false) {
-                                                                                            $word = "Delete";
-                                                                                        } elseif (strpos($v->name, "Update user-role") !== false) {
-                                                                                            $word = "Update user role";
-                                                                                        } elseif (strpos($v->name, "Add user-role") !== false) {
-                                                                                                $word = "Add user role";
-                                                                                        }
-                                                                                        elseif (strpos($v->name, "Remove user-role") !== false) {
-                                                                                                $word = "Remove user role";
-                                                                                        }
-                                                                                        elseif (strpos($v->name, "Show ") !== false) {
-                                                                                                $word = "Show";
-                                                                                        }
-                                
-                                                                                    ?>
-                                                                                        <!--begin::Options-->
-                                                                                        <td>
-                                                                                            <!--begin::Wrapper-->
-                                                                                            <div class="d-flex">
-                                                                                                <!-- Custom Outline Checkboxes -->
-                                                                                                <div class="form-check form-check-outline form-check-primary mb-3">
-                                                                                                    <input class="form-check-input" type="checkbox" value="{{ $v->id }}" name="permission[]">
-                                                                                                    <label class="form-check-label" for="formCheck13">
-                                                                                                        {{ $word }}
-                                                                                                    </label>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <!--end::Wrapper-->
-                                                                                        </td>
-                                                                                        <!--end::Options-->
-                                                                    @endforeach
-                                                                
-                                                            </tr>
-
-
-                                                        @endforeach
-
-
-
-                                                                                <!--begin::Table row-->
-
-                                                        </tbody>
-                                                <!--end::Table body-->
-                                            </table>
-                                            <!--end::Table-->
-                                        </div>
-                                        <!--end::Table wrapper-->
-                                        
-                                        </div><!--end col-->
-                                    
-                                        <div class="col-lg-12">
-                                            <div class="hstack gap-2 justify-content-end">
-                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                                <button type="submit" class="btn btn-primary">Submit</button>
-                                            </div>
-                                        </div><!--end col-->
-                                    </div><!--end row-->
-                                </form>
-                            </div>
-                        </div>
+                        @endcanany
+                    </div>
+                    <div class="rol-card-name mt-1">{{ $role->name }}</div>
+                    <div class="rol-card-count">
+                        <strong>{{ $roles_num }}</strong> assigned user{{ $roles_num !== 1 ? 's' : '' }}
                     </div>
                 </div>
+
+                {{-- Permissions --}}
+                <div class="rol-card-body">
+                    <div style="font-size:10.5px;font-weight:700;color:var(--rol-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">
+                        Permissions
+                    </div>
+                    @forelse($role_permissions as $perm)
+                        <span class="rol-perm-tag"><i class="bi bi-check2"></i>{{ $perm }}</span>
+                    @empty
+                        <span style="font-size:12px;color:var(--rol-muted);">No permissions assigned</span>
+                    @endforelse
+                    @if($role->permissions->count() > 4)
+                        @can('View role')
+                        <br><a href="{{ route('roles.show', $role->id) }}" class="rol-perm-more mt-1 d-inline-block">
+                            +{{ $role->permissions->count() - 4 }} more →
+                        </a>
+                        @endcan
+                    @endif
+                </div>
+
+                {{-- Footer --}}
+                <div class="rol-card-footer">
+                    <span class="rol-users-badge">
+                        <i class="bi bi-people-fill"></i> {{ $roles_num }} user{{ $roles_num !== 1 ? 's' : '' }}
+                    </span>
+                    @can('View role')
+                    <a href="{{ route('roles.show', $role->id) }}" class="rol-view-link">
+                        View <i class="bi bi-arrow-right"></i>
+                    </a>
+                    @endcan
+                </div>
+            </div>
+        </div>
+        @endforeach
     </div>
-    <!-- End Page-content -->
+    @else
+    <div class="rol-empty">
+        <span class="rol-empty-icon"><i class="bi bi-shield-x"></i></span>
+        <h4>No Roles Created Yet</h4>
+        <p>Click "Create Role" to define your first role and assign permissions.</p>
+    </div>
+    @endif
 
-   <script>
+    {{-- ════ ADD ROLE MODAL ════ --}}
+    <div class="modal fade rol-modal" id="addRoleModalgrid" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle-fill me-2"></i>Create New Role</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="kt_modal_add_role_form" action="{{ route('roles.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="rol-form-label">Role Name <span class="text-danger">*</span></label>
+                                <input type="text" class="rol-form-control" name="name" placeholder="e.g. Administrator" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="rol-form-label">Role Badge Colour</label>
+                                <select name="badge" class="rol-form-control">
+                                    <option value="">Select colour…</option>
+                                    <option value="badge bg-light">Light Grey</option>
+                                    <option value="badge bg-dark">Dark</option>
+                                    <option value="badge bg-primary">Blue</option>
+                                    <option value="badge bg-secondary">Light Blue</option>
+                                    <option value="badge bg-success">Green</option>
+                                    <option value="badge bg-info">Purple</option>
+                                    <option value="badge bg-warning">Yellow</option>
+                                    <option value="badge bg-danger">Red</option>
+                                </select>
+                            </div>
+                        </div>
 
-    document.addEventListener("DOMContentLoaded", function () {
-        const selectAllCheckbox = document.getElementById("kt_roles_select_all");
-        const permissionCheckboxes = document.querySelectorAll('input[name="permission[]"]');
+                        <div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:9px;padding:10px 14px;font-size:12.5px;color:#3730a3;margin-bottom:16px;">
+                            <i class="bi bi-info-circle-fill me-1"></i> Tick the permissions this role should have. Use a group's checkbox to select everything under it at once, or the search box to find one quickly.
+                        </div>
 
-        if (!selectAllCheckbox) {
-            console.warn("Select all checkbox not found.");
-            return;
-        }
-
-        if (permissionCheckboxes.length === 0) {
-            console.warn("No permission checkboxes found.");
-            selectAllCheckbox.disabled = true;
-            return;
-        }
-
-        selectAllCheckbox.addEventListener("change", function () {
-            console.log(`Select all checkbox toggled, state: ${this.checked}`);
-            permissionCheckboxes.forEach((checkbox) => {
-                checkbox.checked = this.checked;
-            });
-            console.log(`Updated ${permissionCheckboxes.length} permission checkboxes to ${this.checked ? "checked" : "unchecked"}`);
-        });
-
-        function updateSelectAllState() {
-            const allChecked = Array.from(permissionCheckboxes).every(checkbox => checkbox.checked);
-            const someChecked = Array.from(permissionCheckboxes).some(checkbox => checkbox.checked);
-            selectAllCheckbox.checked = allChecked;
-            selectAllCheckbox.indeterminate = someChecked && !allChecked;
-        }
-
-        permissionCheckboxes.forEach((checkbox) => {
-            checkbox.addEventListener("change", function () {
-                console.log(`Permission checkbox toggled, value: ${this.value}, state: ${this.checked}`);
-                updateSelectAllState();
-            });
-        });
-
-        // Initial state update
-        updateSelectAllState();
-
-        // Optional: Validate form submission
-        document.getElementById("kt_modal_add_role_form").addEventListener("submit", function (e) {
-            if (!Array.from(permissionCheckboxes).some(checkbox => checkbox.checked)) {
-                e.preventDefault();
-                alert("Please select at least one permission.");
-            }
-        });
-    });
-   </script>
+                        @include('roles.partials.permission-picker', ['pickerId' => 'createPermPicker', 'checkedIds' => []])
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="rol-btn-primary">
+                            <i class="bi bi-check-circle"></i> Create Role
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAll     = document.getElementById('kt_roles_select_all');
+    const permBoxes     = document.querySelectorAll('input[name="permission[]"]');
+    const moduleToggles = document.querySelectorAll('.module-select-all');
+
+    if (selectAll && permBoxes.length) {
+
+        // Global "select all" → checks/unchecks everything, including module toggles
+        selectAll.addEventListener('change', function () {
+            permBoxes.forEach(c => c.checked = this.checked);
+            moduleToggles.forEach(m => { m.checked = this.checked; m.indeterminate = false; });
+        });
+
+        // Per-module "select all" → checks/unchecks only that module's permissions
+        moduleToggles.forEach(function (toggle) {
+            toggle.addEventListener('change', function () {
+                const module = this.dataset.module;
+                document.querySelectorAll('.module-perm[data-module="' + module + '"]')
+                    .forEach(c => c.checked = this.checked);
+                syncGlobal();
+            });
+        });
+
+        // Keep each module toggle's checked/indeterminate state in sync with its own boxes
+        function syncModuleToggles() {
+            moduleToggles.forEach(function (toggle) {
+                const module = toggle.dataset.module;
+                const boxes  = document.querySelectorAll('.module-perm[data-module="' + module + '"]');
+                const all    = Array.from(boxes).every(c => c.checked);
+                const some   = Array.from(boxes).some(c => c.checked);
+                toggle.checked       = all;
+                toggle.indeterminate = some && !all;
+            });
+        }
+
+        function syncGlobal() {
+            const all  = Array.from(permBoxes).every(c => c.checked);
+            const some = Array.from(permBoxes).some(c => c.checked);
+            selectAll.checked       = all;
+            selectAll.indeterminate = some && !all;
+        }
+
+        function sync() {
+            syncModuleToggles();
+            syncGlobal();
+        }
+
+        permBoxes.forEach(c => c.addEventListener('change', sync));
+        sync();
+
+        document.getElementById('kt_modal_add_role_form')
+            .addEventListener('submit', function (e) {
+                if (!Array.from(permBoxes).some(c => c.checked)) {
+                    e.preventDefault();
+                    Swal.fire({ icon:'warning', title:'No permissions selected',
+                        text:'Please select at least one permission.', confirmButtonColor:'#6366f1' });
+                }
+            });
+    }
+});
+</script>
+
 @endsection

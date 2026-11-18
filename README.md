@@ -51,6 +51,19 @@ press ⌘K / Ctrl+K anywhere to jump to a page, flock, pond, customer, invoice o
 
 Tests: `php artisan test` (SQLite in memory).
 
+## Look and feel (from csskabba-portal)
+
+The admin layout is csskabba-portal's: the same master page, sidebar (collapsible groups,
+user card and Sign Out at the bottom), top bar (Spotlight search on Ctrl/⌘ K, theme menu,
+user menu), light / dark / auto themes and the Apple style. The Roles, Role details, Add
+users, Permissions, Users, User overview and Profile settings pages are csskabba's pages with
+the school parts (students, staff records, classes, parents) taken out.
+
+- Users: add, edit (name, email, roles, password), delete one or many, filter, sort.
+- Roles: role cards; role details with permissions and assigned users; bulk remove.
+- Profile settings: anyone can edit their own profile, photo, email and password; editing
+  someone else needs the "Update user" permission. Passwords are stored hashed only.
+
 ## Documentation
 
 - `docs/GUIDE.md` – how to use the platform and exactly how every figure is worked out

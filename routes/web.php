@@ -35,6 +35,8 @@ Route::group(['middleware' => ['auth']], function () {
     //Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
 
+    Route::post('roles/bulk-remove-users', [RoleController::class, 'bulkRemoveUsers'])->name('roles.bulkremoveusers');
+    Route::get('roles/{role}/users', [RoleController::class, 'getRoleUsers'])->name('roles.users');
     Route::resource('roles', RoleController::class);
     Route::resource('users', UserController::class);
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
@@ -44,6 +46,12 @@ Route::group(['middleware' => ['auth']], function () {
 
 
     Route::resource('biodata', BiodataController::class);
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::post('/update-info', [BiodataController::class, 'updateProfile'])->name('update-info');
+        Route::post('/update-avatar', [BiodataController::class, 'updateAvatar'])->name('update-avatar');
+        Route::post('/update-email', [BiodataController::class, 'ajaxemailupdate'])->name('update-email');
+        Route::post('/update-password', [BiodataController::class, 'ajaxpasswordupdate'])->name('update-password');
+    });
     Route::get('/overview/{id}', [OverviewController::class, 'show'])->name('user.overview');
     Route::get('/settings/{id}', [BiodataController::class, 'show'])->name('user.settings');
 

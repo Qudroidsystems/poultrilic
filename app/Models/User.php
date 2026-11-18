@@ -230,5 +230,9 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-  
+    /** Extra personal details (staff_bio table) shown on the profile pages. */
+    public function bio(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\BioModel::class, 'user_id');
+    }
 }

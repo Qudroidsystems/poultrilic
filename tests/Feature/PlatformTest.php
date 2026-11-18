@@ -356,3 +356,40 @@ it('builds a demo farm whose figures add up', function () {
     $this->getJson(route('search', ['q' => 'pond']))->assertOk()->assertJsonPath('results.0.group', 'Livestock');
     $this->getJson(route('search', ['q' => 'layers']))->assertOk()->assertJsonPath('results.0.title', 'Layers A (Isa Brown)');
 });
+
+it('renders the roles, permissions and users pages in the csskabba layout', function () {
+    $perms = ['View role', 'Create role', 'Update role', 'Delete role', 'Update user-role', 'Remove user-role',
+        'View permission', 'View user', 'Create user', 'Update user', 'Delete user', 'dashboard'];
+    $admin = plUser($perms);
+    $role = \Spatie\Permission\Models\Role::create(['name' => 'Farm Manager', 'guard_name' => 'web']);
+    $role->givePermissionTo('View user');
+    $other = User::factory()->create(['first_name' => 'Grace', 'last_name' => 'Nakato']);
+    $other->assignRole($role);
+
+    $this->actingAs($admin)->get(route('roles.index'))->assertOk()->assertSee('rol-card', false)->assertSee('Farm Manager');
+    $this->get(route('roles.show', $role->id))->assertOk()->assertSee('Grace Nakato');
+    $this->getJson(route('roles.users', $role->id))->assertOk();
+    $this->get(route('permissions.index'))->assertOk();
+    $this->get(route('users.index'))->assertOk()->assertSee('u-hero', false)->assertSee('Grace Nakato')->assertDontSee('Add Student');
+    $this->get(route('users.overview', $other->id))->assertOk()->assertSee('Activity Timeline');
+    $this->get(route('user.settings', $other->id))->assertOk()->assertSee('Personal Details');
+});
+
+it('updates a user name and roles from the users list, and guards profile changes', function () {
+    $admin = plUser(['View user', 'Update user', 'dashboard']);
+    \Spatie\Permission\Models\Role::create(['name' => 'Viewer', 'guard_name' => 'web']);
+    $u = User::factory()->create();
+
+    $this->actingAs($admin)->putJson("/users/{$u->id}", ['name' => 'Peter Okello', 'email' => 'peter@farm.test', 'roles' => ['Viewer']])
+        ->assertOk()->assertJsonPath('user.name', 'Peter Okello');
+    expect($u->fresh()->hasRole('Viewer'))->toBeTrue();
+
+    // someone without "Update user" cannot change another person's password, but can change their own
+    $plain = plUser(['dashboard']);
+    $this->actingAs($plain)->postJson(route('profile.update-password'), ['userid' => $u->id, 'password' => 'newpass123', 'password_confirmation' => 'newpass123'])
+        ->assertForbidden();
+    $this->postJson(route('profile.update-password'), ['userid' => $plain->id, 'password' => 'newpass123', 'password_confirmation' => 'newpass123'])
+        ->assertOk();
+    expect(\Illuminate\Support\Facades\Hash::check('newpass123', $plain->fresh()->password))->toBeTrue()
+        ->and($plain->fresh()->wpassword)->toBeNull();
+});

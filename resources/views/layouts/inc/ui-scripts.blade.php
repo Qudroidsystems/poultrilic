@@ -2,12 +2,12 @@
 <div id="spotlight-overlay" class="pl-spotlight" hidden>
     <div class="pl-spotlight-box" role="dialog" aria-modal="true" aria-label="Search">
         <div class="pl-spotlight-input">
-            <i class="ri-search-line"></i>
-            <input id="spotlight-input" type="text" placeholder="Search flocks, ponds, customers, reports, pages…" autocomplete="off" spellcheck="false">
-            <kbd>esc</kbd>
+            <i class="mdi mdi-magnify"></i>
+            <input id="spotlight-input" type="text" placeholder="Search everything..." autocomplete="off" spellcheck="false">
+            <kbd id="spotlight-esc" style="cursor:pointer">ESC</kbd>
         </div>
         <div id="spotlight-results" class="pl-spotlight-results" role="listbox"></div>
-        <div class="pl-spotlight-foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>⌘</kbd><kbd>K</kbd> toggle</span></div>
+        <div class="pl-spotlight-foot"><span><kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd> open</span><span><kbd>↑↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>ESC</kbd> close</span></div>
     </div>
 </div>
 <script>
@@ -19,26 +19,7 @@
     var PT = window.PortalTheme;
     // The template's app.js restores its own theme from sessionStorage; the portal theme wins.
     if (PT) { PT.apply(); }
-    var ICON = { light: 'ri-sun-line', dark: 'ri-moon-line', auto: 'ri-contrast-2-line' };
-    function syncTheme() {
-        var mode = PT ? PT.mode : 'light', ui = PT ? PT.ui : 'default';
-        var icon = document.getElementById('theme-icon');
-        if (icon) { icon.className = (ui === 'apple' && mode === 'light' ? 'ri-apple-line' : (ICON[mode] || ICON.light)) + ' align-middle fs-3xl'; }
-        qsa('.theme-mode-item').forEach(function (a) {
-            var on = a.hasAttribute('data-ui') ? a.getAttribute('data-ui') === ui : a.getAttribute('data-mode') === mode;
-            a.classList.toggle('is-active', on);
-            a.setAttribute('aria-checked', on ? 'true' : 'false');
-        });
-    }
-    qsa('.theme-mode-item').forEach(function (a) {
-        a.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (!PT) { return; }
-            if (a.hasAttribute('data-ui')) { PT.setUi(a.getAttribute('data-ui')); } else { PT.setMode(a.getAttribute('data-mode')); }
-        });
-    });
-    document.addEventListener('portal-theme-change', syncTheme);
-    syncTheme();
+    // The theme menu itself is wired by layouts/inc/layout-scripts.
 
     /* ── Confirmations: <form data-confirm="…"> uses an Apple-style dialog ── */
     var hasAlert = typeof AppleAlert !== 'undefined' && window.Swal;
@@ -87,7 +68,7 @@
     var items = [], active = 0, timer = null, seq = 0;
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     function render() {
-        if (!items.length) { list.innerHTML = '<div class="pl-spotlight-empty">' + (input.value.trim() ? 'No matches' : 'Type to search') + '</div>'; return; }
+        if (!items.length) { list.innerHTML = '<div class="pl-spotlight-empty">' + (input.value.trim() ? 'No matches' : '<i class="mdi mdi-lightning-bolt" style="font-size:48px;display:block;margin-bottom:16px;opacity:.4"></i>Start typing to search…<div style="margin-top:16px;font-size:12px;opacity:.5">Popular: Flocks, Daily records, Reports, Invoices</div>') + '</div>'; return; }
         var html = '', group = null;
         items.forEach(function (it, i) {
             if (it.group !== group) { group = it.group; html += '<div class="pl-spotlight-group">' + esc(group) + '</div>'; }
@@ -119,6 +100,7 @@
     function go(i) { var it = items[i]; if (!it) { return; } remember(it); window.location.href = it.url; }
 
     if (trigger) { trigger.addEventListener('click', open); }
+    var escBtn = document.getElementById('spotlight-esc'); if (escBtn) { escBtn.addEventListener('click', close); }
     document.addEventListener('keydown', function (e) {
         if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); overlay.hidden ? open() : close(); return; }
         if (overlay.hidden) { return; }

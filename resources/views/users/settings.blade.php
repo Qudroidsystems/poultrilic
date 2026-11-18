@@ -1,611 +1,538 @@
+@extends('layouts.master')
 
-    @extends('layouts.master')
-    @section('content')
+@section('content')
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
 
+            <!-- Page Title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">{{ $user->name }} - Profile Settings</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ route('users.index') }}">Users</a></li>
+                                <li class="breadcrumb-item active">Profile Settings</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-               <!--begin::Main-->
-            <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-                <!--begin::Content wrapper-->
-                <div class="d-flex flex-column flex-column-fluid">
-
-<!--begin::Toolbar-->
-<div id="kt_app_toolbar" class="app-toolbar  py-3 py-lg-6 "
-
-         >
-
-            <!--begin::Toolbar container-->
-        <div id="kt_app_toolbar_container" class="app-container  container-xxl d-flex flex-stack ">
-
-
-
-<!--begin::Page title-->
-<div  class="page-title d-flex flex-column justify-content-center flex-wrap me-3 ">
-    <!--begin::Title-->
-    <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">
-        Account Settings
-            </h1>
-    <!--end::Title-->
-
-
-        <!--begin::Breadcrumb-->
-        <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
-                            <!--begin::Item-->
-                                    <li class="breadcrumb-item text-muted">
-                                                    <a href="../index.html" class="text-muted text-hover-primary">
-                                Home                            </a>
-                                            </li>
-                                <!--end::Item-->
-                                    <!--begin::Item-->
-                    <li class="breadcrumb-item">
-                        <span class="bullet bg-gray-400 w-5px h-2px"></span>
-                    </li>
-                    <!--end::Item-->
-
-                            <!--begin::Item-->
-                                    <li class="breadcrumb-item text-muted">
-                                                    Account                                            </li>
-                                <!--end::Item-->
-
+            <!-- Flash Messages -->
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="ri-check-line me-2"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="ri-error-warning-line me-2"></i> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="ri-error-warning-line me-2"></i>
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
                     </ul>
-        <!--end::Breadcrumb-->
-    </div>
-<!--end::Page title-->
-@if ($errors->any())
-<div class="alert alert-danger">
-    <strong>Whoops!</strong> There were some problems with your input.<br><br>
-    <ul>
-        @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-        @endforeach
-    </ul>
-</div>
-@endif
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
 
-@if (\Session::has('status'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-{{ \Session::get('status') }}
-<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-@if (\Session::has('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-{{ \Session::get('success') }}
-<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
+            <div class="row">
+                <div class="col-xxl-12">
 
-        </div>
-        <!--end::Toolbar container-->
-    </div>
-<!--end::Toolbar-->
-
-<!--begin::Content-->
-<div id="kt_app_content" class="app-content  flex-column-fluid " >
-
-
-        <!--begin::Content container-->
-        <div id="kt_app_content_container" class="app-container  container-xxl ">
-
-            @include('users.inc.navbar')
-
-
-<!--begin::Basic info-->
-<div class="card mb-5 mb-xl-10">
-    <!--begin::Card header-->
-    <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
-        <!--begin::Card title-->
-        <div class="card-title m-0">
-            <h3 class="fw-bold m-0">Profile Details</h3>
-        </div>
-        <!--end::Card title-->
-    </div>
-    <!--begin::Card header-->
-    @if (count($errors) > 0)
-    <div class="row animated fadeInUp">
-          @if (count($errors) > 0)
-    <div class="alert alert-warning fade in">
-    <a href="#" class="close" data-dismiss="alert">&times;</a>
-        <strong>Opps!</strong> Something went wrong, please check below errors.<br><br>
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-     </div>
-     @endif
-    </div>
-       @endif
-    <!--begin::Content-->
-    <div id="kt_account_settings_profile_details" class="collapse show">
-        <!--begin::Form-->
-        <form id="kt_account_profile_details_form" class="form" method="POST"
-        enctype="multipart/form-data" action="{{ route('biodata.store') }}" >
-          @csrf
-            <!--begin::Card body-->
-            <div class="card-body border-top p-9">
-                <input type="hidden" name="id" value="{{ Auth::user()->id}}">
-                <!--begin::Input group-->
-                <div class="row mb-6">
-                    <!--begin::Label-->
-                    <label class="col-lg-4 col-form-label fw-semibold fs-6">Avatar</label>
-                    <!--end::Label-->
-
-                    <!--begin::Col-->
-                    <div class="col-lg-8">
-
-                        <!--begin::Image input-->
-                        <div class="image-input image-input-outline" data-kt-image-input="true" style="background-image: url('{{asset('assets/assets/media/svg/avatars/blank.svg')  }})">
-                            <!--begin::Preview existing avatar-->
-
-                            <div class="image-input-wrapper w-125px h-125px" style="background-image: url({{Storage::url('images/staffavatar/'.$user->avatar)  }})"></div>
-                            <!--end::Preview existing avatar-->
-
-                            <!--begin::Label-->
-                            <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="change" data-bs-toggle="tooltip" title="Change avatar">
-                                <i class="ki-duotone ki-pencil fs-7"><span class="path1"></span><span class="path2"></span></i>
-                                <!--begin::Inputs-->
-                                <input type="file" name="avatar" accept=".png, .jpg, .jpeg"/>
-                                <input type="hidden" name="avatar_remove"/>
-                                <!--end::Inputs-->
-                            </label>
-                            <!--end::Label-->
-
-                            <!--begin::Cancel-->
-                            <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="cancel" data-bs-toggle="tooltip" title="Cancel avatar">
-                                <i class="ki-duotone ki-cross fs-2"><span class="path1"></span><span class="path2"></span></i>                            </span>
-                            <!--end::Cancel-->
-
-                            <!--begin::Remove-->
-                            <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="remove" data-bs-toggle="tooltip" title="Remove avatar">
-                                <i class="ki-duotone ki-cross fs-2"><span class="path1"></span><span class="path2"></span></i>                            </span>
-                            <!--end::Remove-->
+                    <!-- Tabs Navigation -->
+                    <div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+                        <ul class="nav nav-pills arrow-navtabs nav-secondary gap-2 flex-grow-1" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#personalDetails">
+                                    <i class="ri-user-line me-1"></i> Personal Details
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="tab" href="#security">
+                                    <i class="ri-lock-line me-1"></i> Security
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="flex-shrink-0 ms-auto">
+                            <a href="{{ route('users.index') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Back to Users
+                            </a>
                         </div>
-                        <!--end::Image input-->
-
-                        <!--begin::Hint-->
-                        <div class="form-text">Allowed file types:  png, jpg, jpeg.</div>
-                        <!--end::Hint-->
                     </div>
-                    <!--end::Col-->
-                </div>
-                <!--end::Input group-->
 
-                <!--begin::Input group-->
-                <div class="row mb-6">
-                    <!--begin::Label-->
-                    <label class="col-lg-4 col-form-label required fw-semibold fs-6">Full Name</label>
-                    <!--end::Label-->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="tab-content">
 
-                    <!--begin::Col-->
-                    <div class="col-lg-8">
-                        <!--begin::Row-->
-                        <div class="row">
-                            <!--begin::Col-->
-                            <div class="col-lg-6 fv-row">
-                                <input type="text" name="fname" class="form-control form-control-lg form-control-solid mb-3 mb-lg-0" placeholder="First name" value="{{ $userbio->firstname }}" />
-                            </div>
-                            <!--end::Col-->
+                                <!-- Personal Details Tab -->
+                                <div class="tab-pane active" id="personalDetails" role="tabpanel">
+                                    <div class="text-center mb-5">
+                                        <div class="position-relative d-inline-block">
+                                            <div class="avatar-xxl">
+                                                @php
+                                                    $avatarUrl = asset('images/default-avatar.png');
+                                                    $hasAvatar = false;
 
-                            <!--begin::Col-->
-                            <div class="col-lg-6 fv-row">
-                                <input type="text" name="lname" class="form-control form-control-lg form-control-solid" placeholder="Last name" value="{{ $userbio->lastname }}" />
-                            </div>
-                            <!--end::Col-->
+                                                    if ($user->profile_image && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profile_image)) {
+                                                        $avatarUrl = asset('storage/' . $user->profile_image);
+                                                        $hasAvatar = true;
+                                                    }
 
+                                                    $initials = strtoupper(
+                                                        substr($user->first_name ?? ($user->name ? explode(' ', $user->name)[0] : 'U'), 0, 1) .
+                                                        substr($user->last_name ?? (explode(' ', $user->name)[1] ?? ''), 0, 1)
+                                                    );
+                                                @endphp
 
-                            <!--begin::Col-->
-                            <div class="col-lg-6 fv-row">
-                                <input type="text" name="oname" class="form-control form-control-lg form-control-solid" placeholder="Other names" value="{{ $userbio->othernames }}" />
-                            </div>
-                            <!--end::Col-->
-                        </div>
-                        <!--end::Row-->
-                    </div>
-                    <!--end::Col-->
-                </div>
-                <!--end::Input group-->
+                                                @if($hasAvatar)
+                                                    <img src="{{ $avatarUrl }}?t={{ time() }}"
+                                                         alt="Profile"
+                                                         class="rounded-circle img-thumbnail"
+                                                         id="profilePreview"
+                                                         style="width: 150px; height: 150px; object-fit: cover;"
+                                                         onerror="this.onerror=null; this.src='{{ asset('images/default-avatar.png') }}';">
+                                                @else
+                                                    <div class="avatar-title rounded-circle bg-light text-primary fs-1"
+                                                         style="width: 150px; height: 150px; line-height: 150px;"
+                                                         id="profilePreview">
+                                                        {{ $initials }}
+                                                    </div>
+                                                @endif
+                                            </div>
 
-                <!--begin::Input group-->
-                <div class="row mb-6">
-                    <!--begin::Label-->
-                    <label class="col-lg-4 col-form-label required fw-semibold fs-6">Address</label>
-                    <!--end::Label-->
-
-                    <!--begin::Col-->
-                    <div class="col-lg-8 fv-row">
-                        <input type="text" name="address" class="form-control form-control-lg form-control-solid" placeholder="Address" value="{{ $userbio->address }}" />
-                    </div>
-                    <!--end::Col-->
-                </div>
-                <!--end::Input group-->
-
-                <!--begin::Input group-->
-                <div class="row mb-6">
-                    <!--begin::Label-->
-                    <label class="col-lg-4 col-form-label fw-semibold fs-6">
-                        <span class="required">Contact Phone</span>
-
-
-                        <span class="ms-1"  data-bs-toggle="tooltip" title="Phone number must be active" >
-                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6"><span class="path1">
-                                </span><span class="path2"></span><span class="path3"></span></i></span>
-                     </label>
-                                <!--end::Label-->
-
-                    <!--begin::Col-->
-                    <div class="col-lg-8 fv-row">
-                        <input type="tel" name="phone" class="form-control form-control-lg form-control-solid" placeholder="Phone number" value="{{ $userbio->phone }}" />
-                    </div>
-                    <!--end::Col-->
-                </div>
-                <!--end::Input group-->
-
-
-                 <!--begin::Input group-->
-                 <div class="row mb-6">
-                    <!--begin::Label-->
-                    <label class="col-lg-4 col-form-label fw-semibold fs-6">
-                        <span class="required">Date of Birth</span>
-
-
-                        <span class="ms-1"  data-bs-toggle="tooltip" title="Phone number must be active" >
-                            <i class="ki-duotone ki-information-5 text-gray-500 fs-6"><span class="path1">
-                                </span><span class="path2"></span><span class="path3"></span></i></span>
-                     </label>
-                                <!--end::Label-->
-
-                    <!--begin::Col-->
-                    <div class="col-lg-8 fv-row">
-                        <input type="date" name="dob" class="form-control form-control-lg form-control-solid" placeholder="Date of Birth" value="{{ $userbio->dob }}" />
-                    </div>
-                    <!--end::Col-->
-                </div>
-                <!--end::Input group-->
-
-
-
-
-
-
-
-
-                <!--begin::Input group-->
-                <div class="row mb-6">
-                    <!--begin::Label-->
-                    <label class="col-lg-4 col-form-label required fw-semibold fs-6">
-                        Gender
-                    </label>
-                    <!--end::Label-->
-
-                    <!--begin::Col-->
-                    <div class="col-lg-8 fv-row">
-                        <!--begin::Options-->
-                        <div class="d-flex align-items-center mt-3">
-                            <!--begin::Option-->
-                            <label class="form-check form-check-custom form-check-inline form-check-solid me-5">
-                                <input class="form-check-input" name="gender" type="radio" {{ ($userbio->gender =="Male") ? "checked": "" }} value="Male"/>
-                                <span class="fw-semibold ps-2 fs-6">
-                                    Male
-                                </span>
-                            </label>
-                            <!--end::Option-->
-
-                            <!--begin::Option-->
-                            <label class="form-check form-check-custom form-check-inline form-check-solid">
-                                <input class="form-check-input" name="gender" type="radio" {{ ($userbio->gender =="Female") ? "checked": "" }} value="Female"/>
-                                <span class="fw-semibold ps-2 fs-6">
-                                    Female
-                                </span>
-                            </label>
-                            <!--end::Option-->
-                        </div>
-                        <!--end::Options-->
-                    </div>
-                    <!--end::Col-->
-                </div>
-                <!--end::Input group-->
-
-
-                     <!--begin::Input group-->
-                     <div class="row mb-6">
-                        <!--begin::Label-->
-                        <label class="col-lg-4 col-form-label required fw-semibold fs-6">
-                           Marital Status
-                        </label>
-                        <!--end::Label-->
-
-                        <!--begin::Col-->
-                        <div class="col-lg-8 fv-row">
-                            <!--begin::Options-->
-                            <div class="d-flex align-items-center mt-3">
-                                <!--begin::Option-->
-                                <label class="form-check form-check-custom form-check-inline form-check-solid me-5">
-                                    <input class="form-check-input" name="maritalstatus" type="radio" {{ ($userbio->maritalstatus =="Single") ? "checked": "" }} value="Single"/>
-                                    <span class="fw-semibold ps-2 fs-6">
-                                      Single
-                                    </span>
-                                </label>
-                                <!--end::Option-->
-
-                                <!--begin::Option-->
-                                <label class="form-check form-check-custom form-check-inline form-check-solid">
-                                    <input class="form-check-input" name="maritalstatus" type="radio" {{ ($userbio->maritalstatus =="Married") ? "checked": "" }} value="Married"/>
-                                    <span class="fw-semibold ps-2 fs-6">
-                                       Married
-                                    </span>
-                                </label>
-                                <!--end::Option-->
-
-                                  <!--begin::Option-->
-                                  <label class="form-check form-check-custom form-check-inline form-check-solid">
-                                    <input class="form-check-input" name="maritalstatus" type="radio" {{ ($userbio->maritalstatus =="Divorced") ? "checked": "" }} value="Divorced"/>
-                                    <span class="fw-semibold ps-2 fs-6">
-                                       Divored
-                                    </span>
-                                </label>
-                                <!--end::Option-->
-                            </div>
-                            <!--end::Options-->
-                        </div>
-                        <!--end::Col-->
-                    </div>
-                    <!--end::Input group-->
-
-                      <!--begin::Input group-->
-                <div class="row mb-6">
-                    <!--begin::Label-->
-                    <label class="col-lg-4 col-form-label required fw-semibold fs-6">Nationality</label>
-                    <!--end::Label-->
-
-                    <!--begin::Col-->
-                    <div class="col-lg-8 fv-row">
-                        <input type="text" name="nationality" class="form-control form-control-lg form-control-solid" placeholder="Nationality" value="{{ $userbio->nationality }}" />
-                    </div>
-                    <!--end::Col-->
-                </div>
-                <!--end::Input group-->
-
-
-            </div>
-            <!--end::Card body-->
-
-            <!--begin::Actions-->
-            <div class="card-footer d-flex justify-content-end py-6 px-9">
-                <button type="reset" class="btn btn-light btn-active-light-primary me-2">Discard</button>
-                <button type="submit" class="btn btn-primary" id="kt_account_profile_details_submit">Save Changes</button>
-            </div>
-            <!--end::Actions-->
-        </form>
-        <!--end::Form-->
-    </div>
-    <!--end::Content-->
-</div>
-<!--end::Basic info-->
-<!--begin::Sign-in Method-->
-<div class="card  mb-5 mb-xl-10"   >
-    <!--begin::Card header-->
-    <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_signin_method">
-        <div class="card-title m-0">
-            <h3 class="fw-bold m-0">Sign-in Method</h3>
-        </div>
-    </div>
-    <!--end::Card header-->
-
-    <!--begin::Content-->
-    <div id="kt_account_settings_signin_method" class="collapse show">
-        <!--begin::Card body-->
-        <div class="card-body border-top p-9">
-            <!--begin::Email Address-->
-            <div class="d-flex flex-wrap align-items-center">
-                <!--begin::Label-->
-                <div id="kt_signin_email">
-                    <div class="fs-6 fw-bold mb-1">Email Address</div>
-                    <div class="fw-semibold text-gray-600">{{ $user->email }}</div>
-                </div>
-                <!--end::Label-->
-
-                <!--begin::Edit-->
-                <div id="kt_signin_email_edit" class="flex-row-fluid d-none">
-                    <!--begin::Form-->
-                    <form id="kt_signin_change_email" class="form">
-                        @csrf
-                        <input type="hidden" name="id" id="userid" value="{{ Auth::user()->id}}">
-                        <div class="row mb-6">
-                            <div class="col-lg-6 mb-4 mb-lg-0">
-                                <div class="fv-row mb-0">
-                                    <label for="emailaddress" class="form-label fs-6 fw-bold mb-3">Enter New Email Address</label>
-                                    <input type="email" class="form-control form-control-lg form-control-solid" id="emailaddress"
-                                     placeholder="Email Address" name="emailaddress" value="{{ $user->email }}" />
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="fv-row mb-0">
-                                    <label for="confirmemailpassword" class="form-label fs-6 fw-bold mb-3">Confirm Email</label>
-                                    <input type="email" class="form-control form-control-lg form-control-solid"
-                                    placeholder="Confirm Email Address" name="confirmemail" id="confirmemail" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-flex">
-                            <button id="kt_signin_submit" type="button" class="btn btn-primary  me-2 px-6">Update Email</button>
-                            <button id="kt_signin_cancel" type="button" class="btn btn-color-gray-400 btn-active-light-primary px-6">Cancel</button>
-                        </div>
-                    </form>
-                    <!--end::Form-->
-                </div>
-                <!--end::Edit-->
-
-                <!--begin::Action-->
-                <div id="kt_signin_email_button" class="ms-auto">
-                    <button class="btn btn-light btn-active-light-primary">Change Email</button>
-                </div>
-                <!--end::Action-->
-            </div>
-            <!--end::Email Address-->
-
-            <!--begin::Separator-->
-            <div class="separator separator-dashed my-6"></div>
-            <!--end::Separator-->
-
-            <!--begin::Password-->
-            <div class="d-flex flex-wrap align-items-center mb-10">
-                <!--begin::Label-->
-                <div id="kt_signin_password">
-                    <div class="fs-6 fw-bold mb-1">Password</div>
-                    <div class="fw-semibold text-gray-600">************</div>
-                </div>
-                <!--end::Label-->
-
-                <!--begin::Edit-->
-                <div id="kt_signin_password_edit" class="flex-row-fluid d-none">
-                    <!--begin::Form-->
-                    <form id="kt_signin_change_password" class="form" novalidate="novalidate" method="POST">
-                        @csrf
-                        <input type="hidden" name="pid" id="pid" value="{{ Auth::user()->id}}">
-                        <div class="row mb-1">
-                            <div class="col-lg-4">
-                                <div class="fv-row mb-0">
-                                    <label for="currentpassword" class="form-label fs-6 fw-bold mb-3">Current Password</label>
-                                    <input type="password" class="form-control form-control-lg form-control-solid "
-                                    name="currentpassword" id="currentpassword" value="{{ Auth::user()->password }}" />
-                                </div>
-                            </div>
-
-                            <div class="col-lg-4">
-                                <div class="fv-row mb-0">
-                                    <label for="newpassword" class="form-label fs-6 fw-bold mb-3">New Password</label>
-                                    <input type="password" class="form-control form-control-lg form-control-solid "
-                                     name="newpassword" id="newpassword" />
-                                </div>
-                            </div>
-
-                            <div class="col-lg-4">
-                                <div class="fv-row mb-0">
-                                    <label for="confirmpassword" class="form-label fs-6 fw-bold mb-3">Confirm New Password</label>
-                                    <input type="password" class="form-control form-control-lg form-control-solid "
-                                     name="confirmpassword" id="confirmpassword" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-text mb-5">Password must be at least 8 character and contain symbols</div>
-
-                        <div class="d-flex">
-                            <button id="kt_password_submit" type="button" class="btn btn-primary me-2 px-6">Update Password</button>
-                            <button id="kt_password_cancel" type="button" class="btn btn-color-gray-400 btn-active-light-primary px-6">Cancel</button>
-                        </div>
-                    </form>
-                    <!--end::Form-->
-                </div>
-                <!--end::Edit-->
-
-                <!--begin::Action-->
-                <div id="kt_signin_password_button" class="ms-auto">
-                    <button class="btn btn-light btn-active-light-primary">Reset Password</button>
-                </div>
-                <!--end::Action-->
-            </div>
-            <!--end::Password-->
-
-
-{{-- <!--begin::Notice-->
-<div class="notice d-flex bg-light-primary rounded border-primary border border-dashed  p-6">
-            <!--begin::Icon-->
-        <i class="ki-duotone ki-shield-tick fs-2tx text-primary me-4"><span class="path1"></span><span class="path2"></span></i>        <!--end::Icon-->
-
-    <!--begin::Wrapper-->
-    <div class="d-flex flex-stack flex-grow-1 flex-wrap flex-md-nowrap">
-                    <!--begin::Content-->
-            <div class="mb-3 mb-md-0 fw-semibold">
-                                    <h4 class="text-gray-900 fw-bold">Secure Your Account</h4>
-
-                                    <div class="fs-6 text-gray-700 pe-7">Two-factor authentication adds an extra layer of security to your account. To log in, in addition you'll need to provide a 6 digit code</div>
-                            </div>
-            <!--end::Content-->
-
-                    <!--begin::Action-->
-            <a href="#" class="btn btn-primary px-6 align-self-center text-nowrap"  data-bs-toggle="modal" data-bs-target="#kt_modal_two_factor_authentication" >
-                Enable            </a>
-            <!--end::Action-->
-            </div>
-    <!--end::Wrapper-->
-</div>
-<!--end::Notice--> --}}
-        </div>
-        <!--end::Card body-->
-    </div>
-    <!--end::Content-->
-</div>
-<!--end::Sign-in Method-->
-
-
-
-{{-- <!--begin::Deactivate Account-->
-<div class="card  "   >
-
-        <!--begin::Card header-->
-        <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_deactivate" aria-expanded="true" aria-controls="kt_account_deactivate">
-            <div class="card-title m-0">
-                <h3 class="fw-bold m-0">Deactivate Account</h3>
-            </div>
-        </div>
-        <!--end::Card header-->
-
-        <!--begin::Content-->
-        <div id="kt_account_settings_deactivate" class="collapse show">
-            <!--begin::Form-->
-            <form id="kt_account_deactivate_form" class="form">
-
-                <!--begin::Card body-->
-                <div class="card-body border-top p-9">
-
-            <!--begin::Notice-->
-            <div class="notice d-flex bg-light-warning rounded border-warning border border-dashed mb-9 p-6">
-                        <!--begin::Icon-->
-                    <i class="ki-duotone ki-information fs-2tx text-warning me-4"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>        <!--end::Icon-->
-
-                <!--begin::Wrapper-->
-                <div class="d-flex flex-stack flex-grow-1 ">
-                                <!--begin::Content-->
-                        <div class=" fw-semibold">
-                                                <h4 class="text-gray-900 fw-bold">You Are Deactivating Your Account</h4>
-
-                                                <div class="fs-6 text-gray-700 ">For extra security, this requires you to confirm your email or phone number when you reset yousignr password. <br/><a class="fw-bold" href="#">Learn more</a></div>
+                                            <!-- Avatar upload -->
+                                            @if($canEdit)
+                                                <label for="avatar" class="position-absolute bottom-0 end-0 btn btn-sm btn-icon btn-primary rounded-circle">
+                                                    <i class="ri-camera-line fs-16"></i>
+                                                    <input type="file" id="avatar" name="avatar" class="d-none" accept="image/*">
+                                                </label>
+                                            @endif
                                         </div>
-                        <!--end::Content-->
+                                        <h4 class="mt-3 mb-1">{{ $user->name }}</h4>
+                                        <p class="text-muted mb-0">{{ $user->email }}</p>
+                                        <div class="mt-2">
+                                            @foreach($user->roles as $role)
+                                                <span class="badge bg-info me-1">{{ $role->name }}</span>
+                                            @endforeach
+                                        </div>
+                                    </div>
 
+                                    <!-- Personal Details Content -->
+                                    @if($canEdit)
+                                        <form action="{{ route('profile.update-info') }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="id" value="{{ $user->id }}">
+                                            <div class="row g-3">
+                                                <div class="col-12"><h5 class="mb-3 border-bottom pb-2">Personal Information</h5></div>
+                                                <div class="col-md-6">
+                                                    <label>First Name <span class="text-danger">*</span></label>
+                                                    <input type="text" name="fname" class="form-control" value="{{ old('fname', $userbio?->firstname ?? $user->first_name ?? '') }}" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label>Last Name <span class="text-danger">*</span></label>
+                                                    <input type="text" name="lname" class="form-control" value="{{ old('lname', $userbio?->lastname ?? $user->last_name ?? '') }}" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label>Other Names</label>
+                                                    <input type="text" name="oname" class="form-control" value="{{ old('oname', $userbio?->othernames ?? '') }}">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label>Phone Number</label>
+                                                    <input type="text" name="phone" class="form-control" value="{{ old('phone', $userbio?->phone ?? $user->phone_number ?? '') }}">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label>Gender</label>
+                                                    <select name="gender" class="form-control">
+                                                        <option value="">Select</option>
+                                                        <option value="male" {{ old('gender', $userbio?->gender ?? '') == 'male' ? 'selected' : '' }}>Male</option>
+                                                        <option value="female" {{ old('gender', $userbio?->gender ?? '') == 'female' ? 'selected' : '' }}>Female</option>
+                                                        <option value="other" {{ old('gender', $userbio?->gender ?? '') == 'other' ? 'selected' : '' }}>Other</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label>Marital Status</label>
+                                                    <select name="maritalstatus" class="form-control">
+                                                        <option value="">Select</option>
+                                                        <option value="single" {{ old('maritalstatus', $userbio?->maritalstatus ?? '') == 'single' ? 'selected' : '' }}>Single</option>
+                                                        <option value="married" {{ old('maritalstatus', $userbio?->maritalstatus ?? '') == 'married' ? 'selected' : '' }}>Married</option>
+                                                        <option value="divorced" {{ old('maritalstatus', $userbio?->maritalstatus ?? '') == 'divorced' ? 'selected' : '' }}>Divorced</option>
+                                                        <option value="widowed" {{ old('maritalstatus', $userbio?->maritalstatus ?? '') == 'widowed' ? 'selected' : '' }}>Widowed</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label>Nationality</label>
+                                                    <input type="text" name="nationality" class="form-control" value="{{ old('nationality', $userbio?->nationality ?? '') }}">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label>Date of Birth</label>
+                                                    <input type="date" name="dob" class="form-control"
+                                                           value="{{ old('dob', $userbio?->dob ?? optional($user->date_of_birth)->format('Y-m-d') ?? '') }}">
+                                                </div>
+                                                <div class="col-12">
+                                                    <label>Address</label>
+                                                    <textarea name="address" class="form-control" rows="3">{{ old('address', $userbio?->address ?? '') }}</textarea>
+                                                </div>
+                                                <div class="col-12 text-end mt-4">
+                                                    <button type="reset" class="btn btn-light me-2">Reset</button>
+                                                    <button type="submit" class="btn btn-primary"><i class="ri-save-line me-1"></i> Save Changes</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    @else
+                                        <div class="row g-3">
+                                            <div class="col-12"><h5 class="mb-3 border-bottom pb-2">Personal Information</h5></div>
+                                            <div class="col-md-6">
+                                                <label>First Name</label>
+                                                <input type="text" class="form-control" value="{{ $userbio?->firstname ?? 'N/A' }}" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label>Last Name</label>
+                                                <input type="text" class="form-control" value="{{ $userbio?->lastname ?? 'N/A' }}" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label>Other Names</label>
+                                                <input type="text" class="form-control" value="{{ $userbio?->othernames ?? 'N/A' }}" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label>Phone Number</label>
+                                                <input type="text" class="form-control" value="{{ $userbio?->phone ?? $user->phone_number ?? 'N/A' }}" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label>Gender</label>
+                                                <input type="text" class="form-control" value="{{ ucfirst($userbio?->gender ?? 'N/A') }}" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label>Nationality</label>
+                                                <input type="text" class="form-control" value="{{ $userbio?->nationality ?? 'N/A' }}" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label>Date of Birth</label>
+                                                <input type="text" class="form-control" value="{{ $userbio?->dob ?? 'N/A' }}" readonly>
+                                            </div>
+                                            <div class="col-12">
+                                                <label>Address</label>
+                                                <textarea class="form-control" rows="3" readonly>{{ $userbio?->address ?? 'N/A' }}</textarea>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <!-- Security Tab -->
+                                <div class="tab-pane" id="security" role="tabpanel">
+                                    <div class="row">
+                                        <div class="col-lg-6 mb-4">
+                                            <div class="card border">
+                                                <div class="card-header bg-light"><h5 class="card-title mb-0"><i class="ri-mail-line me-2"></i>Update Email</h5></div>
+                                                <div class="card-body">
+                                                    @if($canEdit)
+                                                        <form id="updateEmailForm">
+                                                            @csrf
+                                                            <input type="hidden" name="userid" value="{{ $user->id }}">
+                                                            <div class="mb-3"><label>Current Email</label><input type="email" class="form-control" value="{{ $user->email }}" readonly></div>
+                                                            <div class="mb-3"><label>New Email *</label><input type="email" name="emailaddress" class="form-control" required></div>
+                                                            <div class="mb-3"><label>Confirm New Email *</label><input type="email" name="emailaddress_confirmation" class="form-control" required></div>
+                                                            <button type="submit" class="btn btn-primary"><span class="spinner-border spinner-border-sm d-none me-1"></span> Update Email</button>
+                                                        </form>
+                                                        <div id="emailMessage" class="mt-3"></div>
+                                                    @else
+                                                        <p><strong>Current Email:</strong> {{ $user->email }}</p>
+                                                        <small class="text-muted">Email changes must be requested from a farm administrator.</small>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6 mb-4">
+                                            <div class="card border">
+                                                <div class="card-header bg-light"><h5 class="card-title mb-0"><i class="ri-lock-line me-2"></i>Change Password</h5></div>
+                                                <div class="card-body">
+                                                    @if($canEdit)
+                                                        <form id="updatePasswordForm">
+                                                            @csrf
+                                                            <input type="hidden" name="userid" value="{{ $user->id }}">
+                                                            <div class="mb-3"><label>New Password *</label><input type="password" name="password" class="form-control" required></div>
+                                                            <div class="mb-3"><label>Confirm Password *</label><input type="password" name="password_confirmation" class="form-control" required></div>
+                                                            <div class="alert alert-info"><i class="ri-information-line me-2"></i> Minimum 8 characters</div>
+                                                            <button type="submit" class="btn btn-primary"><span class="spinner-border spinner-border-sm d-none me-1"></span> Update Password</button>
+                                                        </form>
+                                                        <div id="passwordMessage" class="mt-3"></div>
+                                                    @else
+                                                        <p><strong>Password Status:</strong> Set</p>
+                                                        <small class="text-muted">Password changes must be requested from a farm administrator.</small>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
                         </div>
-                <!--end::Wrapper-->
-            </div>
-            <!--end::Notice-->
-
-                        <!--begin::Form input row-->
-                        <div class="form-check form-check-solid fv-row">
-                            <input name="deactivate" class="form-check-input" type="checkbox" value="" id="deactivate" />
-                            <label class="form-check-label fw-semibold ps-2 fs-6" for="deactivate">I confirm my account deactivation</label>
-                        </div>
-                        <!--end::Form input row-->
                     </div>
-                    <!--end::Card body-->
-
-                    <!--begin::Card footer-->
-                    <div class="card-footer d-flex justify-content-end py-6 px-9">
-                        <button id="kt_account_deactivate_account_submit" type="submit" class="btn btn-danger fw-semibold">Deactivate Account</button>
-                    </div>
-                    <!--end::Card footer-->
-
-                </form>
-                <!--end::Form-->
-            </div>
-            <!--end::Content-->
-</div>
-<!--end::Deactivate Account--> --}}
-</div>
-        <!--end::Content container-->
-    </div>
-<!--end::Content-->
                 </div>
-                <!--end::Content wrapper-->
+            </div>
+        </div>
+    </div>
+</div>
 
-    @endsection
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// Session messages
+@if(session('success'))
+    Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: '{{ session('success') }}',
+        toast: true,
+        position: 'top-end',
+        timer: 3000,
+        showConfirmButton: false
+    });
+@endif
+@if(session('error'))
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: '{{ session('error') }}',
+        toast: true,
+        position: 'top-end',
+        timer: 3000,
+        showConfirmButton: false
+    });
+@endif
 
+// Avatar upload - only when allowed
+@if($canEdit)
+document.getElementById('avatar')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+        Swal.fire('Error', 'Image must be less than 5MB', 'error');
+        this.value = '';
+        return;
+    }
+
+    if (!file.type.match('image.*')) {
+        Swal.fire('Error', 'Please select an image file', 'error');
+        this.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById('profilePreview');
+        const fallback = document.getElementById('profileFallback') || null;
+
+        if (preview.tagName === 'IMG') {
+            preview.src = e.target.result;
+            preview.classList.remove('d-none');
+            if (fallback) fallback.classList.add('d-none');
+        } else {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.alt = 'Profile';
+            img.className = 'rounded-circle img-thumbnail';
+            img.id = 'profilePreview';
+            img.style.cssText = 'width: 150px; height: 150px; object-fit: cover;';
+            img.onerror = function() {
+                this.onerror = null;
+                this.src = '{{ asset("images/default-avatar.png") }}';
+            };
+            preview.parentNode.replaceChild(img, preview);
+        }
+    };
+    reader.readAsDataURL(file);
+
+    const fd = new FormData();
+    fd.append('avatar', file);
+    fd.append('id', '{{ $user->id }}');
+    fd.append('_token', '{{ csrf_token() }}');
+
+    Swal.fire({
+        title: 'Uploading...',
+        html: 'Please wait while we upload your profile picture',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    fetch('{{ route("profile.update-avatar") }}', {
+        method: 'POST',
+        body: fd,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+            if (data.avatar_url) {
+                document.getElementById('profilePreview').src = data.avatar_url + '?t=' + Date.now();
+            }
+        } else {
+            Swal.fire('Error!', data.message || 'Failed to upload avatar', 'error');
+        }
+    })
+    .catch(error => {
+        Swal.close();
+        Swal.fire('Error!', 'Network error occurred. Please try again.', 'error');
+    });
+});
+@endif
+
+// Email Update Form - only when allowed
+@if($canEdit)
+document.getElementById('updateEmailForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const fd = new FormData(form);
+    const btn = form.querySelector('button[type="submit"]');
+    const spinner = btn.querySelector('.spinner-border');
+    const msgDiv = document.getElementById('emailMessage');
+
+    btn.disabled = true;
+    if (spinner) spinner.classList.remove('d-none');
+
+    fetch('{{ route("profile.update-email") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: fd
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            });
+            msgDiv.innerHTML = `<div class="alert alert-success alert-dismissible fade show mt-3">
+                <i class="ri-check-line me-2"></i>${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+            form.reset();
+        } else {
+            Swal.fire('Error!', data.message || 'Failed to update email', 'error');
+            msgDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show mt-3">
+                <i class="ri-error-warning-line me-2"></i>${data.message || 'An error occurred'}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+        }
+    })
+    .catch(error => {
+        Swal.fire('Error!', 'Network error. Please try again.', 'error');
+        msgDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show mt-3">
+            <i class="ri-error-warning-line me-2"></i>Request failed. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+    })
+    .finally(() => {
+        btn.disabled = false;
+        if (spinner) spinner.classList.add('d-none');
+    });
+});
+@endif
+
+// Password Update Form - only when allowed
+@if($canEdit)
+document.getElementById('updatePasswordForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const fd = new FormData(form);
+    const btn = form.querySelector('button[type="submit"]');
+    const spinner = btn.querySelector('.spinner-border');
+    const msgDiv = document.getElementById('passwordMessage');
+
+    btn.disabled = true;
+    if (spinner) spinner.classList.remove('d-none');
+
+    fetch('{{ route("profile.update-password") }}', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: fd
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            });
+            msgDiv.innerHTML = `<div class="alert alert-success alert-dismissible fade show mt-3">
+                <i class="ri-check-line me-2"></i>${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+            form.reset();
+        } else {
+            Swal.fire('Error!', data.message || 'Failed to update password', 'error');
+            msgDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show mt-3">
+                <i class="ri-error-warning-line me-2"></i>${data.message || 'An error occurred'}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>`;
+        }
+    })
+    .catch(error => {
+        Swal.fire('Error!', 'Network error. Please try again.', 'error');
+        msgDiv.innerHTML = `<div class="alert alert-danger alert-dismissible fade show mt-3">
+            <i class="ri-error-warning-line me-2"></i>Request failed. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+    })
+    .finally(() => {
+        btn.disabled = false;
+        if (spinner) spinner.classList.add('d-none');
+    });
+});
+@endif
+
+// Tab persistence (remember last active tab)
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', e => {
+            localStorage.setItem('activeProfileTab', e.target.getAttribute('href'));
+        });
+    });
+
+    const saved = localStorage.getItem('activeProfileTab');
+    if (saved) {
+        const tab = document.querySelector(`a[href="${saved}"]`);
+        if (tab) {
+            const bsTab = new bootstrap.Tab(tab);
+            bsTab.show();
+        }
+    }
+});
+</script>
+@endsection

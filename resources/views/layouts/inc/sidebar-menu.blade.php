@@ -1,64 +1,165 @@
-{{-- Sidebar menu: grouped by the job people come to do, each link shown only with its permission. --}}
+{{-- Sidebar menu in the csskabba-portal structure: section titles, collapsible groups (menu-dropdown / nav-sm).
+     The active item and its group are highlighted by layouts/inc/layout-scripts (initActiveSidebar). --}}
 @php
     $u = auth()->user();
-    $active = fn (...$p) => request()->routeIs(...$p) ? 'active' : '';
     $livestockTypes = \Illuminate\Support\Facades\Schema::hasTable('livestock_types')
         ? \App\Models\LivestockType::where('active', true)->orderBy('sort')->get() : collect();
 @endphp
 <ul class="navbar-nav" id="navbar-nav">
-    <li class="menu-title"><span>Farm</span></li>
-    @can('View flock')
-        <li class="nav-item"><a class="nav-link menu-link {{ $active('poultry.overview') }}" href="{{ route('poultry.overview') }}"><i class="ri-dashboard-2-line"></i> <span>Farm overview</span></a></li>
-    @endcan
-    @can('dashboard')
-        <li class="nav-item"><a class="nav-link menu-link {{ $active('dashboard') }}" href="{{ route('dashboard') }}"><i class="ph-gauge"></i> <span>Analytics dashboard</span></a></li>
-    @endcan
 
-    @can('View flock')
-        <li class="menu-title"><i class="ri-more-fill"></i> <span>Poultry</span></li>
-        <li class="nav-item"><a class="nav-link menu-link {{ $active('flocks.*', 'week-entries.*', 'daily-entries.*', 'poultry.flocks.*') }}" href="{{ route('flocks.index') }}"><i class="ri-home-4-line"></i> <span>Flocks & daily records</span></a></li>
-        @can('Merge flock')
-            <li class="nav-item"><a class="nav-link menu-link {{ $active('poultry.merge*') }}" href="{{ route('poultry.merge') }}"><i class="ri-git-merge-line"></i> <span>Combine flocks</span></a></li>
-        @endcan
-    @endcan
-    @can('Import records')
-        <li class="nav-item"><a class="nav-link menu-link {{ $active('imports.*') }}" href="{{ route('imports.index') }}"><i class="ri-file-excel-2-line"></i> <span>Import from Excel</span></a></li>
-    @endcan
+    <li class="menu-title"><span data-key="t-menu">Menu</span></li>
 
-    @if ($livestockTypes->isNotEmpty() || $u?->can('Manage livestock types'))
-        <li class="menu-title"><i class="ri-more-fill"></i> <span>Livestock & more</span></li>
-        @can('View livestock')
-            @foreach ($livestockTypes as $t)
-                <li class="nav-item"><a class="nav-link menu-link {{ request()->routeIs('livestock.index', 'livestock.units.*') && optional(request()->route('type'))->id === $t->id ? 'active' : '' }}" href="{{ route('livestock.index', $t) }}"><i class="{{ $t->icon }}"></i> <span>{{ $t->name }}</span></a></li>
-            @endforeach
+    {{-- Dashboards --}}
+    @if ($u?->can('View flock') || $u?->can('dashboard'))
+        <li class="nav-item">
+            <a class="nav-link menu-link collapsed" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
+                <i class="ph-gauge"></i> <span>Dashboards</span>
+            </a>
+            <div class="collapse menu-dropdown" id="sidebarDashboards">
+                <ul class="nav nav-sm flex-column">
+                    @can('View flock')<li class="nav-item"><a href="{{ route('poultry.overview') }}" class="nav-link">Farm Overview</a></li>@endcan
+                    @can('dashboard')<li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link">Analytics Dashboard</a></li>@endcan
+                </ul>
+            </div>
+        </li>
+    @endif
+
+    {{-- POULTRY --}}
+    @if ($u?->can('View flock') || $u?->can('Import records'))
+        <li class="menu-title"><i class="ri-more-fill"></i> <span>POULTRY</span></li>
+        @can('View flock')
+            <li class="nav-item">
+                <a class="nav-link menu-link collapsed" href="#sidebarFlocks" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarFlocks">
+                    <i class="ri-home-4-line"></i> <span>Flock Management</span>
+                </a>
+                <div class="collapse menu-dropdown" id="sidebarFlocks">
+                    <ul class="nav nav-sm flex-column">
+                        <li class="nav-item"><a href="{{ route('flocks.index') }}" class="nav-link">Flocks & Daily Records</a></li>
+                        @can('Merge flock')<li class="nav-item"><a href="{{ route('poultry.merge') }}" class="nav-link">Combine Flocks</a></li>@endcan
+                    </ul>
+                </div>
+            </li>
         @endcan
-        @can('Manage livestock types')
-            <li class="nav-item"><a class="nav-link menu-link {{ $active('livestock.types.*') }}" href="{{ route('livestock.types.index') }}"><i class="ri-add-circle-line"></i> <span>{{ $livestockTypes->isEmpty() ? 'Add cattle, goats, fish…' : 'Set up farm units' }}</span></a></li>
+        @can('Import records')
+            <li class="nav-item">
+                <a class="nav-link menu-link" href="{{ route('imports.index') }}"><i class="ri-file-excel-2-line"></i> <span>Import from Excel</span></a>
+            </li>
         @endcan
     @endif
 
+    {{-- LIVESTOCK & MORE --}}
+    @if (($livestockTypes->isNotEmpty() && $u?->can('View livestock')) || $u?->can('Manage livestock types'))
+        <li class="menu-title"><i class="ri-more-fill"></i> <span>LIVESTOCK & MORE</span></li>
+        <li class="nav-item">
+            <a class="nav-link menu-link collapsed" href="#sidebarLivestock" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarLivestock">
+                <i class="ri-leaf-line"></i> <span>Farm Units</span>
+            </a>
+            <div class="collapse menu-dropdown" id="sidebarLivestock">
+                <ul class="nav nav-sm flex-column">
+                    @can('View livestock')
+                        @foreach ($livestockTypes as $t)
+                            <li class="nav-item"><a href="{{ route('livestock.index', $t) }}" class="nav-link">{{ $t->name }}</a></li>
+                        @endforeach
+                    @endcan
+                    @can('Manage livestock types')
+                        <li class="nav-item"><a href="{{ route('livestock.types.index') }}" class="nav-link">{{ $livestockTypes->isEmpty() ? 'Add Cattle, Goats, Fish…' : 'Set Up Farm Units' }}</a></li>
+                    @endcan
+                </ul>
+            </div>
+        </li>
+    @endif
+
+    {{-- REPORTS --}}
     @can('View reports')
-        <li class="menu-title"><i class="ri-more-fill"></i> <span>Reports</span></li>
-        <li class="nav-item"><a class="nav-link menu-link {{ $active('reports.performance') }}" href="{{ route('reports.performance') }}"><i class="ri-file-chart-line"></i> <span>Performance report</span></a></li>
-        <li class="nav-item"><a class="nav-link menu-link {{ request()->routeIs('reports.*') && ! request()->routeIs('reports.performance') ? 'active' : '' }}" href="{{ route('reports.index') }}"><i class="ri-bar-chart-2-line"></i> <span>Reports & analytics</span></a></li>
+        <li class="menu-title"><i class="ri-more-fill"></i> <span>REPORTS & ANALYTICS</span></li>
+        <li class="nav-item">
+            <a class="nav-link menu-link collapsed" href="#sidebarReports" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarReports">
+                <i class="ri-file-chart-line"></i> <span>Reports</span>
+            </a>
+            <div class="collapse menu-dropdown" id="sidebarReports">
+                <ul class="nav nav-sm flex-column">
+                    <li class="nav-item"><a href="{{ route('reports.performance') }}" class="nav-link">Performance Report</a></li>
+                    <li class="nav-item"><a href="{{ route('reports.index') }}" class="nav-link">Reports & Analytics</a></li>
+                    @can('Manage reports')<li class="nav-item"><a href="{{ route('reports.create') }}" class="nav-link">New Report</a></li>@endcan
+                </ul>
+            </div>
+        </li>
     @endcan
 
-    @canany(['View sale', 'View customer'])
-        <li class="menu-title"><i class="ri-more-fill"></i> <span>Sales</span></li>
-        @can('View sale')<li class="nav-item"><a class="nav-link menu-link {{ $active('sales.*') }}" href="{{ route('sales.index') }}"><i class="ph-receipt"></i> <span>Invoices</span></a></li>@endcan
-        @can('View customer')<li class="nav-item"><a class="nav-link menu-link {{ $active('customers.*') }}" href="{{ route('customers.index') }}"><i class="ri-team-line"></i> <span>Customers</span></a></li>@endcan
+    {{-- SALES & FINANCE --}}
+    @canany(['View sale', 'View customer', 'View expense', 'View feed', 'View settings'])
+        <li class="menu-title"><i class="ri-more-fill"></i> <span>SALES & FINANCE</span></li>
+        @canany(['View sale', 'View customer'])
+            <li class="nav-item">
+                <a class="nav-link menu-link collapsed" href="#sidebarSales" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSales">
+                    <i class="ph-receipt"></i> <span>Sales</span>
+                </a>
+                <div class="collapse menu-dropdown" id="sidebarSales">
+                    <ul class="nav nav-sm flex-column">
+                        @can('View sale')<li class="nav-item"><a href="{{ route('sales.index') }}" class="nav-link">Invoices</a></li>@endcan
+                        @can('View customer')<li class="nav-item"><a href="{{ route('customers.index') }}" class="nav-link">Customers</a></li>@endcan
+                    </ul>
+                </div>
+            </li>
+        @endcanany
+        @canany(['View expense', 'View feed', 'View settings'])
+            <li class="nav-item">
+                <a class="nav-link menu-link collapsed" href="#sidebarFinance" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarFinance">
+                    <i class="ph-coins"></i> <span>Finance</span>
+                </a>
+                <div class="collapse menu-dropdown" id="sidebarFinance">
+                    <ul class="nav nav-sm flex-column">
+                        @can('View expense')<li class="nav-item"><a href="{{ route('expenses.index') }}" class="nav-link">Expenses</a></li>@endcan
+                        @can('View feed')<li class="nav-item"><a href="{{ route('feed.index') }}" class="nav-link">Feed Stock</a></li>@endcan
+                        @can('View settings')<li class="nav-item"><a href="{{ route('settings.index') }}" class="nav-link">Prices & Costs</a></li>@endcan
+                    </ul>
+                </div>
+            </li>
+        @endcanany
     @endcanany
 
-    @canany(['View expense', 'View feed', 'View settings'])
-        <li class="menu-title"><i class="ri-more-fill"></i> <span>Finance</span></li>
-        @can('View expense')<li class="nav-item"><a class="nav-link menu-link {{ $active('expenses.*') }}" href="{{ route('expenses.index') }}"><i class="ph-coins"></i> <span>Expenses</span></a></li>@endcan
-        @can('View feed')<li class="nav-item"><a class="nav-link menu-link {{ $active('feed.*') }}" href="{{ route('feed.index') }}"><i class="ri-stack-line"></i> <span>Feed stock</span></a></li>@endcan
-        @can('View settings')<li class="nav-item"><a class="nav-link menu-link {{ $active('settings.*') }}" href="{{ route('settings.index') }}"><i class="ri-price-tag-3-line"></i> <span>Prices & costs</span></a></li>@endcan
-    @endcanany
+    {{-- USERS & PRIVILEGES --}}
+    @if ($u?->can('View user') || $u?->can('View role') || $u?->can('View permission'))
+        <li class="menu-title"><i class="ri-more-fill"></i> <span>USERS & PRIVILEGES</span></li>
+    @endif
+    @can('View user')
+        <li class="nav-item">
+            <a class="nav-link menu-link collapsed" href="#sidebarUsers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarUsers">
+                <i class="ph-user-circle"></i> <span>User Management</span>
+            </a>
+            <div class="collapse menu-dropdown" id="sidebarUsers">
+                <ul class="nav nav-sm flex-column">
+                    <li class="nav-item"><a href="{{ route('users.index') }}" class="nav-link">Users</a></li>
+                </ul>
+            </div>
+        </li>
+    @endcan
+    @if ($u?->can('View role') || $u?->can('View permission'))
+        <li class="nav-item">
+            <a class="nav-link menu-link collapsed" href="#sidebarRoles" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRoles">
+                <i class="ri-shield-keyhole-line"></i> <span>Roles & Permissions</span>
+            </a>
+            <div class="collapse menu-dropdown" id="sidebarRoles">
+                <ul class="nav nav-sm flex-column">
+                    @can('View role')<li class="nav-item"><a href="{{ route('roles.index') }}" class="nav-link">Roles</a></li>@endcan
+                    @can('View permission')<li class="nav-item"><a href="{{ route('permissions.index') }}" class="nav-link">Permissions</a></li>@endcan
+                </ul>
+            </div>
+        </li>
+    @endif
 
-    <li class="menu-title"><i class="ri-more-fill"></i> <span>Admin</span></li>
-    @can('View user')<li class="nav-item"><a class="nav-link menu-link {{ $active('users.*') }}" href="{{ route('users.index') }}"><i class="ph-user-circle"></i> <span>Users</span></a></li>@endcan
-    @can('View role')<li class="nav-item"><a class="nav-link menu-link {{ $active('roles.*') }}" href="{{ route('roles.index') }}"><i class="ph-address-book"></i> <span>Roles</span></a></li>@endcan
-    @can('View permission')<li class="nav-item"><a class="nav-link menu-link {{ $active('permissions.*') }}" href="{{ route('permissions.index') }}"><i class="ri-shield-keyhole-line"></i> <span>Permissions</span></a></li>@endcan
-    <li class="nav-item"><a class="nav-link menu-link" href="{{ $u ? route('users.overview', $u->id) : '#' }}"><i class="ri-account-circle-line"></i> <span>My account</span></a></li>
+    {{-- My Account --}}
+    @auth
+        <li class="nav-item">
+            <a class="nav-link menu-link collapsed" href="#sidebarAccount" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccount">
+                <i class="ph-address-book"></i> <span>My Account</span>
+            </a>
+            <div class="collapse menu-dropdown" id="sidebarAccount">
+                <ul class="nav nav-sm flex-column">
+                    <li class="nav-item"><a href="{{ route('users.overview', auth()->id()) }}" class="nav-link"><i class="ri-profile-line me-2"></i> My Profile</a></li>
+                    <li class="nav-item"><a href="{{ route('user.settings', auth()->id()) }}" class="nav-link"><i class="ri-settings-3-line me-2"></i> Account Settings</a></li>
+                </ul>
+            </div>
+        </li>
+    @endauth
 </ul>
