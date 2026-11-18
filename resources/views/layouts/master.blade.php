@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     @php $farmName = \App\Support\FarmSettings::text('farm_name'); @endphp
-    <title>{{ $pagetitle ?? 'Poultrilic' }} | {{ $farmName ?: 'Poultrilic' }}</title>
+    <title>{{ $pagetitle ?? 'Dashboard' }} | {{ $farmName }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="Poultry and farm management: flocks, livestock, sales, analytics and reports" name="description">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -78,15 +78,16 @@
     <!-- ========== SIDEBAR ========== -->
     <div class="app-menu navbar-menu">
 
-        <!-- LOGO -->
+        <!-- LOGO: the farm's own logo and name (Website › Settings / Business details) -->
+        @php $brandLogo = \App\Services\Website\WebsiteContent::farm()->logo; @endphp
         <div class="navbar-brand-box">
             <a href="{{ route('poultry.overview') }}" class="logo logo-dark">
-                <span class="logo-sm"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span></span>
-                <span class="logo-lg"><span class="pl-logo"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span><span class="pl-logo-text">Poultrilic</span></span></span>
+                <span class="logo-sm"><span class="pl-logo-mark @if ($brandLogo) has-img @endif">@if ($brandLogo)<img src="{{ $brandLogo }}" alt="">@else<i class="ri-seedling-fill"></i>@endif</span></span>
+                <span class="logo-lg"><span class="pl-logo"><span class="pl-logo-mark @if ($brandLogo) has-img @endif">@if ($brandLogo)<img src="{{ $brandLogo }}" alt="">@else<i class="ri-seedling-fill"></i>@endif</span><span class="pl-logo-text">{{ $farmName }}</span></span></span>
             </a>
             <a href="{{ route('poultry.overview') }}" class="logo logo-light">
-                <span class="logo-sm"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span></span>
-                <span class="logo-lg"><span class="pl-logo"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span><span class="pl-logo-text">Poultrilic</span></span></span>
+                <span class="logo-sm"><span class="pl-logo-mark @if ($brandLogo) has-img @endif">@if ($brandLogo)<img src="{{ $brandLogo }}" alt="">@else<i class="ri-seedling-fill"></i>@endif</span></span>
+                <span class="logo-lg"><span class="pl-logo"><span class="pl-logo-mark @if ($brandLogo) has-img @endif">@if ($brandLogo)<img src="{{ $brandLogo }}" alt="">@else<i class="ri-seedling-fill"></i>@endif</span><span class="pl-logo-text">{{ $farmName }}</span></span></span>
             </a>
             <button type="button" class="btn btn-sm p-0 fs-3xl header-item float-end btn-vertical-sm-hover" id="vertical-hover">
                 <i class="ri-record-circle-line"></i>
@@ -144,8 +145,8 @@
                 <div class="d-flex">
                     <div class="navbar-brand-box horizontal-logo">
                         <a href="{{ route('poultry.overview') }}" class="logo logo-dark">
-                            <span class="logo-sm"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span></span>
-                            <span class="logo-lg"><span class="pl-logo"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span><span class="pl-logo-text">Poultrilic</span></span></span>
+                            <span class="logo-sm"><span class="pl-logo-mark @if ($brandLogo) has-img @endif">@if ($brandLogo)<img src="{{ $brandLogo }}" alt="">@else<i class="ri-seedling-fill"></i>@endif</span></span>
+                            <span class="logo-lg"><span class="pl-logo"><span class="pl-logo-mark @if ($brandLogo) has-img @endif">@if ($brandLogo)<img src="{{ $brandLogo }}" alt="">@else<i class="ri-seedling-fill"></i>@endif</span><span class="pl-logo-text">{{ $farmName }}</span></span></span>
                         </a>
                     </div>
                     <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger shadow-none" id="topnav-hamburger-icon">
@@ -261,7 +262,7 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-6">
-                    {{ now()->year }} © {{ $farmName ?: 'Poultrilic' }}
+                    {{ now()->year }} © {{ $farmName }}
                     <span class="text-muted">· Powered by <span class="fw-semibold">Poultrilic</span></span>
                 </div>
                 <div class="col-sm-6">

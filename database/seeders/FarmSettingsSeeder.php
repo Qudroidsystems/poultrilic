@@ -12,7 +12,7 @@ class FarmSettingsSeeder extends Seeder
     public function run(): void
     {
         $values = FarmSettings::DEFAULTS + [
-            'farm_name' => env('FARM_NAME', 'Poultrilic Farm'),
+            'farm_name' => env('FARM_NAME', 'Prime Farm'),
             'farm_address' => env('FARM_ADDRESS', ''),
             'farm_phone' => env('FARM_PHONE', ''),
             'invoice_footer' => 'Thank you for your patronage.',

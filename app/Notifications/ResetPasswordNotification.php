@@ -16,7 +16,7 @@ class ResetPasswordNotification extends ResetPassword
 
     public function toMail($notifiable): MailMessage
     {
-        $farm    = FarmSettings::text('farm_name') ?: 'Poultrilic';
+        $farm    = FarmSettings::text('farm_name');
         $minutes = config('auth.passwords.users.expire', 60);
 
         $mail = (new MailMessage)

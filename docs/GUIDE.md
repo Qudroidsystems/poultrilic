@@ -155,3 +155,28 @@ unit and month, and appears in the performance report and the report designer.
   APP_URL=http://your-server-address   # links in emails use this
   ```
   Then run `php artisan config:clear`.
+
+## The public website
+
+The website at `/` is the farm's own shop window, managed under **Website** in the sidebar
+(permission "Manage website"; Super Admin and Admin have it). Nothing on it is sample content:
+a section only appears once it has something to show.
+
+- **Live from the farm records**: "The farm today" numbers (birds on the farm, eggs collected
+  in the last 30 days of records, laying rate, eggs ready to sell, farm enterprises, other animals,
+  customers, years farming; tick which ones visitors may see in Website › Settings), the
+  "What we raise and grow" cards (active flocks plus each farm-unit type), product prices that follow
+  the egg price in Prices & Costs (per egg or per crate of 30) and availability from the egg stock or
+  birds on the farm. The farm name, address and phone come from Prices & Costs › Business details.
+  Numbers are cached for an hour and the home page refreshes them every few minutes.
+- **Written by the farm**: products, home slider, welcome text, pages (About, Our farm, Products
+  menus), news / events / farm tips, gallery albums, team, testimonials, FAQs, values, highlights,
+  partners, colours, logo, social links, WhatsApp button and map.
+- **Orders and messages**: visitors can send an order (product, quantity, pick-up or delivery, date),
+  ask for a farm visit, send a message or join the newsletter. They arrive in Website › Orders &
+  messages with call / WhatsApp links and a CSV export; the sidebar shows the unread count.
+- **Switching it off**: untick "Website is live" and `/` opens the staff sign-in page.
+- Animations (word-by-word headings, reveal on scroll, counters, parallax, card tilt, floating eggs,
+  marquee, scroll progress) switch off for visitors who turn on "reduce motion".
+- Uploaded photos go to `storage/app/public/website`; run `php artisan storage:link` once if images
+  don't show.

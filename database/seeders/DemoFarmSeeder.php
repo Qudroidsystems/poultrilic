@@ -46,9 +46,6 @@ class DemoFarmSeeder extends Seeder
         mt_srand(20261118);
         $today = now()->startOfDay();
         $userId = User::orderBy('id')->value('id');
-        if (in_array(FarmSettings::text('farm_name'), ['', 'Poultrilic Farm', (string) config('app.name')], true)) {
-            FarmSettings::set(['farm_name' => 'Poultrilic Demo Farm']);
-        }
 
         DB::transaction(function () use ($today, $userId) {
             FlockLedger::batch(function () use ($today) {

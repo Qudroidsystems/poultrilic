@@ -3,9 +3,9 @@
 <html lang="en" data-layout="vertical" data-sidebar="dark" data-sidebar-size="lg" data-preloader="disable" data-theme="default" data-topbar="light" data-bs-theme="light">
 <head>
     <meta charset="utf-8">
-    <title>@yield('title', 'Sign In') | {{ \App\Support\FarmSettings::text('farm_name') ?: 'Poultrilic' }}</title>
+    <title>@yield('title', 'Sign In') | {{ \App\Support\FarmSettings::text('farm_name') }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="Poultrilic farm management" name="description">
+    <meta content="{{ \App\Support\FarmSettings::text('farm_name') }} — staff portal" name="description">
     <meta content="Qudroid Systems" name="author">
     @include('auth.partials.brand-head')
     <!-- Fonts css load -->

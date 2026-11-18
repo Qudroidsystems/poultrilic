@@ -23,7 +23,7 @@ class LivestockSheetImporter
 
     public function headers(LivestockType $type): array
     {
-        $h = [[$type->unit_label, 'Name of the ' . strtolower($type->unit_label) . ' exactly as in Poultrilic'], ['Date', 'The day the record describes']];
+        $h = [[$type->unit_label, 'Name of the ' . strtolower($type->unit_label) . ' exactly as in the portal'], ['Date', 'The day the record describes']];
         foreach ($type->fields as $f) {
             $note = trim(($f->help ?? '') . ' ' . match ($f->kind) {
                 'select' => 'One of: ' . implode(', ', $f->options ?? []),

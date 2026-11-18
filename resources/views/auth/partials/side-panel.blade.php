@@ -1,7 +1,7 @@
 {{-- Left panel of the sign-in pages: csskabba's animated circles, with farm icons
      around the ring instead of staff photos (no user details are shown before sign-in). --}}
 @php
-    $farmName = \App\Support\FarmSettings::text('farm_name') ?: 'Poultrilic';
+    $farmName = \App\Support\FarmSettings::text('farm_name');
     $orbit = [
         ['mdi mdi-egg-outline', 'Eggs and laying rate'],
         ['ri-seedling-line', 'Feed and stock'],
@@ -22,7 +22,7 @@
                 <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center" style="animation: pulse 2s infinite;">
                     <div class="effect-circle-2 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
                         <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(4px);">
-                            <span class="text-primary ms-1" style="font-weight: 600;">Poultrilic</span>
+                            <span class="text-primary ms-1" style="font-weight: 600;">{{ $farmName }}</span>
                         </div>
                     </div>
                 </div>

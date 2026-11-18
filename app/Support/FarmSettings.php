@@ -80,7 +80,7 @@ class FarmSettings
         }
     }
 
-    /** A business-detail text value; the business name falls back to the app name. */
+    /** A business-detail text value; the business name falls back to config('poultrilic.farm_name') (Prime Farm). */
     public static function text(string $key): string
     {
         $value = trim((string) (self::stored()[$key] ?? ''));
@@ -88,7 +88,7 @@ class FarmSettings
             return $value;
         }
 
-        return $key === 'farm_name' ? (string) config('app.name') : (self::TEXT_FIELDS[$key]['default'] ?? '');
+        return $key === 'farm_name' ? (string) config('poultrilic.farm_name', 'Prime Farm') : (self::TEXT_FIELDS[$key]['default'] ?? '');
     }
 
     public static function get(string $key): float|int

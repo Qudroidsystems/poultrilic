@@ -11,6 +11,8 @@
     background: var(--cb-hero-grad, linear-gradient(135deg, #0f2342, #0d9488));
     box-shadow: 0 4px 12px rgba(13, 148, 136, .25);
 }
+.pl-logo-mark.has-img { background: #fff; padding: 2px; overflow: hidden; }
+.pl-logo-mark.has-img img { width: 100%; height: 100%; object-fit: contain; border-radius: 7px; }
 .pl-logo-text { font-family: var(--cb-font-display, 'Playfair Display', serif); font-weight: 700; font-size: 21px; letter-spacing: -.01em; color: #fff; }
 .logo-dark .pl-logo-text { color: var(--cb-heading, #0f2342); }
 html[data-ui=apple] .pl-logo-text { font-family: var(--pt-a-font); font-weight: 650; letter-spacing: -.03em; }

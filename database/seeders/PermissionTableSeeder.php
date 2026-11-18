@@ -30,6 +30,7 @@ class PermissionTableSeeder extends Seeder
         'Expense Management' => ['View expense', 'Create expense', 'Update expense', 'Delete expense'],
         'Feed Management' => ['View feed', 'Create feed', 'Update feed', 'Delete feed'],
         'Settings' => ['View settings', 'Update settings'],
+        'Website' => ['Manage website'],
     ];
 
     public function run(): void

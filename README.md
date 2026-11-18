@@ -68,6 +68,13 @@ Sign-in, sign-up, forgot / reset password and email verification use csskabba's 
 design (`layouts/auth.blade.php`). See docs/GUIDE.md, "Signing in, sign-up and account recovery",
 for the reset flow, admin recovery links and email setup.
 
+## Public website
+
+`/` is the farm's website (ported from csskabba-portal's school website): products with live egg
+prices and stock, live farm numbers, farm units, pages, news, gallery, team, orders and messages,
+all managed under **Website** in the portal. Run `php artisan migrate` after upgrading. See
+docs/GUIDE.md, "The public website".
+
 ## Documentation
 
 - `docs/GUIDE.md` – how to use the platform and exactly how every figure is worked out

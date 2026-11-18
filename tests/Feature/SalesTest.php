@@ -288,9 +288,13 @@ it('renders the invoice and receipt templates with the business details', functi
     expect($html)->toContain($p->receipt_number)->toContain('1,000.00')->toContain('74,000.00');
 });
 
-it('falls back to the app name when no business name is set', function () {
-    config(['app.name' => 'Poultrilic']);
-    expect(FarmSettings::text('farm_name'))->toBe('Poultrilic');
+it('falls back to the farm name in config when no business name is set', function () {
+    \App\Models\Setting::where('key', 'farm_name')->delete();   // the upgrade saves "Prime Farm"; test the fallback
+    FarmSettings::flush();
+    expect(FarmSettings::text('farm_name'))->toBe('Prime Farm');
+    config(['poultrilic.farm_name' => 'Another Farm']);
+    FarmSettings::flush();
+    expect(FarmSettings::text('farm_name'))->toBe('Another Farm');
 });
 
 // ------------------------------------------------------------ customers

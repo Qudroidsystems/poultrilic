@@ -30,7 +30,7 @@
                     </div>
                     <div class="form-check mb-3">
                         <input type="checkbox" name="create_missing" value="1" class="form-check-input" id="pcm">
-                        <label for="pcm" class="form-check-label">Create flocks that are in the sheet but not in Poultrilic yet</label>
+                        <label for="pcm" class="form-check-label">Create flocks that are in the sheet but not in the portal yet</label>
                     </div>
                     <button class="btn btn-primary"><i class="ri-eye-line align-bottom me-1"></i>Check the file</button>
                 </form>
@@ -71,7 +71,7 @@
                             </div>
                             <div class="form-check mb-3">
                                 <input type="checkbox" name="create_missing" value="1" class="form-check-input" id="lcm">
-                                <label for="lcm" class="form-check-label">Create units that are not in Poultrilic yet</label>
+                                <label for="lcm" class="form-check-label">Create units that are not in the portal yet</label>
                             </div>
                             <button class="btn btn-primary"><i class="ri-eye-line align-bottom me-1"></i>Check the file</button>
                         </form>

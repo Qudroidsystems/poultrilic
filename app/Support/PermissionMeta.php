@@ -48,6 +48,7 @@ class PermissionMeta
         'Import records'            => ['Import', 'Upload daily records from an Excel sheet.'],
         'Manage reports'            => ['Manage', 'Create, edit and delete saved reports and analytics.'],
         'Manage livestock types'    => ['Manage', 'Set up farm units such as cows, goats and fish ponds.'],
+        'Manage website'            => ['Manage', 'Edit the public website and read orders and messages from visitors.'],
         'Manage livestock units'    => ['Manage', 'Add and edit the units (herds, ponds) of each farm-unit type.'],
     ];
 

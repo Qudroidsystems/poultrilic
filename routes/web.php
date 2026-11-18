@@ -17,14 +17,16 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WeekEntryController;
 use App\Http\Controllers\DailyEntryController;
 use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\WebsiteHomeController;
 use App\Http\Controllers\PoultryController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LivestockTypeController;
 use App\Http\Controllers\LivestockController;
 use App\Http\Controllers\ReportController;
 
-Route::get('/', [WebsiteHomeController::class, 'index'])->name('websiteHome');
+// The farm's public website (switch it off in Website › Settings and "/" opens the sign-in page).
+Route::get('/', [\App\Http\Controllers\Website\SiteController::class, 'home'])->name('site.home');
+Route::redirect('/website', '/', 301)->name('websiteHome');
+require __DIR__ . '/website.php';
 
 
 Auth::routes(['register' => config('poultrilic.allow_registration', true), 'verify' => true]);

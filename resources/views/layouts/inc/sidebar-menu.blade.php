@@ -118,6 +118,30 @@
         @endcanany
     @endcanany
 
+    {{-- WEBSITE --}}
+    @can('Manage website')
+        @php $webUnread = \Illuminate\Support\Facades\Schema::hasTable('website_messages') ? \App\Models\Website\WebsiteMessage::whereNull('read_at')->where('type', '!=', 'newsletter')->count() : 0; @endphp
+        <li class="menu-title"><i class="ri-more-fill"></i> <span>WEBSITE</span></li>
+        <li class="nav-item">
+            <a class="nav-link menu-link collapsed" href="#sidebarWebsite" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarWebsite">
+                <i class="ri-global-line"></i> <span>Website</span>
+                @if ($webUnread)<span class="badge bg-danger rounded-pill ms-auto">{{ $webUnread }}</span>@endif
+            </a>
+            <div class="collapse menu-dropdown" id="sidebarWebsite">
+                <ul class="nav nav-sm flex-column">
+                    <li class="nav-item"><a href="{{ route('website.admin.index') }}" class="nav-link">Overview</a></li>
+                    <li class="nav-item"><a href="{{ route('website.admin.messages') }}" class="nav-link">Orders &amp; messages</a></li>
+                    <li class="nav-item"><a href="{{ route('website.admin.list', 'products') }}" class="nav-link">Products</a></li>
+                    <li class="nav-item"><a href="{{ route('website.admin.list', 'pages') }}" class="nav-link">Pages</a></li>
+                    <li class="nav-item"><a href="{{ route('website.admin.list', 'posts') }}" class="nav-link">News &amp; events</a></li>
+                    <li class="nav-item"><a href="{{ route('website.admin.albums') }}" class="nav-link">Gallery</a></li>
+                    <li class="nav-item"><a href="{{ route('website.admin.settings') }}" class="nav-link">Settings</a></li>
+                    <li class="nav-item"><a href="{{ route('site.home') }}" target="_blank" class="nav-link">View website <i class="ri-external-link-line ms-1"></i></a></li>
+                </ul>
+            </div>
+        </li>
+    @endcan
+
     {{-- USERS & PRIVILEGES --}}
     @if ($u?->can('View user') || $u?->can('View role') || $u?->can('View permission'))
         <li class="menu-title"><i class="ri-more-fill"></i> <span>USERS & PRIVILEGES</span></li>
