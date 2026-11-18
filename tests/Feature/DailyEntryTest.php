@@ -128,7 +128,8 @@ it('derives integer columns when only the legacy text is written', function () {
 
     expect($entry->fresh()->eggs_produced)->toBe(172232)
         ->and($entry->fresh()->eggs_sold)->toBe(30)
-        ->and($entry->fresh()->eggs_outstanding)->toBe(63)
+        // Outstanding is derived by the flock ledger (laid - sold - broken - bad), not taken from the typed text.
+        ->and($entry->fresh()->eggs_outstanding)->toBe(172232 - 30)
         ->and($entry->fresh()->flock_id)->not->toBeNull();
 });
 

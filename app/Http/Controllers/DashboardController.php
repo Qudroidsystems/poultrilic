@@ -474,46 +474,20 @@ class DashboardController extends Controller
             
             foreach ($allEntriesForFlock as $entry) {
                 $totalEggsProduced += (int) $entry->eggs_produced;
-                $totalFeedConsumed += $entry->total_feeds_consumed ?? 0;
-                $totalBrokenEggs += $entry->broken_egg ?? 0;
-                
-                // Count drug usage days
-                if ($entry->drugs && $entry->drugs !== 'Nil' && $entry->drugs !== '') {
+                // Bags fed that day. (total_feeds_consumed is a running total; summing it counted feed many times.)
+                $totalFeedConsumed += (float) $entry->daily_feeds;
+                $totalBrokenEggs += (int) $entry->broken_egg + (int) $entry->bad_eggs;
+                if ($entry->has_drugs) {
                     $totalDrugUsage++;
                 }
             }
-            
-            // For Flock 1 and 2, use hardcoded values from manual data
-            if ($flock->id == 1) {
-                $initialBirds = 1000;
-                $currentBirds = 959; // From manual data
-                // Override with actual totals from database
-                $totalEggsSold = 172232; // From entry ID 424: '5741 Cr 2PC' = 5741*30 + 2
-                $totalFeedConsumed = 1252; // From manual data
-                // Calculate total eggs produced from all entries
-                $totalEggsProduced = $this->calculateTotalEggsProducedForFlock(1);
-                // Calculate total broken eggs
-                $totalBrokenEggs = $this->calculateTotalBrokenEggsForFlock(1);
-                // Calculate total drug usage
-                $totalDrugUsage = $this->calculateTotalDrugUsageForFlock(1);
-            } elseif ($flock->id == 2) {
-                $initialBirds = 650;
-                $currentBirds = 642;
-                // For flock 2, calculate from database
-                $totalEggsSold = $this->calculateTotalEggsSoldForFlock(2);
-                $totalFeedConsumed = $latestEntry->total_feeds_consumed ?? 0;
-                $totalEggsProduced = $this->calculateTotalEggsProducedForFlock(2);
-                $totalBrokenEggs = $this->calculateTotalBrokenEggsForFlock(2);
-                $totalDrugUsage = $this->calculateTotalDrugUsageForFlock(2);
-            } else {
-                // For other flocks
-                $initialBirds = $maxBirds;
-                $currentBirds = $latestEntry->current_birds;
-            }
-            
-            // Calculate mortality
-            $mortality = max(0, $initialBirds - $currentBirds);
-            
+
+            // Every flock from its own records (the hardcoded figures for flocks 1 and 2 are gone):
+            // birds at start of records, birds alive from the flock ledger, deaths summed day by day.
+            $initialBirds = (int) $flock->initial_bird_count;
+            $currentBirds = (int) $latestEntry->current_birds;
+            $mortality = (int) $allEntriesForFlock->sum('daily_mortality');
+
             $flocks[$flock->id] = [
                 'totalBirds' => $initialBirds,
                 'currentBirds' => $currentBirds,
@@ -667,9 +641,9 @@ class DashboardController extends Controller
             return 0;
         }
 
-        // Get entries with positive birds
+        // Hen-day: only laying days count, so a flock of growing chicks does not drag the rate down.
         $validEntries = $dailyEntries->filter(function($entry) {
-            return $entry->current_birds > 0;
+            return $entry->current_birds > 0 && (int) $entry->eggs_produced > 0;
         });
         
         if ($validEntries->count() === 0) {

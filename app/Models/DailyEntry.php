@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\FlockLedger;
 use App\Support\Eggs;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,7 +11,9 @@ class DailyEntry extends Model
     protected $fillable = [
         'week_entry_id', 'flock_id', 'day_number', 'entry_date',
         'daily_feeds', 'available_feeds', 'total_feeds_consumed',
-        'daily_mortality', 'sick_bay', 'total_mortality', 'current_birds',
+        'daily_mortality', 'birds_stolen', 'birds_culled', 'sick_bay', 'total_mortality', 'current_birds',
+        'reported_birds_alive', 'reported_total_deaths', 'avg_weight_g', 'bad_eggs', 'egg_stock',
+        'notes', 'source', 'reported_at',
         // Integer egg counts (pieces) - the source of truth for all reporting.
         'eggs_produced', 'eggs_sold', 'eggs_outstanding',
         // Legacy "11 Cr 12PC" text columns, still written for backward compatibility.
@@ -24,7 +27,15 @@ class DailyEntry extends Model
         'daily_feeds' => 'decimal:2',
         'available_feeds' => 'decimal:2',
         'reorder_feeds' => 'decimal:2',
-        'total_feeds_consumed' => 'integer',
+        'total_feeds_consumed' => 'decimal:2',
+        'birds_stolen' => 'integer',
+        'birds_culled' => 'integer',
+        'bad_eggs' => 'integer',
+        'egg_stock' => 'integer',
+        'reported_birds_alive' => 'integer',
+        'reported_total_deaths' => 'integer',
+        'avg_weight_g' => 'decimal:1',
+        'reported_at' => 'datetime',
         'daily_mortality' => 'integer',
         'sick_bay' => 'integer',
         'total_mortality' => 'integer',
@@ -114,37 +125,54 @@ class DailyEntry extends Model
                     $entry->{$int} = Eggs::parse($entry->{$legacy});
                 }
             }
-        });
-
-        // Update flock's current bird count when daily mortality is recorded
-        static::created(function ($dailyEntry) {
-            $dailyEntry->updateFlockBirdCount();
-        });
-
-        static::updated(function ($dailyEntry) {
-            if ($dailyEntry->isDirty('daily_mortality')) {
-                $dailyEntry->updateFlockBirdCount();
+            // ...and the other way round, so screens that still show the text never go stale.
+            foreach (['eggs_produced' => 'daily_egg_production', 'eggs_sold' => 'daily_sold_egg'] as $int => $legacy) {
+                if ($entry->isDirty($int) && ! $entry->isDirty($legacy)) {
+                    $entry->{$legacy} = Eggs::format((int) $entry->{$int});
+                }
             }
+            foreach (['daily_egg_production', 'daily_sold_egg', 'outstanding_egg', 'total_sold_egg', 'total_egg_in_farm'] as $col) {
+                if ($entry->{$col} === null) {
+                    $entry->{$col} = '0 Cr 0PC';
+                }
+            }
+            foreach (['sick_bay', 'available_feeds', 'total_mortality', 'current_birds', 'total_feeds_consumed', 'broken_egg'] as $col) {
+                if ($entry->{$col} === null) {
+                    $entry->{$col} = 0;
+                }
+            }
+        });
+
+        // Every running total (birds alive, deaths to date, feed to date, egg stock) is recalculated for the
+        // whole flock whenever a day is added, changed or removed. See App\Services\FlockLedger.
+        static::saved(function (DailyEntry $entry) {
+            FlockLedger::touch($entry->flock_id);
+            if ($entry->wasChanged('flock_id') && $entry->getOriginal('flock_id')) {
+                FlockLedger::touch((int) $entry->getOriginal('flock_id'));
+            }
+        });
+
+        static::deleted(function (DailyEntry $entry) {
+            FlockLedger::touch($entry->flock_id);
         });
     }
 
+    /** Birds lost today for any reason. */
+    public function getLossesAttribute(): int
+    {
+        return (int) $this->daily_mortality + (int) $this->birds_stolen + (int) $this->birds_culled;
+    }
+
+    /** Eggs laid per bird alive that day, as a percentage (hen-day production). */
+    public function getHenDayAttribute(): ?float
+    {
+        $birds = (int) $this->current_birds;
+        return ($birds > 0 && $this->eggs_produced > 0) ? round($this->eggs_produced / $birds * 100, 1) : null;
+    }
+
+    /** Kept for older callers: recalculates the whole flock. */
     public function updateFlockBirdCount()
     {
-        try {
-            $flockId = $this->flock_id ?: optional($this->weekEntry)->flock_id;
-            $flock = $flockId ? Flock::find($flockId) : null;
-
-            if ($flock) {
-                // The latest entry (by the date it describes) carries the current bird count.
-                $latestEntry = static::query()->forFlock($flock->id)->latestFirst()->first();
-
-                if ($latestEntry) {
-                    $flock->current_bird_count = $latestEntry->current_birds;
-                    $flock->save();
-                }
-            }
-        } catch (\Exception $e) {
-            \Log::error('Error updating flock bird count: ' . $e->getMessage());
-        }
+        FlockLedger::rebuild((int) ($this->flock_id ?: optional($this->weekEntry)->flock_id));
     }
 }

@@ -108,7 +108,7 @@
                                                 </th>
                                                 <th scope="col">Day Number</th>
                                                 <th scope="col">Daily Feeds</th>
-                                                <th scope="col">Daily Mortality</th>
+                                                <th scope="col">Deaths today</th>
                                                 <th scope="col">Current Birds</th>
                                                 <th scope="col">Daily Egg Production</th>
                                                 <th scope="col">Daily Sold Eggs</th>
@@ -245,20 +245,30 @@
                                     <div class="form-text">The day these figures are for (one entry per flock per date).</div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="daily_feeds" class="form-label">Daily Feeds (kg)</label>
-                                    <input type="number" id="daily_feeds" name="daily_feeds" class="form-control" placeholder="Enter daily feeds in kg" required min="0" step="0.01">
+                                    <label for="daily_feeds" class="form-label">Feed fed today (bags)</label>
+                                    <input type="number" id="daily_feeds" name="daily_feeds" class="form-control" placeholder="Bags fed today" required min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="available_feeds" class="form-label">Available Feeds (kg)</label>
-                                    <input type="number" id="available_feeds" name="available_feeds" class="form-control" placeholder="Enter available feeds in kg" required min="0" step="0.01">
+                                    <label for="available_feeds" class="form-label">Feed in store (bags)</label>
+                                    <input type="number" id="available_feeds" name="available_feeds" class="form-control" placeholder="Bags left in store" required min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="daily_mortality" class="form-label">Daily Mortality</label>
+                                    <label for="daily_mortality" class="form-label">Deaths today</label>
                                     <input type="number" id="daily_mortality" name="daily_mortality" class="form-control" placeholder="Enter number of deaths" required min="0">
                                 </div>
                                 <div class="mb-3">
                                     <label for="sick_bay" class="form-label">Sick Bay</label>
                                     <input type="number" id="sick_bay" name="sick_bay" class="form-control" placeholder="Enter number of sick birds" required min="0">
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label for="birds_stolen" class="form-label">Birds stolen / missing</label>
+                                        <input type="number" id="birds_stolen" name="birds_stolen" class="form-control" value="0" min="0">
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="birds_culled" class="form-label">Birds culled / sold live</label>
+                                        <input type="number" id="birds_culled" name="birds_culled" class="form-control" value="0" min="0">
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Daily Egg Production (1 crate = 30 eggs)</label>
@@ -305,9 +315,19 @@
                                     <label class="form-label">Drugs Administered</label>
                                     <input type="text" id="drugs" name="drugs" class="form-control" placeholder="Enter drugs administered (optional)">
                                 </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-5">
+                                        <label for="bad_eggs" class="form-label">Bad eggs (pieces)</label>
+                                        <input type="number" id="bad_eggs" name="bad_eggs" class="form-control" value="0" min="0">
+                                    </div>
+                                    <div class="col-7">
+                                        <label for="notes" class="form-label">Notes</label>
+                                        <input type="text" id="notes" name="notes" class="form-control" placeholder="Vaccination, vet visit, anything unusual">
+                                    </div>
+                                </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Reorder Feeds (kg)</label>
-                                    <input type="number" id="reorder_feeds" name="reorder_feeds" class="form-control" placeholder="Enter reorder feeds in kg (optional)" min="0" step="0.01">
+                                    <label class="form-label">Re-order feed (bags)</label>
+                                    <input type="number" id="reorder_feeds" name="reorder_feeds" class="form-control" placeholder="Bags to re-order (optional)" min="0" step="0.01">
                                 </div>
                                 <div class="alert alert-danger d-none" id="add-error-msg"></div>
                             </div>
@@ -347,20 +367,30 @@
                                     <input type="date" id="edit_entry_date" name="entry_date" class="form-control" max="{{ now()->toDateString() }}" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_daily_feeds" class="form-label">Daily Feeds (kg)</label>
-                                    <input type="number" id="edit_daily_feeds" name="daily_feeds" class="form-control" placeholder="Enter daily feeds in kg" required min="0" step="0.01">
+                                    <label for="edit_daily_feeds" class="form-label">Feed fed today (bags)</label>
+                                    <input type="number" id="edit_daily_feeds" name="daily_feeds" class="form-control" placeholder="Bags fed today" required min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_available_feeds" class="form-label">Available Feeds (kg)</label>
-                                    <input type="number" id="edit_available_feeds" name="available_feeds" class="form-control" placeholder="Enter available feeds in kg" required min="0" step="0.01">
+                                    <label for="edit_available_feeds" class="form-label">Feed in store (bags)</label>
+                                    <input type="number" id="edit_available_feeds" name="available_feeds" class="form-control" placeholder="Bags left in store" required min="0" step="0.01">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit_daily_mortality" class="form-label">Daily Mortality</label>
+                                    <label for="edit_daily_mortality" class="form-label">Deaths today</label>
                                     <input type="number" id="edit_daily_mortality" name="daily_mortality" class="form-control" placeholder="Enter number of deaths" required min="0">
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit_sick_bay" class="form-label">Sick Bay</label>
                                     <input type="number" id="edit_sick_bay" name="sick_bay" class="form-control" placeholder="Enter number of sick birds" required min="0">
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label for="edit_birds_stolen" class="form-label">Birds stolen / missing</label>
+                                        <input type="number" id="edit_birds_stolen" name="birds_stolen" class="form-control" value="0" min="0">
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="edit_birds_culled" class="form-label">Birds culled / sold live</label>
+                                        <input type="number" id="edit_birds_culled" name="birds_culled" class="form-control" value="0" min="0">
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Daily Egg Production (1 crate = 30 eggs)</label>
@@ -407,9 +437,19 @@
                                     <label class="form-label">Drugs Administered</label>
                                     <input type="text" id="edit_drugs" name="drugs" class="form-control" placeholder="Enter drugs administered (optional)">
                                 </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-5">
+                                        <label for="edit_bad_eggs" class="form-label">Bad eggs (pieces)</label>
+                                        <input type="number" id="edit_bad_eggs" name="bad_eggs" class="form-control" value="0" min="0">
+                                    </div>
+                                    <div class="col-7">
+                                        <label for="edit_notes" class="form-label">Notes</label>
+                                        <input type="text" id="edit_notes" name="notes" class="form-control" placeholder="Vaccination, vet visit, anything unusual">
+                                    </div>
+                                </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Reorder Feeds (kg)</label>
-                                    <input type="number" id="edit_reorder_feeds" name="reorder_feeds" class="form-control" placeholder="Enter reorder feeds in kg (optional)" min="0" step="0.01">
+                                    <label class="form-label">Re-order feed (bags)</label>
+                                    <input type="number" id="edit_reorder_feeds" name="reorder_feeds" class="form-control" placeholder="Bags to re-order (optional)" min="0" step="0.01">
                                 </div>
                                 <div class="alert alert-danger d-none" id="edit-error-msg"></div>
                             </div>

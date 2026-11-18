@@ -274,10 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const dailySoldEgg = dailySoldEggCrates * CRATE_SIZE + dailySoldEggPieces;
             const brokenEgg = brokenEggCrates * CRATE_SIZE + brokenEggPieces;
 
-            if (dailySoldEgg + brokenEgg > dailyEggProduction) {
-                displayError('add-error-msg', 'The sum of sold and broken eggs cannot exceed daily egg production.');
-                return;
-            }
+            // Eggs sold may exceed today's lay: they come out of the eggs already in the farm.
 
             const payload = {
                 _token: formData.get('_token'),
@@ -294,6 +291,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 broken_egg_crates: brokenEggCrates,
                 broken_egg_pieces: brokenEggPieces,
                 drugs: formData.get('drugs') || '',
+                birds_stolen: parseInt(formData.get('birds_stolen')) || 0,
+                birds_culled: parseInt(formData.get('birds_culled')) || 0,
+                bad_eggs: parseInt(formData.get('bad_eggs')) || 0,
+                notes: formData.get('notes') || null,
                 reorder_feeds: reorderFeeds
             };
 
@@ -389,6 +390,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 document.getElementById('edit_broken_egg_crates').value = brokenEgg.crates;
                 document.getElementById('edit_broken_egg_pieces').value = brokenEgg.pieces;
                 document.getElementById('edit_drugs').value = data.drugs || '';
+                ['birds_stolen', 'birds_culled', 'bad_eggs'].forEach(f => {
+                    const el = document.getElementById('edit_' + f);
+                    if (el) el.value = data[f] || 0;
+                });
+                const notesEl = document.getElementById('edit_notes');
+                if (notesEl) notesEl.value = data.notes || '';
                 document.getElementById('edit_reorder_feeds').value = formatDecimal(data.reorder_feeds || 0);
                 document.getElementById('edit_outstanding_egg').textContent = data.outstanding_egg || '0 Cr 0PC (0 pieces)';
                 document.getElementById('edit_total_egg_in_farm').textContent = data.total_egg_in_farm || '0 Cr 0PC (0 pieces)';
@@ -458,10 +465,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const dailySoldEgg = dailySoldEggCrates * CRATE_SIZE + dailySoldEggPieces;
             const brokenEgg = brokenEggCrates * CRATE_SIZE + brokenEggPieces;
 
-            if (dailySoldEgg + brokenEgg > dailyEggProduction) {
-                displayError('edit-error-msg', 'The sum of sold and broken eggs cannot exceed daily egg production.');
-                return;
-            }
+            // Eggs sold may exceed today's lay: they come out of the eggs already in the farm.
 
             const payload = {
                 _token: formData.get('_token'),
@@ -480,6 +484,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 broken_egg_crates: brokenEggCrates,
                 broken_egg_pieces: brokenEggPieces,
                 drugs: formData.get('drugs') || '',
+                birds_stolen: parseInt(formData.get('birds_stolen')) || 0,
+                birds_culled: parseInt(formData.get('birds_culled')) || 0,
+                bad_eggs: parseInt(formData.get('bad_eggs')) || 0,
+                notes: formData.get('notes') || null,
                 reorder_feeds: reorderFeeds
             };
 

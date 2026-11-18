@@ -18,6 +18,11 @@ use App\Http\Controllers\WeekEntryController;
 use App\Http\Controllers\DailyEntryController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\WebsiteHomeController;
+use App\Http\Controllers\PoultryController;
+use App\Http\Controllers\ImportController;
+use App\Http\Controllers\LivestockTypeController;
+use App\Http\Controllers\LivestockController;
+use App\Http\Controllers\ReportController;
 
 Route::get('/', [WebsiteHomeController::class, 'index'])->name('websiteHome');
 
@@ -58,6 +63,51 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('feed', FeedController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Poultry: farm overview, flock pages, merge, recalculation and record export
+    Route::get('overview', [PoultryController::class, 'overview'])->name('poultry.overview');
+    Route::get('poultry/flocks/{flock}', [PoultryController::class, 'show'])->name('poultry.flocks.show');
+    Route::get('poultry/flocks/{flock}/export', [PoultryController::class, 'export'])->name('poultry.flocks.export');
+    Route::post('poultry/flocks/{flock}/recalculate', [PoultryController::class, 'recalculate'])->name('poultry.flocks.recalculate');
+    Route::get('poultry/merge', [PoultryController::class, 'mergeForm'])->name('poultry.merge');
+    Route::post('poultry/merge', [PoultryController::class, 'merge'])->name('poultry.merge.store');
+
+    // Excel imports (poultry and every livestock type), templates and history
+    Route::get('imports', [ImportController::class, 'index'])->name('imports.index');
+    Route::get('imports/template/{kind}', [ImportController::class, 'template'])->name('imports.template');
+    Route::post('imports/preview', [ImportController::class, 'preview'])->name('imports.preview');
+    Route::get('imports/{batch}', [ImportController::class, 'show'])->name('imports.show');
+    Route::post('imports/{batch}/commit', [ImportController::class, 'commit'])->name('imports.commit');
+
+    // Livestock builder (admin) and recording
+    Route::get('livestock/setup', [LivestockTypeController::class, 'index'])->name('livestock.types.index');
+    Route::post('livestock/setup', [LivestockTypeController::class, 'store'])->name('livestock.types.store');
+    Route::get('livestock/setup/{type}', [LivestockTypeController::class, 'edit'])->name('livestock.types.edit');
+    Route::put('livestock/setup/{type}', [LivestockTypeController::class, 'update'])->name('livestock.types.update');
+    Route::delete('livestock/setup/{type}', [LivestockTypeController::class, 'destroy'])->name('livestock.types.destroy');
+    Route::post('livestock/setup/{type}/fields', [LivestockTypeController::class, 'storeField'])->name('livestock.fields.store');
+    Route::put('livestock/setup/{type}/fields/{field}', [LivestockTypeController::class, 'updateField'])->name('livestock.fields.update');
+    Route::delete('livestock/setup/{type}/fields/{field}', [LivestockTypeController::class, 'destroyField'])->name('livestock.fields.destroy');
+
+    Route::get('livestock/{type}', [LivestockController::class, 'index'])->name('livestock.index');
+    Route::post('livestock/{type}/units', [LivestockController::class, 'storeUnit'])->name('livestock.units.store');
+    Route::get('livestock/{type}/units/{unit}', [LivestockController::class, 'show'])->name('livestock.units.show');
+    Route::put('livestock/{type}/units/{unit}', [LivestockController::class, 'updateUnit'])->name('livestock.units.update');
+    Route::delete('livestock/{type}/units/{unit}', [LivestockController::class, 'destroyUnit'])->name('livestock.units.destroy');
+    Route::get('livestock/{type}/export', [LivestockController::class, 'export'])->name('livestock.export');
+    Route::post('livestock/{type}/units/{unit}/records', [LivestockController::class, 'storeRecord'])->name('livestock.records.store');
+    Route::delete('livestock/{type}/units/{unit}/records/{record}', [LivestockController::class, 'destroyRecord'])->name('livestock.records.destroy');
+
+    // Reports: performance report and admin-defined reports
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/performance', [ReportController::class, 'performance'])->name('reports.performance');
+    Route::get('reports/create', [ReportController::class, 'create'])->name('reports.create');
+    Route::post('reports', [ReportController::class, 'store'])->name('reports.store');
+    Route::get('reports/{report}', [ReportController::class, 'show'])->name('reports.show');
+    Route::get('reports/{report}/edit', [ReportController::class, 'edit'])->name('reports.edit');
+    Route::put('reports/{report}', [ReportController::class, 'update'])->name('reports.update');
+    Route::delete('reports/{report}', [ReportController::class, 'destroy'])->name('reports.destroy');
+    Route::get('reports/{report}/export/{format}', [ReportController::class, 'export'])->name('reports.export');
 
     Route::prefix('flocks/{flock_id}')->group(function () {
         Route::get('weeks', [WeekEntryController::class, 'index'])->name('week-entries.index');
