@@ -1,6 +1,6 @@
 @extends('layouts.page')
 @section('page')
-    @include('partials.page-header', ['title' => 'Combine flocks', 'subtitle' => 'For when flocks are moved into one house, e.g. 650 + 770 birds becoming one flock of 1,420.',
+    @include('partials.page-header', ['icon' => 'ri-git-merge-line', 'title' => 'Combine flocks', 'subtitle' => 'For when flocks are moved into one house, e.g. 650 + 770 birds becoming one flock of 1,420.',
         'crumbs' => ['Overview' => route('poultry.overview'), 'Combine flocks' => null]])
     @php($pre = array_map('intval', (array) request('sources', [])))
     <div class="row">

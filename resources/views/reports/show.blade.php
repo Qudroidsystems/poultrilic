@@ -9,7 +9,7 @@
     $q = request()->only(['period', 'from', 'to']);
 @endphp
 @section('page')
-    @include('partials.page-header', ['title' => $rep->name, 'subtitle' => (\App\Services\ReportRunner::sources()[$src] ?? $src) . ($r['entities'] ? ' · ' . implode(', ', $r['entities']) : '') . ($rep->description ? ' · ' . $rep->description : ''),
+    @include('partials.page-header', ['icon' => 'ri-bar-chart-2-line', 'title' => $rep->name, 'subtitle' => (\App\Services\ReportRunner::sources()[$src] ?? $src) . ($r['entities'] ? ' · ' . implode(', ', $r['entities']) : '') . ($rep->description ? ' · ' . $rep->description : ''),
         'crumbs' => ['Reports' => route('reports.index'), $rep->name => null],
         'actions' => '<a href="' . route('reports.export', [$rep, 'xlsx'] + $q) . '" class="btn btn-sm btn-soft-success"><i class="ri-file-excel-2-line align-bottom"></i> Excel</a> '
             . '<a href="' . route('reports.export', [$rep, 'pdf'] + $q) . '" class="btn btn-sm btn-soft-danger"><i class="ri-file-pdf-line align-bottom"></i> PDF</a> '

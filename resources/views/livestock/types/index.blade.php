@@ -1,6 +1,6 @@
 @extends('layouts.page')
 @section('page')
-    @include('partials.page-header', ['title' => 'Livestock & farm units', 'subtitle' => 'Set up anything else the farm keeps: cattle, goats, fish ponds, pigs, crops. Each gets its own record form, Excel import and reports.',
+    @include('partials.page-header', ['icon' => 'ri-leaf-line', 'title' => 'Livestock & farm units', 'subtitle' => 'Set up anything else the farm keeps: cattle, goats, fish ponds, pigs, crops. Each gets its own record form, Excel import and reports.',
         'crumbs' => ['Settings' => route('settings.index'), 'Livestock setup' => null]])
 
     <div class="row g-3">

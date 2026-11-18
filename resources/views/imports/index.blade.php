@@ -1,6 +1,6 @@
 @extends('layouts.page')
 @section('page')
-    @include('partials.page-header', ['title' => 'Import from Excel', 'subtitle' => 'Upload a sheet, check what will be saved, then import. Nothing is saved until you confirm.',
+    @include('partials.page-header', ['icon' => 'ri-file-excel-2-line', 'title' => 'Import from Excel', 'subtitle' => 'Upload a sheet, check what will be saved, then import. Nothing is saved until you confirm.',
         'crumbs' => ['Overview' => route('poultry.overview'), 'Import' => null]])
 
     <div class="row g-3">

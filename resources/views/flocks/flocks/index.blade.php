@@ -6,7 +6,7 @@
     $canDelete = auth()->user()->can('Delete flock');
 @endphp
 @section('page')
-    @include('partials.page-header', [
+    @include('partials.page-header', ['icon' => 'ri-home-4-line', 
         'title' => 'Flocks',
         'subtitle' => ($counts['active'] ?? 0) . ' active · ' . number_format($birdsNow) . ' birds on the farm',
         'crumbs' => ['Overview' => route('poultry.overview'), 'Flocks' => null],

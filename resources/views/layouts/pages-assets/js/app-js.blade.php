@@ -21,10 +21,6 @@
             noData: { text: 'No records in this period' },
         }, extra || {});
     };
-    // Confirm buttons/forms marked data-confirm.
-    document.addEventListener('submit', function (e) {
-        var msg = e.target.getAttribute('data-confirm');
-        if (msg && !confirm(msg)) { e.preventDefault(); }
-    });
+    // Forms marked data-confirm are confirmed by layouts/inc/ui-scripts (Apple-style dialog).
 </script>
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>

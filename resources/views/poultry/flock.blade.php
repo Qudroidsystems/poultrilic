@@ -7,7 +7,7 @@
     $isLayer = $flock->flock_type === 'layer' || $L['eggs_laid'] > 0;
 @endphp
 @section('page')
-    @include('partials.page-header', [
+    @include('partials.page-header', ['icon' => 'ri-home-4-line', 
         'title' => $flock->display_name,
         'subtitle' => collect([
             $flock->type_label, $flock->breed, $flock->house,

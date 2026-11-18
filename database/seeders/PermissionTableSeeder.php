@@ -2,128 +2,52 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
+/**
+ * Every permission the app checks, grouped by the title shown on the Permissions page.
+ * Safe to run again: missing permissions are added and titles corrected; nothing is removed.
+ */
 class PermissionTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    public const GROUPS = [
+        'User Management' => ['View user', 'Create user', 'Update user', 'Delete user'],
+        'Role Management' => ['View role', 'Create role', 'Update role', 'Delete role', 'Add user-role', 'Update user-role', 'Remove user-role'],
+        'Permission Management' => ['View permission', 'Create permission', 'Update permission', 'Delete permission'],
+        'Dashboard Management' => ['dashboard'],
+        'Flock Management' => ['View flock', 'Create flock', 'Update flock', 'Delete flock', 'Merge flock'],
+        'Week Entry Management' => ['View weekly-entry', 'Create weekly-entry', 'Update weekly-entry', 'Delete weekly-entry'],
+        'Daily Entry Management' => ['View daily-entry', 'Create daily-entry', 'Update daily-entry', 'Delete daily-entry'],
+        'Livestock' => [
+            'View livestock', 'Create livestock record', 'Update livestock record', 'Delete livestock record',
+            'Manage livestock units', 'Manage livestock types',
+        ],
+        'Imports & Reports' => ['Import records', 'View reports', 'Manage reports'],
+        'Sales Management' => ['View sale', 'Create sale', 'Update sale', 'Delete sale', 'Create payment', 'Delete payment'],
+        'Customer Management' => ['View customer', 'Create customer', 'Update customer', 'Delete customer'],
+        'Expense Management' => ['View expense', 'Create expense', 'Update expense', 'Delete expense'],
+        'Feed Management' => ['View feed', 'Create feed', 'Update feed', 'Delete feed'],
+        'Settings' => ['View settings', 'Update settings'],
+    ];
+
     public function run(): void
     {
-        $permissions = [
-        //    'Super role',
-           'View user',
-           'Create user',
-           'Update user',
-           'Delete user',
-           
-           'View role',
-           'Create role',
-           'Update role',
-           'Delete role',
-           'Add user-role',
-           'Update user-role',
-           'Remove user-role',
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-           'View permission',
-           'Create permission',
-           'Update permission',
-           'Delete permission',
-
-           'dashboard',
-
-           'View flock',
-           'Create flock',
-           'Update flock',
-           'Delete flock',
-
-           'View weekly-entry',
-           'Create weekly-entry',
-           'Update weekly-entry',
-           'Delete weekly-entry',
-
-           'View daily-entry',
-           'Create daily-entry',
-           'Update daily-entry',
-           'Delete daily-entry',
-
-           'View expense',
-           'Create expense',
-           'Update expense',
-           'Delete expense',
-
-           'View customer',
-           'Create customer',
-           'Update customer',
-           'Delete customer',
-
-           'View sale',
-           'Create sale',
-           'Update sale',
-           'Delete sale',
-
-           'Create payment',
-           'Delete payment',
-
-           'View feed',
-           'Create feed',
-           'Update feed',
-           'Delete feed',
-
-           'View settings',
-           'Update settings',
-
-        ];
-
-        foreach ($permissions as $permission) {
-            $str = $permission;
-            $delimiter = ' ';
-            $words = explode($delimiter, $str);
-
-            foreach ($words as $word) {
-                if($word == "user")
-                Permission::Create(['name' => $permission,'title'=>"User Management"]);
-
-                if($word == "role" || $word == "user-role")
-                Permission::Create(['name' => $permission,'title'=>"Role Management"]);
-
-                if($word == "permission")
-                Permission::Create(['name' => $permission,'title'=>"Permission Management"]);
-
-                if($word == "dashboard")
-                Permission::Create(['name' => $permission,'title'=>"Dashboard Management"]);
-
-                if($word == "flock")
-                Permission::Create(['name' => $permission,'title'=>"flock Management"]);
-
-                if($word == "weekly-entry")
-                Permission::Create(['name' => $permission,'title'=>"Week Entry Management"]);
-
-                if($word == "daily-entry")
-                Permission::Create(['name' => $permission,'title'=>"Daily Entry Management"]);
-
-                if($word == "expense")
-                Permission::Create(['name' => $permission,'title'=>"Expense Management"]);
-
-                if($word == "customer")
-                Permission::Create(['name' => $permission,'title'=>"Customer Management"]);
-
-                if($word == "sale" || $word == "payment")
-                Permission::Create(['name' => $permission,'title'=>"Sales Management"]);
-
-                if($word == "feed")
-                Permission::Create(['name' => $permission,'title'=>"Feed Management"]);
-
-                if($word == "settings")
-                Permission::Create(['name' => $permission,'title'=>"Settings Management"]);
-
-               
-
+        foreach (self::GROUPS as $title => $names) {
+            foreach ($names as $name) {
+                Permission::updateOrCreate(['name' => $name, 'guard_name' => 'web'], ['title' => $title]);
             }
-            //  Permission::Create(['name' => $permission]);
         }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    /** All permission names. */
+    public static function all(): array
+    {
+        return array_merge(...array_values(self::GROUPS));
     }
 }

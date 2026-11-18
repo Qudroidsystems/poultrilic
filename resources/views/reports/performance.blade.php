@@ -7,7 +7,7 @@
     $sevLabel = ['danger' => 'Act now', 'warning' => 'Check', 'info' => 'Note'];
 @endphp
 @section('page')
-    @include('partials.page-header', ['title' => 'Farm performance report', 'subtitle' => ($farm ? $farm . ' · ' : '') . 'generated ' . $generated->format('j M Y, H:i'),
+    @include('partials.page-header', ['icon' => 'ri-file-chart-line', 'title' => 'Farm performance report', 'subtitle' => ($farm ? $farm . ' · ' : '') . 'generated ' . $generated->format('j M Y, H:i'),
         'crumbs' => ['Reports' => route('reports.index'), 'Performance' => null],
         'actions' => '<a href="' . route('reports.performance', request()->query() + ['format' => 'pdf']) . '" class="btn btn-sm btn-danger"><i class="ri-file-pdf-line align-bottom me-1"></i>Download PDF</a>'])
 

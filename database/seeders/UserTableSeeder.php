@@ -3,56 +3,48 @@
 namespace Database\Seeders;
 
 use App\Models\BioModel;
-use Hash;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash as FacadesHash;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
+/**
+ * The first Super Admin. Safe to run again: the account is created only if missing and an existing password is
+ * never reset. Set ADMIN_EMAIL, ADMIN_PASSWORD and ADMIN_NAME in .env before seeding a live server.
+ */
 class UserTableSeeder extends Seeder
 {
-
-    use HasRoles;
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        $user = User::create([
-            'first_name' => 'Ilemobayo',
-            'last_name'=> 'Eliab',
-            'username'=>'eliabsiji@gmail.com',
-            'email' => 'eliabsiji@gmail.com',
-            'avatar' => 'unnamed.png',
-            'password' => FacadesHash::make('12345678'),
-            // 'wpassword' => '12345678',
-            // 'role'=>'staff'
-        ]);
+        $email = env('ADMIN_EMAIL', 'eliabsiji@gmail.com');
+        $name = trim(env('ADMIN_NAME', 'Ilemobayo Eliab'));
+        [$first, $last] = array_pad(explode(' ', $name, 2), 2, '');
 
-        BioModel::updateOrCreate(['user_id'=>$user->id],
-                                 ['firstname' =>'ilemobayo',
-                                   'lastname' => 'Eliab',
-                                   'othernames' => 'siji',
-                                   'phone' => '98385523567',
-                                   'address' => 'ondo',
-                                   'gender' =>'male',
-                                   'maritalstatus' =>'Single',
-                                    'nationality' =>'nigerian',
-                                    'dob' => '12-12-12']);
+        $user = User::where('email', $email)->first();
+        if (! $user) {
+            $user = User::forceCreate([
+                'first_name' => $first ?: 'Admin',
+                'last_name' => $last ?: 'User',
+                'username' => Str::before($email, '@') . (User::where('username', Str::before($email, '@'))->exists() ? '-' . Str::random(4) : ''),
+                'email' => $email,
+                'avatar' => 'unnamed.png',
+                'password' => Hash::make(env('ADMIN_PASSWORD', '12345678')),
+                'email_verified_at' => now(),
+            ]);
+        }
 
-        // $role = Role::find(1);
-        $role = Role::create(['name' => 'Super Admin','badge'=>'badge bg-success']); //creating super admin role
-        $role2 = Role::create(['name' => 'Admin','badge'=>'badge bg-primary']);//creating admin role
-        $permissions = Permission::pluck('id', 'id')->all();
-        $role->syncPermissions($permissions);
-        $user->assignRole([$role->id]);
-        $role2->syncPermissions($permissions);
-        $user->assignRole([$role2->id]);
+        if (class_exists(BioModel::class) && ! BioModel::where('user_id', $user->id)->exists()) {
+            BioModel::create(['user_id' => $user->id, 'firstname' => $user->first_name, 'lastname' => $user->last_name]);
+        }
 
+        foreach (['Super Admin', 'Admin'] as $role) {
+            if (! $user->hasRole($role)) {
+                $user->assignRole($role);
+            }
+        }
+
+        if (app()->runningInConsole() && isset($this->command) && env('ADMIN_PASSWORD') === null && $user->wasRecentlyCreated) {
+            $this->command->warn("  Admin {$email} was created with the default password. Change it after signing in.");
+        }
     }
 }

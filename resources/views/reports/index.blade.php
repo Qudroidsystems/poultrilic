@@ -1,6 +1,6 @@
 @extends('layouts.page')
 @section('page')
-    @include('partials.page-header', ['title' => 'Reports', 'subtitle' => 'The farm performance report, plus reports you design: pick the figures, how to group them and the period.',
+    @include('partials.page-header', ['icon' => 'ri-bar-chart-2-line', 'title' => 'Reports', 'subtitle' => 'The farm performance report, plus reports you design: pick the figures, how to group them and the period.',
         'crumbs' => ['Overview' => route('poultry.overview'), 'Reports' => null],
         'actions' => auth()->user()->can('Manage reports') ? '<a href="' . route('reports.create') . '" class="btn btn-primary btn-sm"><i class="ri-add-line align-bottom"></i> New report</a>' : ''])
 

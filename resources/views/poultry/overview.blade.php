@@ -7,7 +7,7 @@
     $sevLabel = ['danger' => 'Act now', 'warning' => 'Check', 'info' => 'Note'];
 @endphp
 @section('page')
-    @include('partials.page-header', [
+    @include('partials.page-header', ['icon' => 'ri-dashboard-2-line', 
         'title' => 'Farm overview',
         'subtitle' => $activeCount . ' active flock' . ($activeCount === 1 ? '' : 's') . ' · ' . number_format($birdsNow) . ' birds on the farm',
         'actions' => (auth()->user()->can('Create daily-entry') || auth()->user()->can('Import records') ? '<a href="' . route('imports.index') . '" class="btn btn-soft-primary btn-sm"><i class="ri-file-excel-2-line align-bottom me-1"></i>Import Excel</a> ' : '')

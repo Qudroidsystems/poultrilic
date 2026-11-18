@@ -6,7 +6,7 @@
     $chartKeys = $numeric->take(3)->all();
 @endphp
 @section('page')
-    @include('partials.page-header', [
+    @include('partials.page-header', ['icon' => $type->icon, 
         'title' => $type->name,
         'subtitle' => $type->description,
         'crumbs' => ['Overview' => route('poultry.overview'), $type->name => null],

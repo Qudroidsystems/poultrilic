@@ -3,7 +3,7 @@
     use App\Models\LivestockField as F;
 @endphp
 @section('page')
-    @include('partials.page-header', ['title' => "Set up {$type->name}", 'subtitle' => 'What is recorded for each ' . strtolower($type->unit_label) . ', and how it adds up.',
+    @include('partials.page-header', ['icon' => 'ri-settings-3-line', 'title' => "Set up {$type->name}", 'subtitle' => 'What is recorded for each ' . strtolower($type->unit_label) . ', and how it adds up.',
         'crumbs' => ['Livestock setup' => route('livestock.types.index'), $type->name => null],
         'actions' => '<a href="' . route('livestock.index', $type) . '" class="btn btn-sm btn-primary">Go to ' . e($type->name) . '</a>'])
 

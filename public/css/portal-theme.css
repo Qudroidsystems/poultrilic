@@ -1,0 +1,458 @@
+/* ==========================================================================
+   Portal themes — loaded last in layouts/master.blade.php
+   --------------------------------------------------------------------------
+   PART 1  Shared tokens used by the dark adapter (js/portal-theme.js)
+   PART 2  Dark mode: fixes for common components and third-party widgets
+   PART 3  Apple style (html[data-ui=apple]) — light and dark
+   ========================================================================== */
+
+/* ── PART 1 · Tokens ───────────────────────────────────────────────────── */
+html[data-bs-theme=dark] {
+    --pt-surface:    #1a1d23;   /* cards, panels (was white)            */
+    --pt-surface-2:  #15171c;   /* page-level light greys               */
+    --pt-surface-3:  #23262e;   /* tracks, hovers, chips (mid greys)    */
+    --pt-border:     #2c3039;
+    --pt-text:       #e4e5e7;
+    --pt-text-muted: #a3a6ad;
+    --pt-input:      #121418;
+}
+
+/* ── PART 2 · Dark mode ────────────────────────────────────────────────── */
+html[data-bs-theme=dark] body { background-color: var(--tb-body-bg); }
+
+html[data-bs-theme=dark] .bg-white,
+html[data-bs-theme=dark] .bg-body { background-color: var(--pt-surface) !important; }
+html[data-bs-theme=dark] .bg-light { background-color: var(--pt-surface-3) !important; }
+html[data-bs-theme=dark] .text-dark:not(.badge):not(.btn),
+html[data-bs-theme=dark] .text-black { color: var(--pt-text) !important; }
+html[data-bs-theme=dark] .text-body-secondary,
+html[data-bs-theme=dark] .text-muted { color: var(--pt-text-muted) !important; }
+html[data-bs-theme=dark] .border-light { border-color: var(--pt-border) !important; }
+
+html[data-bs-theme=dark] .table-light,
+html[data-bs-theme=dark] .table > thead.table-light > tr > th,
+html[data-bs-theme=dark] .table > thead.table-light > tr > td {
+    --tb-table-bg: var(--pt-surface-3);
+    --tb-table-color: var(--pt-text);
+    --tb-table-border-color: var(--pt-border);
+    background-color: var(--pt-surface-3);
+    color: var(--pt-text);
+}
+html[data-bs-theme=dark] .table { --tb-table-color: var(--tb-body-color); --tb-table-border-color: var(--pt-border); }
+html[data-bs-theme=dark] .table-striped > tbody > tr:nth-of-type(odd) > * { --tb-table-bg-type: rgba(255, 255, 255, .025); }
+html[data-bs-theme=dark] .table tbody tr:hover { background-color: rgba(255, 255, 255, .035); }
+
+html[data-bs-theme=dark] .form-control,
+html[data-bs-theme=dark] .form-select,
+html[data-bs-theme=dark] .input-group-text {
+    background-color: var(--pt-input);
+    border-color: var(--pt-border);
+    color: var(--pt-text);
+}
+html[data-bs-theme=dark] .form-control:disabled,
+html[data-bs-theme=dark] .form-control[readonly],
+html[data-bs-theme=dark] .form-select:disabled { background-color: var(--pt-surface-3); color: var(--pt-text-muted); }
+html[data-bs-theme=dark] .form-control::placeholder { color: #6f737b; }
+html[data-bs-theme=dark] .form-check-input:not(:checked) { background-color: var(--pt-input); border-color: #4a4f59; }
+
+html[data-bs-theme=dark] .modal-content,
+html[data-bs-theme=dark] .offcanvas,
+html[data-bs-theme=dark] .popover,
+html[data-bs-theme=dark] .toast { background-color: var(--pt-surface); color: var(--tb-body-color); }
+html[data-bs-theme=dark] .modal-footer,
+html[data-bs-theme=dark] .modal-header:not(.modal-header-gradient) { border-color: var(--pt-border); }
+html[data-bs-theme=dark] .dropdown-menu,
+html[data-bs-theme=dark] #theme-dropdown,
+html[data-bs-theme=dark] #user-dropdown { background: var(--pt-surface) !important; border-color: var(--pt-border) !important; color: var(--tb-body-color); }
+html[data-bs-theme=dark] .theme-mode-item,
+html[data-bs-theme=dark] .dropdown-item { color: var(--tb-body-color); }
+html[data-bs-theme=dark] .theme-mode-item:hover { background: var(--pt-surface-3); }
+html[data-bs-theme=dark] .list-group-item { background-color: var(--pt-surface); border-color: var(--pt-border); color: var(--tb-body-color); }
+html[data-bs-theme=dark] .accordion-button:not(.collapsed) { background-color: var(--pt-surface-3); color: var(--pt-text); }
+html[data-bs-theme=dark] .nav-tabs .nav-link.active { background-color: var(--pt-surface); border-color: var(--pt-border) var(--pt-border) var(--pt-surface); }
+html[data-bs-theme=dark] .page-link { background-color: var(--pt-surface); border-color: var(--pt-border); }
+html[data-bs-theme=dark] .page-item.disabled .page-link { background-color: var(--pt-surface-2); }
+html[data-bs-theme=dark] .progress { background-color: var(--pt-surface-3); }
+html[data-bs-theme=dark] kbd { background: #2a2e36; color: var(--pt-text); border: 1px solid #3a3f49; }
+html[data-bs-theme=dark] hr { border-color: var(--pt-border); opacity: 1; }
+html[data-bs-theme=dark] .card:hover { box-shadow: 0 6px 20px rgba(0, 0, 0, .35); }
+html[data-bs-theme=dark] .btn-close:not(.btn-close-white) { filter: invert(1) grayscale(100%) brightness(200%); }
+html[data-bs-theme=dark] .modal-header-gradient .btn-close { filter: brightness(0) invert(1); }
+
+/* Third-party widgets loaded from CDNs (their CSS can't be adapted automatically) */
+html[data-bs-theme=dark] .select2-container--default .select2-selection--single,
+html[data-bs-theme=dark] .select2-container--default .select2-selection--multiple { background-color: var(--pt-input); border-color: var(--pt-border); }
+html[data-bs-theme=dark] .select2-container--default .select2-selection--single .select2-selection__rendered { color: var(--pt-text); }
+html[data-bs-theme=dark] .select2-dropdown { background-color: var(--pt-surface); border-color: var(--pt-border); color: var(--pt-text); }
+html[data-bs-theme=dark] .select2-container--default .select2-search--dropdown .select2-search__field { background: var(--pt-input); border-color: var(--pt-border); color: var(--pt-text); }
+html[data-bs-theme=dark] .select2-container--default .select2-results__option[aria-selected=true],
+html[data-bs-theme=dark] .select2-container--default .select2-results__option--selected { background-color: var(--pt-surface-3); }
+html[data-bs-theme=dark] .select2-container--default .select2-selection--multiple .select2-selection__choice { background-color: var(--pt-surface-3); border-color: var(--pt-border); color: var(--pt-text); }
+html[data-bs-theme=dark] .choices__inner,
+html[data-bs-theme=dark] .choices__input { background-color: var(--pt-input) !important; border-color: var(--pt-border) !important; color: var(--pt-text); }
+html[data-bs-theme=dark] .choices__list--dropdown,
+html[data-bs-theme=dark] .choices__list[aria-expanded] { background-color: var(--pt-surface) !important; border-color: var(--pt-border) !important; color: var(--pt-text); }
+html[data-bs-theme=dark] .choices__list--dropdown .choices__item--selectable.is-highlighted { background-color: var(--pt-surface-3) !important; }
+html[data-bs-theme=dark] .swal2-popup { background: var(--pt-surface) !important; color: var(--pt-text) !important; }
+html[data-bs-theme=dark] .swal2-title,
+html[data-bs-theme=dark] .swal2-html-container { color: var(--pt-text) !important; }
+html[data-bs-theme=dark] .swal2-input,
+html[data-bs-theme=dark] .swal2-textarea,
+html[data-bs-theme=dark] .swal2-select { background: var(--pt-input) !important; border-color: var(--pt-border) !important; color: var(--pt-text) !important; }
+html[data-bs-theme=dark] .flatpickr-calendar { background: var(--pt-surface); box-shadow: 0 8px 24px rgba(0, 0, 0, .5); }
+html[data-bs-theme=dark] .flatpickr-day { color: var(--pt-text); }
+html[data-bs-theme=dark] .flatpickr-day:hover { background: var(--pt-surface-3); border-color: var(--pt-surface-3); }
+html[data-bs-theme=dark] .flatpickr-months .flatpickr-month,
+html[data-bs-theme=dark] .flatpickr-current-month .flatpickr-monthDropdown-months,
+html[data-bs-theme=dark] span.flatpickr-weekday { color: var(--pt-text); fill: var(--pt-text); background: transparent; }
+html[data-bs-theme=dark] .apexcharts-tooltip.apexcharts-theme-light { background: var(--pt-surface) !important; border-color: var(--pt-border) !important; color: var(--pt-text); }
+html[data-bs-theme=dark] .apexcharts-text,
+html[data-bs-theme=dark] .apexcharts-legend-text { fill: var(--pt-text-muted); color: var(--pt-text-muted) !important; }
+html[data-bs-theme=dark] .apexcharts-gridline { stroke: var(--pt-border); }
+html[data-bs-theme=dark] .dataTables_wrapper .dataTables_paginate .paginate_button { color: var(--pt-text) !important; }
+
+html[data-bs-theme=dark] ::-webkit-scrollbar { width: 10px; height: 10px; }
+html[data-bs-theme=dark] ::-webkit-scrollbar-track { background: transparent; }
+html[data-bs-theme=dark] ::-webkit-scrollbar-thumb { background: #3a3e47; border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+
+/* ── PART 3 · Apple style ──────────────────────────────────────────────── */
+html[data-ui=apple] {
+    --pt-a-blue: #007aff;
+    --pt-a-blue-rgb: 0, 122, 255;
+    --pt-a-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    --pt-a-group-bg: #f2f2f7;
+    --pt-a-card: #ffffff;
+    --pt-a-fill: rgba(120, 120, 128, .12);
+    --pt-a-fill-2: rgba(120, 120, 128, .08);
+    --pt-a-sep: rgba(60, 60, 67, .16);
+    --pt-a-label: #1d1d1f;
+    --pt-a-label-2: rgba(60, 60, 67, .62);
+    --pt-a-blur-bg: rgba(255, 255, 255, .72);
+    --pt-a-shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 4px 16px rgba(0, 0, 0, .04);
+
+    /* template tokens */
+    --tb-font-sans-serif: var(--pt-a-font);
+    --tb-body-font-family: var(--pt-a-font);
+    --tb-primary: var(--pt-a-blue);
+    --tb-primary-rgb: var(--pt-a-blue-rgb);
+    --tb-primary-bg-subtle: rgba(0, 122, 255, .1);
+    --tb-primary-border-subtle: rgba(0, 122, 255, .3);
+    --tb-primary-text-emphasis: #0062cc;
+    --tb-link-color: var(--pt-a-blue);
+    --tb-link-color-rgb: var(--pt-a-blue-rgb);
+    --tb-link-hover-color: #0062cc;
+    --tb-success: #34c759;  --tb-success-rgb: 52, 199, 89;
+    --tb-danger: #ff3b30;   --tb-danger-rgb: 255, 59, 48;
+    --tb-warning: #ff9500;  --tb-warning-rgb: 255, 149, 0;
+    --tb-info: #32ade6;     --tb-info-rgb: 50, 173, 230;
+    --tb-body-bg: var(--pt-a-group-bg);
+    --tb-body-bg-rgb: 242, 242, 247;
+    --tb-secondary-bg: var(--pt-a-card);
+    --tb-tertiary-bg: var(--pt-a-group-bg);
+    --tb-body-color: var(--pt-a-label);
+    --tb-emphasis-color: #000;
+    --tb-secondary-color: var(--pt-a-label-2);
+    --tb-border-color: var(--pt-a-sep);
+    --tb-border-color-translucent: var(--pt-a-sep);
+    --tb-border-radius: .625rem;
+    --tb-border-radius-sm: .5rem;
+    --tb-border-radius-lg: .875rem;
+    --tb-border-radius-xl: 1.125rem;
+    --tb-focus-ring-color: rgba(0, 122, 255, .3);
+
+
+    /* csskabba / shared CB UI skin */
+    --cb-font: var(--pt-a-font);
+    --cb-font-display: var(--pt-a-font);
+    --cb-surface: var(--pt-a-card);
+    --cb-surface-2: #f7f7fa;
+    --cb-page: var(--pt-a-group-bg);
+    --cb-border: var(--pt-a-sep);
+    --cb-text: var(--pt-a-label);
+    --cb-heading: #000;
+    --cb-muted: var(--pt-a-label-2);
+    --cb-radius: 16px;
+    --cb-radius-sm: 10px;
+    --cb-shadow: var(--pt-a-shadow);
+    --cb-hero-grad: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
+    --cb-head-grad: linear-gradient(to bottom, #fbfbfd, #f5f5f7);
+}
+
+html[data-ui=apple][data-bs-theme=dark] {
+    --pt-a-blue: #0a84ff;
+    --pt-a-blue-rgb: 10, 132, 255;
+    --pt-a-group-bg: #000000;
+    --pt-a-card: #1c1c1e;
+    --pt-a-fill: rgba(120, 120, 128, .24);
+    --pt-a-fill-2: rgba(120, 120, 128, .16);
+    --pt-a-sep: rgba(84, 84, 88, .55);
+    --pt-a-label: #f5f5f7;
+    --pt-a-label-2: rgba(235, 235, 245, .6);
+    --pt-a-blur-bg: rgba(22, 22, 24, .72);
+    --pt-a-shadow: none;
+
+    --tb-body-bg-rgb: 0, 0, 0;
+    --tb-emphasis-color: #fff;
+    --tb-primary-bg-subtle: rgba(10, 132, 255, .18);
+    --tb-primary-text-emphasis: #64b0ff;
+    --tb-link-hover-color: #64b0ff;
+    --tb-success: #30d158;  --tb-success-rgb: 48, 209, 88;
+    --tb-danger: #ff453a;   --tb-danger-rgb: 255, 69, 58;
+    --tb-warning: #ff9f0a;  --tb-warning-rgb: 255, 159, 10;
+    --tb-info: #64d2ff;     --tb-info-rgb: 100, 210, 255;
+
+
+    /* dark adapter targets follow Apple's dark palette */
+    --pt-surface: #1c1c1e;
+    --pt-surface-2: #121214;
+    --pt-surface-3: #2c2c2e;
+    --pt-border: rgba(84, 84, 88, .55);
+    --pt-text: #f5f5f7;
+    --pt-text-muted: rgba(235, 235, 245, .6);
+    --pt-input: #1c1c1e;
+
+    --cb-surface-2: #242426;
+    --cb-hover: #2c2c2e;
+    --cb-head-grad: linear-gradient(to bottom, #2a2a2c, #232325);
+    --cb-hero-grad: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
+}
+
+/* Header + sidebar tokens (the template sets these with two-attribute selectors) */
+html[data-ui=apple][data-theme][data-sidebar][data-topbar] {
+    /* macOS-style light translucent chrome */
+    --tb-header-bg: var(--pt-a-blur-bg);
+    --tb-header-border-color: var(--pt-a-sep);
+    --tb-header-item-color: var(--pt-a-label);
+    --tb-header-item-sub-color: var(--pt-a-label-2);
+    --tb-vertical-menu-bg: #f6f6f8;
+    --tb-vertical-menu-border: var(--pt-a-sep);
+    --tb-vertical-menu-item-color: #3a3a3c;
+    --tb-vertical-menu-item-hover-color: #000;
+    --tb-vertical-menu-item-hover-bg: rgba(0, 0, 0, .05);
+    --tb-vertical-menu-item-active-color: var(--pt-a-blue);
+    --tb-vertical-menu-item-active-bg: rgba(0, 122, 255, .1);
+    --tb-vertical-menu-sub-item-color: #4a4a4e;
+    --tb-vertical-menu-sub-item-hover-color: #000;
+    --tb-vertical-menu-sub-item-active-color: var(--pt-a-blue);
+    --tb-vertical-menu-title-color: rgba(60, 60, 67, .5);
+}
+html[data-ui=apple][data-bs-theme=dark][data-theme][data-sidebar][data-topbar] {
+    --tb-header-bg: var(--pt-a-blur-bg);
+    --tb-header-border-color: var(--pt-a-sep);
+    --tb-header-item-color: var(--pt-a-label);
+    --tb-header-item-sub-color: var(--pt-a-label-2);
+    --tb-vertical-menu-bg: #161618;
+    --tb-vertical-menu-item-color: rgba(235, 235, 245, .72);
+    --tb-vertical-menu-item-hover-color: #fff;
+    --tb-vertical-menu-item-hover-bg: rgba(255, 255, 255, .06);
+    --tb-vertical-menu-item-active-color: #fff;
+    --tb-vertical-menu-item-active-bg: rgba(10, 132, 255, .28);
+    --tb-vertical-menu-sub-item-color: rgba(235, 235, 245, .6);
+    --tb-vertical-menu-sub-item-hover-color: #fff;
+    --tb-vertical-menu-sub-item-active-color: #64b0ff;
+    --tb-vertical-menu-title-color: rgba(235, 235, 245, .4);
+}
+
+/* Typography */
+html[data-ui=apple] body {
+    font-family: var(--pt-a-font);
+    letter-spacing: -.003em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--pt-a-group-bg);
+    color: var(--pt-a-label);
+}
+html[data-ui=apple] body :where(:not(i):not(.mdi):not([class*="ri-"]):not([class^="bi-"]):not([class*=" bi-"]):not([class*="fa-"]):not([class^="ph"]):not([class*=" ph-"]):not([class*="bx"]):not([class*="las "]):not([class*="icon"]):not(code):not(kbd):not(pre)) {
+    font-family: var(--pt-a-font) !important;
+}
+html[data-ui=apple] h1, html[data-ui=apple] h2, html[data-ui=apple] h3,
+html[data-ui=apple] h4, html[data-ui=apple] h5, html[data-ui=apple] h6,
+html[data-ui=apple] .h1, html[data-ui=apple] .h2, html[data-ui=apple] .h3,
+html[data-ui=apple] .h4, html[data-ui=apple] .h5, html[data-ui=apple] .h6 { letter-spacing: -.02em; font-weight: 650; }
+html[data-ui=apple] .page-title-box h4,
+html[data-ui=apple] .page-title-box .mb-sm-0 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.025em; text-transform: none; }
+html[data-ui=apple] .text-muted { color: var(--pt-a-label-2) !important; }
+
+/* Chrome: translucent top bar, macOS sidebar */
+html[data-ui=apple] #page-topbar {
+    background: var(--pt-a-blur-bg) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: .5px solid var(--pt-a-sep);
+    box-shadow: none;
+}
+html[data-ui=apple] .app-menu { border-right: .5px solid var(--pt-a-sep); box-shadow: none; }
+html[data-ui=apple] #navbar-nav .nav-link.menu-link { border-radius: 8px; margin: 1px 10px; }
+html[data-ui=apple] #navbar-nav .nav-link.menu-link.nav-active-parent {
+    color: var(--tb-vertical-menu-item-active-color) !important;
+    background: var(--tb-vertical-menu-item-active-bg) !important;
+}
+html[data-ui=apple] #navbar-nav .nav-link.menu-link.nav-active-parent i { color: var(--pt-a-blue) !important; }
+html[data-ui=apple] #navbar-nav .nav-sm .nav-link.nav-active-child { color: var(--tb-vertical-menu-sub-item-active-color) !important; }
+html[data-ui=apple] #navbar-nav .nav-sm .nav-link.nav-active-child::before { background: var(--pt-a-blue); }
+html[data-ui=apple] .nav-ripple { background: rgba(0, 122, 255, .14); }
+html[data-ui=apple]:not([data-bs-theme=dark]) .sidebar-footer-user-name { color: var(--pt-a-label); }
+html[data-ui=apple]:not([data-bs-theme=dark]) .sidebar-footer-user-role { color: var(--pt-a-label-2); }
+html[data-ui=apple]:not([data-bs-theme=dark]) .sidebar-footer { border-top: .5px solid var(--pt-a-sep) !important; }
+html[data-ui=apple]:not([data-bs-theme=dark]) #scrollbar::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, .15); }
+html[data-ui=apple]:not([data-bs-theme=dark]) .app-menu .logo-light { display: none !important; }
+html[data-ui=apple]:not([data-bs-theme=dark]) .app-menu .logo-dark { display: inline-block !important; }
+
+/* Surfaces */
+html[data-ui=apple] .card {
+    background-color: var(--pt-a-card);
+    border: 0 !important;
+    border-radius: 16px !important;
+    box-shadow: var(--pt-a-shadow) !important;
+}
+html[data-ui=apple][data-bs-theme=dark] .card { box-shadow: none !important; }
+html[data-ui=apple] .card:hover { transform: none; }
+html[data-ui=apple] .card-header,
+html[data-ui=apple] .card-footer { background-color: transparent; border-color: var(--pt-a-sep); }
+html[data-ui=apple] .card-header { border-radius: 16px 16px 0 0 !important; }
+
+html[data-ui=apple] .modal-content {
+    border: 0;
+    border-radius: 18px;
+    background-color: var(--pt-a-card);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .18), 0 0 0 .5px var(--pt-a-sep);
+}
+html[data-ui=apple] .modal-header { border-bottom: .5px solid var(--pt-a-sep); }
+html[data-ui=apple] .modal-footer { border-top: .5px solid var(--pt-a-sep); }
+html[data-ui=apple] .modal-backdrop.show { opacity: .3; }
+html[data-ui=apple] .modal-header-gradient {
+    background: var(--pt-a-card) !important;
+    color: var(--pt-a-label) !important;
+}
+html[data-ui=apple] .modal-header-gradient .modal-title { color: var(--pt-a-label) !important; }
+html[data-ui=apple] .modal-header-gradient .btn-close { filter: none; opacity: .5; }
+html[data-ui=apple][data-bs-theme=dark] .modal-header-gradient .btn-close { filter: invert(1) grayscale(1) brightness(2); }
+html[data-ui=apple] .modal-header-gradient .rpt-subtitle { color: var(--pt-a-label-2); opacity: 1; }
+
+html[data-ui=apple] .dropdown-menu,
+html[data-ui=apple] #theme-dropdown,
+html[data-ui=apple] #user-dropdown {
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: color-mix(in srgb, var(--pt-a-card) 86%, transparent) !important;
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    backdrop-filter: saturate(180%) blur(24px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .16), 0 0 0 .5px var(--pt-a-sep) !important;
+    padding: 6px;
+}
+html[data-ui=apple] .dropdown-item,
+html[data-ui=apple] .theme-mode-item { border-radius: 7px; }
+html[data-ui=apple] .dropdown-item:hover,
+html[data-ui=apple] .dropdown-item:focus { background: var(--pt-a-blue); color: #fff; }
+
+/* Controls */
+html[data-ui=apple] .btn {
+    border-radius: 10px;
+    font-weight: 500;
+    letter-spacing: -.01em;
+    box-shadow: none !important;
+}
+html[data-ui=apple] .btn-sm { border-radius: 8px; }
+html[data-ui=apple] .btn-lg { border-radius: 12px; }
+html[data-ui=apple] .btn-primary {
+    --tb-btn-bg: var(--pt-a-blue); --tb-btn-border-color: var(--pt-a-blue);
+    --tb-btn-hover-bg: color-mix(in srgb, var(--pt-a-blue) 88%, #000); --tb-btn-hover-border-color: transparent;
+    --tb-btn-active-bg: color-mix(in srgb, var(--pt-a-blue) 80%, #000); --tb-btn-active-border-color: transparent;
+    --tb-btn-disabled-bg: var(--pt-a-blue); --tb-btn-disabled-border-color: var(--pt-a-blue);
+}
+html[data-ui=apple] .btn-success {
+    --tb-btn-bg: var(--tb-success); --tb-btn-border-color: var(--tb-success);
+    --tb-btn-hover-bg: color-mix(in srgb, var(--tb-success) 88%, #000); --tb-btn-hover-border-color: transparent;
+    --tb-btn-active-bg: color-mix(in srgb, var(--tb-success) 80%, #000);
+    --tb-btn-disabled-bg: var(--tb-success); --tb-btn-disabled-border-color: var(--tb-success);
+}
+html[data-ui=apple] .btn-danger {
+    --tb-btn-bg: var(--tb-danger); --tb-btn-border-color: var(--tb-danger);
+    --tb-btn-hover-bg: color-mix(in srgb, var(--tb-danger) 88%, #000); --tb-btn-hover-border-color: transparent;
+}
+html[data-ui=apple] .btn-light,
+html[data-ui=apple] .btn-secondary {
+    --tb-btn-bg: var(--pt-a-fill); --tb-btn-border-color: transparent; --tb-btn-color: var(--pt-a-label);
+    --tb-btn-hover-bg: var(--pt-a-fill); --tb-btn-hover-border-color: transparent; --tb-btn-hover-color: var(--pt-a-label);
+    --tb-btn-active-bg: var(--pt-a-fill); --tb-btn-active-color: var(--pt-a-label);
+}
+html[data-ui=apple] .btn-light:hover,
+html[data-ui=apple] .btn-secondary:hover { filter: brightness(.96); }
+html[data-ui=apple] .btn-outline-primary { --tb-btn-color: var(--pt-a-blue); --tb-btn-border-color: var(--pt-a-blue); --tb-btn-hover-bg: var(--pt-a-blue); --tb-btn-hover-border-color: var(--pt-a-blue); }
+
+html[data-ui=apple] .form-control,
+html[data-ui=apple] .form-select,
+html[data-ui=apple] .input-group-text {
+    border-radius: 10px;
+    border: .5px solid var(--pt-a-sep);
+    background-color: var(--pt-a-card);
+    color: var(--pt-a-label);
+}
+html[data-ui=apple][data-bs-theme=dark] .form-control,
+html[data-ui=apple][data-bs-theme=dark] .form-select,
+html[data-ui=apple][data-bs-theme=dark] .input-group-text { background-color: #2c2c2e; border-color: transparent; }
+html[data-ui=apple] .input-group > :not(:first-child) { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+html[data-ui=apple] .input-group > :not(:last-child):not(.dropdown-menu) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+html[data-ui=apple] .form-control:focus,
+html[data-ui=apple] .form-select:focus {
+    border-color: var(--pt-a-blue);
+    box-shadow: 0 0 0 4px rgba(var(--pt-a-blue-rgb), .22);
+}
+html[data-ui=apple] .form-check-input:checked { background-color: var(--pt-a-blue); border-color: var(--pt-a-blue); }
+html[data-ui=apple] .form-switch .form-check-input { width: 2.4em; height: 1.4em; margin-top: .05em; border: 0; background-color: var(--pt-a-fill); }
+html[data-ui=apple] .form-switch .form-check-input:checked { background-color: var(--tb-success); border-color: var(--tb-success); }
+html[data-ui=apple] .form-switch .form-check-input:focus { box-shadow: 0 0 0 4px rgba(var(--tb-success-rgb), .2); }
+
+/* Content */
+html[data-ui=apple] .table { --tb-table-border-color: var(--pt-a-sep); }
+html[data-ui=apple] .table > thead > tr > th {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--pt-a-label-2);
+    text-transform: none;
+    letter-spacing: 0;
+    background-color: transparent;
+    border-bottom: .5px solid var(--pt-a-sep);
+}
+html[data-ui=apple] .table-light { --tb-table-bg: transparent; }
+html[data-ui=apple] .table tbody tr:hover { background-color: var(--pt-a-fill-2); }
+html[data-ui=apple] .table > :not(caption) > * > * { border-bottom-width: .5px; }
+html[data-ui=apple] .badge { border-radius: 6px; font-weight: 600; letter-spacing: 0; }
+html[data-ui=apple] .badge.rounded-pill { border-radius: 999px; }
+html[data-ui=apple] .alert { border: 0; border-radius: 12px; }
+html[data-ui=apple] .nav-tabs { border-bottom: .5px solid var(--pt-a-sep); }
+html[data-ui=apple] .nav-pills .nav-link { border-radius: 8px; }
+html[data-ui=apple] .nav-pills .nav-link.active { background-color: var(--pt-a-blue); }
+html[data-ui=apple] .page-link { border-radius: 8px !important; margin: 0 2px; border: 0; }
+html[data-ui=apple] .pagination-wrap .active .page-link,
+html[data-ui=apple] .page-item.active .page-link { background-color: var(--pt-a-blue); }
+html[data-ui=apple] .progress { border-radius: 999px; background-color: var(--pt-a-fill); }
+html[data-ui=apple] #nprogress .bar { background: var(--pt-a-blue) !important; box-shadow: none !important; }
+html[data-ui=apple] .swal2-popup { border-radius: 18px !important; }
+html[data-ui=apple] .swal2-styled { border-radius: 10px !important; }
+html[data-ui=apple] .swal2-styled.swal2-confirm { background-color: var(--pt-a-blue) !important; }
+html[data-ui=apple] .select2-container--default .select2-selection--single,
+html[data-ui=apple] .select2-container--default .select2-selection--multiple { border-radius: 10px; border: .5px solid var(--pt-a-sep); }
+html[data-ui=apple] .choices__inner { border-radius: 10px !important; }
+
+/* CB UI skin (csskabba + ported Topclass modules) */
+html[data-ui=apple] body.cb-ui .page-title-box .mb-sm-0 { font-family: var(--pt-a-font) !important; }
+
+/* Theme menu in the top bar */
+.pt-menu-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--tb-secondary-color, #878a99);
+    padding: 6px 12px 4px;
+}
+.pt-menu-sep { height: 1px; margin: 6px 4px; background: var(--tb-border-color, #e9ebec); }
+.theme-mode-item .pt-check { margin-left: auto; opacity: 0; font-size: 14px; }
+.theme-mode-item.is-active .pt-check { opacity: 1; }
+.theme-mode-item.is-active { font-weight: 600; color: var(--tb-primary, #405189) !important; }
+.theme-mode-item small { color: var(--tb-secondary-color, #878a99); font-weight: 400; }
+
+@media (prefers-reduced-motion: reduce) {
+    html[data-ui=apple] * { scroll-behavior: auto !important; }
+}

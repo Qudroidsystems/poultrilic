@@ -64,6 +64,9 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
 
+    // Spotlight (⌘K) search
+    Route::get('search', \App\Http\Controllers\SearchController::class)->name('search');
+
     // Poultry: farm overview, flock pages, merge, recalculation and record export
     Route::get('overview', [PoultryController::class, 'overview'])->name('poultry.overview');
     Route::get('poultry/flocks/{flock}', [PoultryController::class, 'show'])->name('poultry.flocks.show');

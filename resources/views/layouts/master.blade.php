@@ -16,6 +16,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com/">
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
     <link id="fontsLink" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    {{-- Portal themes: appearance (light/dark/auto) + style (default/apple). Must stay in <head>, before paint. --}}
+    <script src="{{ asset('js/portal-theme.js') }}?v={{ @filemtime(public_path('js/portal-theme.js')) }}"></script>
     <link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet">
     <link href="{{ asset('theme/layouts/assets/fonts/materialdesignicons-webfont.woff2') }}?v=6.5.95" rel="stylesheet" type="font/woff2">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.css" rel="stylesheet">
@@ -60,7 +62,13 @@
     @endif
     @stack('styles')
 
-
+    {{-- Design system (cb-ui) + themes, loaded last so they win over page CSS.
+         Remove class="cb-ui" from <body class="cb-ui"> to switch the global skin off. --}}
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="{{ asset('theme/layouts/assets/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/cb-ui.css') }}?v={{ @filemtime(public_path('css/cb-ui.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/portal-theme.css') }}?v={{ @filemtime(public_path('css/portal-theme.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/poultrilic.css') }}?v={{ @filemtime(public_path('css/poultrilic.css')) }}" rel="stylesheet">
 </head>
 
 <body>
@@ -72,20 +80,20 @@
         <div class="app-menu navbar-menu">
             <!-- LOGO -->
             <div class="navbar-brand-box">
-                <a href="index.html" class="logo logo-dark">
+                <a href="{{ route('poultry.overview') }}" class="logo logo-dark">
                     <span class="logo-sm">
-                        <img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22">
+                        <span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span>
                     </span>
                     <span class="logo-lg">
-                        <img src="{{ asset('theme/layouts/assets/images/logo-dark.png')}}" alt="" height="22">
+                        <span class="pl-logo"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span><span class="pl-logo-text">Poultrilic</span></span>
                     </span>
                 </a>
-                <a href="index.html" class="logo logo-light">
+                <a href="{{ route('poultry.overview') }}" class="logo logo-light">
                     <span class="logo-sm">
-                        <img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22">
+                        <span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span>
                     </span>
                     <span class="logo-lg">
-                        <img src="{{ asset('theme/layouts/assets/images/logo-light.png')}}" alt="" height="22">
+                        <span class="pl-logo"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span><span class="pl-logo-text">Poultrilic</span></span>
                     </span>
                 </a>
                 <button type="button" class="btn btn-sm p-0 fs-3xl header-item float-end btn-vertical-sm-hover" id="vertical-hover">
@@ -115,21 +123,21 @@
                     <div class="d-flex">
                         <!-- LOGO -->
                         <div class="navbar-brand-box horizontal-logo">
-                            <a href="index.html" class="logo logo-dark">
+                            <a href="{{ route('poultry.overview') }}" class="logo logo-dark">
                                 <span class="logo-sm">
-                                    <img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22">
+                                    <span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span>
                                 </span>
                                 <span class="logo-lg">
-                                    <img src="{{ asset('theme/layouts/assets/images/logo-dark.png')}}" alt="" height="22">
+                                    <span class="pl-logo"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span><span class="pl-logo-text">Poultrilic</span></span>
                                 </span>
                             </a>
 
-                            <a href="index.html" class="logo logo-light">
+                            <a href="{{ route('poultry.overview') }}" class="logo logo-light">
                                 <span class="logo-sm">
-                                    <img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22">
+                                    <span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span>
                                 </span>
                                 <span class="logo-lg">
-                                    <img src="{{ asset('theme/layouts/assets/images/logo-light.png')}}" alt="" height="22">
+                                    <span class="pl-logo"><span class="pl-logo-mark"><i class="ri-seedling-fill"></i></span><span class="pl-logo-text">Poultrilic</span></span>
                                 </span>
                             </a>
                         </div>
@@ -142,90 +150,13 @@
                             </span>
                         </button>
 
-                        <form class="app-search d-none d-md-inline-flex">
-                            <div class="position-relative">
-                                <input type="text" class="form-control" placeholder="Search..." autocomplete="off" id="search-options" value="">
-                                <span class="mdi mdi-magnify search-widget-icon"></span>
-                                <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none" id="search-close-options"></span>
-                            </div>
-                            <div class="dropdown-menu dropdown-menu-lg" id="search-dropdown">
-                                <div data-simplebar style="max-height: 320px;">
-                                    <!-- item-->
-                                    <div class="dropdown-header">
-                                        <h6 class="text-overflow text-muted mb-0 text-uppercase">Recent Searches</h6>
-                                    </div>
-
-                                    <div class="dropdown-item bg-transparent text-wrap">
-                                        <a href="index.html" class="btn btn-subtle-secondary btn-sm btn-rounded">how to setup <i class="mdi mdi-magnify ms-1"></i></a>
-                                        <a href="index.html" class="btn btn-subtle-secondary btn-sm btn-rounded">buttons <i class="mdi mdi-magnify ms-1"></i></a>
-                                    </div>
-                                    <!-- item-->
-                                    <div class="dropdown-header mt-2">
-                                        <h6 class="text-overflow text-muted mb-1 text-uppercase">Pages</h6>
-                                    </div>
-
-                                    <!-- item-->
-                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                        <i class="ri-bubble-chart-line align-middle fs-18 text-muted me-2"></i>
-                                        <span>Analytics Dashboard</span>
-                                    </a>
-
-                                    <!-- item-->
-                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                        <i class="ri-lifebuoy-line align-middle fs-18 text-muted me-2"></i>
-                                        <span>Help Center</span>
-                                    </a>
-
-                                    <!-- item-->
-                                    <a href="javascript:void(0);" class="dropdown-item notify-item">
-                                        <i class="ri-user-settings-line align-middle fs-18 text-muted me-2"></i>
-                                        <span>My account settings</span>
-                                    </a>
-
-                                    <!-- item-->
-                                    <div class="dropdown-header mt-2">
-                                        <h6 class="text-overflow text-muted mb-2 text-uppercase">Members</h6>
-                                    </div>
-
-                                    <div class="notification-list">
-                                        <!-- item -->
-                                        <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
-                                            <div class="d-flex">
-                                                <img src="assets/images/users/avatar-2.jpg" class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                                <div class="flex-1">
-                                                    <h6 class="m-0">Angela Bernier</h6>
-                                                    <span class="fs-11 mb-0 text-muted">Manager</span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        <!-- item -->
-                                        <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
-                                            <div class="d-flex">
-                                                <img src="assets/images/users/avatar-3.jpg" class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                                <div class="flex-1">
-                                                    <h6 class="m-0">David Grasso</h6>
-                                                    <span class="fs-11 mb-0 text-muted">Web Designer</span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        <!-- item -->
-                                        <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
-                                            <div class="d-flex">
-                                                <img src="assets/images/users/avatar-5.jpg" class="me-3 rounded-circle avatar-xs" alt="user-pic">
-                                                <div class="flex-1">
-                                                    <h6 class="m-0">Mike Bunch</h6>
-                                                    <span class="fs-11 mb-0 text-muted">React Developer</span>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <div class="text-center pt-3 pb-1">
-                                    <a href="#" class="btn btn-primary btn-sm">View All Results <i class="ri-arrow-right-line ms-1"></i></a>
-                                </div>
-                            </div>
-                        </form>
+                        <div class="d-none d-md-inline-flex align-items-center ms-2">
+                            <button type="button" id="spotlight-trigger" class="pl-spotlight-trigger" aria-label="Search (Ctrl K)">
+                                <i class="ri-search-line"></i>
+                                <span>Search flocks, pages, reports…</span>
+                                <span class="pl-kbd"><kbd>⌘</kbd><kbd>K</kbd></span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="d-flex align-items-center">
@@ -303,14 +234,19 @@
                             </button>
                         </div> --}}
 
-                        <div class="dropdown topbar-head-dropdown ms-1 header-item">
-                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle mode-layout" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="bi bi-sun align-middle fs-3xl"></i>
+                        <div class="dropdown topbar-head-dropdown ms-1 header-item" id="theme-toggle-wrapper">
+                            <button type="button" id="theme-toggle-btn" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Theme" aria-label="Theme">
+                                <i id="theme-icon" class="ri-sun-line align-middle fs-3xl"></i>
                             </button>
-                            <div class="dropdown-menu p-2 dropdown-menu-end" id="light-dark-mode">
-                                <a href="#!" class="dropdown-item" data-mode="light"><i class="bi bi-sun align-middle me-2"></i> Default (light mode)</a>
-                                <a href="#!" class="dropdown-item" data-mode="dark"><i class="bi bi-moon align-middle me-2"></i> Dark</a>
-                                <a href="#!" class="dropdown-item" data-mode="auto"><i class="bi bi-moon-stars align-middle me-2"></i> Auto (system default)</a>
+                            <div class="dropdown-menu dropdown-menu-end p-2" id="theme-dropdown" style="min-width: 210px" role="menu">
+                                <div class="pt-menu-label">Appearance</div>
+                                <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="light" role="menuitemradio"><i class="ri-sun-line"></i> Light<i class="ri-check-line pt-check"></i></a>
+                                <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="dark" role="menuitemradio"><i class="ri-moon-line"></i> Dark<i class="ri-check-line pt-check"></i></a>
+                                <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-mode="auto" role="menuitemradio"><i class="ri-contrast-2-line"></i> Auto <small>(system)</small><i class="ri-check-line pt-check"></i></a>
+                                <div class="pt-menu-sep"></div>
+                                <div class="pt-menu-label">Style</div>
+                                <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-ui="default" role="menuitemradio"><i class="ri-layout-grid-line"></i> Default<i class="ri-check-line pt-check"></i></a>
+                                <a href="javascript:void(0)" class="theme-mode-item d-flex align-items-center gap-2 px-3 py-2 rounded-2 text-decoration-none" data-ui="apple" role="menuitemradio"><i class="ri-apple-line"></i> Apple<i class="ri-check-line pt-check"></i></a>
                             </div>
                         </div>
 
@@ -481,7 +417,12 @@
                                     ?>
 
                                     @if($userdata)
-                                        <img class="rounded-circle header-profile-user" src="{{ asset('storage/' . $userdata->profile_image) }}"  alt="{{ $userdata->name }}">
+                                        @php($photo = $userdata->profile_image ?: null)
+                                        @if ($photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($photo))
+                                            <img class="rounded-circle header-profile-user" src="{{ asset('storage/' . $photo) }}" alt="{{ $userdata->name }}" style="object-fit: cover">
+                                        @else
+                                            <span class="rounded-circle header-profile-user pl-initials" aria-hidden="true">{{ collect(explode(' ', trim($userdata->name)))->filter()->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode('') }}</span>
+                                        @endif
                                         <span class="text-start ms-xl-2">
                                             <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{ $userdata->name }}</span>
                                             <span class="d-none d-xl-block ms-1 fs-sm user-name-sub-text">{{ $userdata->roles->first()->name ?? 'User' }}</span>
@@ -570,7 +511,7 @@
           <div class="container-fluid">
               <div class="row">
                   <div class="col-sm-6">
-                      <script>document.write(new Date().getFullYear())</script> © primefarm.ng
+                      <script>document.write(new Date().getFullYear())</script> © {{ \App\Support\FarmSettings::text('farm_name') }}
                   </div>
                   <div class="col-sm-6">
                       <div class="text-sm-end d-none d-sm-block">
@@ -610,13 +551,8 @@
 
 
 
-      <div class="customizer-setting d-none d-md-block">
-      <div class="btn btn-info p-2 text-uppercase rounded-end-0 shadow-lg" data-bs-toggle="offcanvas" data-bs-target="#theme-settings-offcanvas" aria-controls="theme-settings-offcanvas">
-      <i class="bi bi-gear mb-1"></i> Customizer
-      </div>
-      </div>
-
-      <!-- Theme Settings -->
+      {{-- The template's customizer button is removed: app.js "clicks" it whenever <html> theme attributes change,
+           and appearance/style now come from the theme menu (js/portal-theme.js). The panel markup stays for app.js. --}}
       <div class="offcanvas offcanvas-end border-0" tabindex="-1" id="theme-settings-offcanvas">
             <div class="d-flex align-items-center bg-primary bg-gradient p-3 offcanvas-header">
             <div class="me-2">
@@ -1349,6 +1285,11 @@
              @include('layouts.pages-assets.js.app-js')
       @endif
       @stack('scripts')
+
+      {{-- Apple-style dialogs (SweetAlert2) for confirmations and toasts. --}}
+      <script>window.Sweetalert2 || window.Swal && window.Swal.fire || document.write('<script src="{{ asset('theme/layouts/assets/libs/sweetalert2/sweetalert2.min.js') }}"><\/script>');</script>
+      @include('partials.apple-alert')
+      @include('layouts.inc.ui-scripts')
 
       </body>
 

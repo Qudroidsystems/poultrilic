@@ -7,7 +7,7 @@
     $vals = $edit?->values ?? [];
 @endphp
 @section('page')
-    @include('partials.page-header', [
+    @include('partials.page-header', ['icon' => $type->icon, 
         'title' => $unit->name,
         'subtitle' => collect([$type->unit_label, $unit->breed, number_format($unit->current_count) . ' ' . strtolower($type->count_label) . ' now', $unit->start_date ? 'since ' . $unit->start_date->format('j M Y') : null, $unit->status === 'active' ? null : 'Closed'])->filter()->implode(' · '),
         'crumbs' => [$type->name => route('livestock.index', $type), $unit->name => null],

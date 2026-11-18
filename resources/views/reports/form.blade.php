@@ -6,7 +6,7 @@
     $isPoultry = $report->source === 'poultry';
 @endphp
 @section('page')
-    @include('partials.page-header', ['title' => $report->exists ? 'Edit report' : 'New report',
+    @include('partials.page-header', ['icon' => 'ri-equalizer-line', 'title' => $report->exists ? 'Edit report' : 'New report',
         'crumbs' => ['Reports' => route('reports.index'), ($report->exists ? $report->name : 'New') => null]])
 
     <form method="POST" action="{{ $report->exists ? route('reports.update', $report) : route('reports.store') }}">

@@ -1,0 +1,111 @@
+/* ==========================================================================
+   Poultrilic — brand, Spotlight and the shared page pieces on top of cb-ui
+   (loaded after css/cb-ui.css and css/portal-theme.css)
+   ========================================================================== */
+
+/* ── Brand ─────────────────────────────────────────────────────────────── */
+.pl-logo { display: inline-flex; align-items: center; gap: 9px; }
+.pl-logo-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 9px; font-size: 17px; color: #fff;
+    background: var(--cb-hero-grad, linear-gradient(135deg, #0f2342, #0d9488));
+    box-shadow: 0 4px 12px rgba(13, 148, 136, .25);
+}
+.pl-logo-text { font-family: var(--cb-font-display, 'Playfair Display', serif); font-weight: 700; font-size: 21px; letter-spacing: -.01em; color: #fff; }
+.logo-dark .pl-logo-text { color: var(--cb-heading, #0f2342); }
+html[data-ui=apple] .pl-logo-text { font-family: var(--pt-a-font); font-weight: 650; letter-spacing: -.03em; }
+html[data-ui=apple][data-sidebar=dark] .app-menu .pl-logo-text,
+html[data-ui=apple] .app-menu .pl-logo-text { color: var(--pt-a-label, #1d1d1f); }
+html[data-ui=apple][data-bs-theme=dark] .app-menu .pl-logo-text { color: #f5f5f7; }
+
+/* ── Spotlight (⌘K) ───────────────────────────────────────────────────── */
+.pl-spotlight-trigger {
+    display: flex; align-items: center; gap: 10px; min-width: 300px; padding: 8px 12px;
+    border-radius: 12px; border: 1px solid var(--tb-border-color, #e9ebec);
+    background: var(--tb-secondary-bg, #f3f6f9); color: var(--tb-secondary-color, #878a99);
+    font-size: 13px; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+}
+.pl-spotlight-trigger:hover { border-color: var(--cb-teal, #0d9488); box-shadow: 0 0 0 3px rgba(13, 148, 136, .1); }
+.pl-spotlight-trigger span:first-of-type { flex: 1; text-align: left; }
+.pl-kbd kbd, .pl-spotlight kbd {
+    font-family: inherit; font-size: 10.5px; padding: 2px 6px; margin-left: 2px; border-radius: 5px;
+    background: var(--tb-tertiary-bg, #e9ebec); color: var(--tb-secondary-color, #6b7280); border: 0; box-shadow: none;
+}
+.pl-spotlight {
+    position: fixed; inset: 0; z-index: 1065; display: flex; align-items: flex-start; justify-content: center;
+    padding: 12vh 16px 16px; background: rgba(15, 23, 42, .32);
+    backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%);
+    animation: plFade .15s ease;
+}
+.pl-spotlight[hidden] { display: none; }
+.pl-spotlight-box {
+    width: 100%; max-width: 680px; border-radius: 22px; overflow: hidden;
+    background: var(--cb-surface, #fff); border: 1px solid var(--cb-border, #e2e8f0);
+    box-shadow: 0 30px 80px rgba(15, 23, 42, .35); animation: plPop .22s cubic-bezier(.34, 1.3, .64, 1);
+}
+.pl-spotlight-input { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--cb-border, #e2e8f0); }
+.pl-spotlight-input i { font-size: 22px; color: var(--cb-muted, #64748b); }
+.pl-spotlight-input input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 19px; color: var(--cb-heading, #0f2342); }
+.pl-spotlight-results { max-height: 52vh; overflow-y: auto; padding: 6px 8px 8px; }
+.pl-spotlight-group { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--cb-muted, #64748b); padding: 12px 12px 4px; }
+.pl-spotlight-item { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 12px; color: var(--cb-text, #334155); text-decoration: none; }
+.pl-spotlight-item:hover, .pl-spotlight-item.is-active { background: var(--cb-teal, #0d9488); color: #fff; }
+.pl-spotlight-ico { width: 32px; height: 32px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: var(--cb-surface-2, #f8fafc); font-size: 17px; flex-shrink: 0; }
+.pl-spotlight-item.is-active .pl-spotlight-ico, .pl-spotlight-item:hover .pl-spotlight-ico { background: rgba(255, 255, 255, .18); }
+.pl-spotlight-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pl-spotlight-text span { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-spotlight-text small { opacity: .75; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-spotlight-enter { opacity: 0; }
+.pl-spotlight-item.is-active .pl-spotlight-enter { opacity: .8; }
+.pl-spotlight-empty { padding: 26px; text-align: center; color: var(--cb-muted, #64748b); }
+.pl-spotlight-foot { display: flex; gap: 16px; justify-content: flex-end; padding: 9px 16px; border-top: 1px solid var(--cb-border, #e2e8f0); font-size: 11.5px; color: var(--cb-muted, #64748b); background: var(--cb-surface-2, #f8fafc); }
+html[data-ui=apple] .pl-spotlight-item:hover, html[data-ui=apple] .pl-spotlight-item.is-active { background: var(--pt-a-blue, #007aff); }
+html[data-ui=apple] .pl-spotlight-trigger:hover { border-color: var(--pt-a-blue); box-shadow: 0 0 0 3px rgba(0, 122, 255, .12); }
+body.pl-spotlight-open { overflow: hidden; }
+@keyframes plFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes plPop { from { opacity: 0; transform: translateY(-14px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* ── Page hero (partials.page-header) ──────────────────────────────────── */
+.pl-hero { padding: 24px 28px; margin-bottom: 20px; }
+.pl-hero h1 { font-size: 24px; }
+.pl-hero .pl-crumbs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; position: relative; font-size: 12px; }
+.pl-hero .pl-crumbs a { color: rgba(255, 255, 255, .8); text-decoration: none; font-weight: 600; }
+.pl-hero .pl-crumbs a:hover { color: #fff; }
+.pl-hero .pl-crumbs i { color: rgba(255, 255, 255, .5); }
+.pl-hero .pl-crumbs span { color: rgba(255, 255, 255, .6); }
+/* Any button passed in as a hero action takes the translucent hero style. */
+.cb-hero .cb-hero-actions .btn {
+    background: rgba(255, 255, 255, .14) !important; border: 1px solid rgba(255, 255, 255, .3) !important; color: #fff !important;
+    border-radius: var(--cb-radius-sm) !important; font-weight: 600; backdrop-filter: blur(4px);
+}
+.cb-hero .cb-hero-actions .btn:hover { background: rgba(255, 255, 255, .26) !important; transform: translateY(-1px); }
+.cb-hero .cb-hero-actions .btn.btn-primary,
+.cb-hero .cb-hero-actions .btn.btn-danger { background: #fff !important; color: var(--cb-navy, #0f2342) !important; border-color: #fff !important; }
+html[data-ui=apple] .cb-hero .cb-hero-actions .btn.btn-primary,
+html[data-ui=apple] .cb-hero .cb-hero-actions .btn.btn-danger { color: var(--pt-a-blue) !important; }
+
+/* ── KPI tiles (partials.kpi) on the cb-stat look ──────────────────────── */
+.cb-stat.pl-kpi { padding: 18px 20px; }
+.cb-stat.pl-kpi .stat-label { text-transform: uppercase; letter-spacing: .05em; font-size: 11px; font-weight: 700; margin: 0; }
+.cb-stat.pl-kpi .stat-value { font-size: 24px; margin-top: 6px; }
+.cb-stat.pl-kpi .stat-sub { font-size: 12px; color: var(--cb-muted); margin-top: 4px; }
+.cb-stat.pl-kpi .stat-ico { opacity: .1; }
+
+/* Filters bar */
+.pl-filter.card { border-radius: var(--cb-radius) !important; }
+
+/* Tables inside cards: softer headers in the cb palette */
+body.cb-ui .page-content .card .table > thead.table-light > tr > th {
+    font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--cb-muted); font-weight: 700;
+}
+
+/* The template's "Builder" customizer stays in the markup (the template's app.js reads it) but is hidden:
+   appearance and style are chosen from the theme menu in the top bar. */
+.customizer-setting { display: none !important; }
+#theme-settings-offcanvas:not(.showing):not(.show) { visibility: hidden; }
+
+/* Initials avatar when the user has no photo */
+.pl-initials {
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; letter-spacing: .02em;
+    color: #fff; background: var(--cb-hero-grad, linear-gradient(135deg, #0f2342, #0d9488));
+}

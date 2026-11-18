@@ -316,3 +316,43 @@ it('serves the mobile API with tokens', function () {
     $this->app['auth']->forgetGuards();   // the test client keeps the signed-in user between calls
     $this->getJson('/api/v1/dashboard')->assertUnauthorized();
 });
+
+// ---- Seeders and Spotlight ----------------------------------------------------------------------
+
+it('seeds permissions, roles and the admin user, and is safe to run twice', function () {
+    $this->seed(\Database\Seeders\DatabaseSeeder::class);
+    $this->seed(\Database\Seeders\DatabaseSeeder::class);
+
+    $admin = User::where('email', env('ADMIN_EMAIL', 'eliabsiji@gmail.com'))->firstOrFail();
+    expect(User::count())->toBe(1)
+        ->and($admin->hasRole('Super Admin'))->toBeTrue()
+        ->and($admin->can('Manage livestock types'))->toBeTrue()
+        ->and(\Spatie\Permission\Models\Role::findByName('Record Keeper')->hasPermissionTo('Create daily-entry'))->toBeTrue()
+        ->and(\Spatie\Permission\Models\Role::findByName('Record Keeper')->hasPermissionTo('Delete flock'))->toBeFalse()
+        ->and(\Illuminate\Support\Facades\DB::table('seeder_log')->where('success', true)->count())->toBeGreaterThanOrEqual(4);
+});
+
+it('builds a demo farm whose figures add up', function () {
+    $this->seed(\Database\Seeders\PermissionTableSeeder::class);
+    $this->seed(\Database\Seeders\RoleTableSeeder::class);
+    $this->seed(\Database\Seeders\UserTableSeeder::class);
+    $this->seed(\Database\Seeders\LivestockTemplateSeeder::class);
+    $this->seed(\Database\Seeders\DemoFarmSeeder::class);
+
+    expect(Flock::count())->toBe(4)->and(DailyEntry::count())->toBeGreaterThan(400)
+        ->and(\App\Models\Sale::count())->toBeGreaterThan(50)
+        ->and(LivestockRecord::count())->toBeGreaterThan(100);
+    foreach (Flock::all() as $f) {
+        $last = DailyEntry::forFlock($f->id)->latestFirst()->first();
+        expect($f->current_bird_count)->toBe($f->initial_bird_count - (int) DailyEntry::forFlock($f->id)->sum(\Illuminate\Support\Facades\DB::raw('daily_mortality + birds_stolen + birds_culled')))
+            ->and($last->current_birds)->toBe($f->current_bird_count);
+    }
+    // Runs once only: a farm with flocks is never touched.
+    $this->seed(\Database\Seeders\DemoFarmSeeder::class);
+    expect(Flock::count())->toBe(4);
+
+    $this->actingAs(User::firstOrFail());
+    $this->get(route('poultry.overview'))->assertOk()->assertSee('Layers A');
+    $this->getJson(route('search', ['q' => 'pond']))->assertOk()->assertJsonPath('results.0.group', 'Livestock');
+    $this->getJson(route('search', ['q' => 'layers']))->assertOk()->assertJsonPath('results.0.title', 'Layers A (Isa Brown)');
+});

@@ -7,7 +7,7 @@
     'notes' => 'Notes', 'reported_at' => 'Sent on', 'unit' => 'Unit', 'date' => 'Date',
 ])
 @section('page')
-    @include('partials.page-header', ['title' => 'Check the import', 'subtitle' => $batch->filename . ' → ' . $batch->target_label,
+    @include('partials.page-header', ['icon' => 'ri-file-search-line', 'title' => 'Check the import', 'subtitle' => $batch->filename . ' → ' . $batch->target_label,
         'crumbs' => ['Import' => route('imports.index'), 'Check' => null]])
 
     @php($groups = $batch->kind === 'poultry' ? ($parsed['flocks'] ?? []) : ($parsed['units'] ?? []))

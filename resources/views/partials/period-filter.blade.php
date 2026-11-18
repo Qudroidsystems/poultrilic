@@ -1,6 +1,6 @@
 {{-- Period (+ optional flock / unit) filter: one row above the charts. Vars: $period, $from, $to, optional $entities (id => name), $selected, $entityName --}}
 @php($periods = \App\Models\ReportDefinition::PERIODS)
-<form method="GET" class="card mb-3">
+<form method="GET" class="card pl-filter mb-3">
     <div class="card-body py-2">
         <div class="row g-2 align-items-end">
             <div class="col-sm-auto">
