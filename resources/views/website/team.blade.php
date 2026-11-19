@@ -28,7 +28,9 @@
                 @endif
             @empty
             @endforelse
-            @if($people->isEmpty())<div class="empty"><i class="ri-team-line"></i>Our team page is being prepared.</div>@endif
+            @if($people->isEmpty())<div class="soon reveal"><div class="soon-ic"><i class="ri-team-line"></i></div><h3>Meet the team soon</h3><p>The people who feed the birds, collect the eggs and serve our customers will be introduced here.</p><a class="btn btn-primary" href="{{ route('site.about') }}">About the farm</a></div>@endif
         </div>
     </section>
+    @include('website.sections.values', ['tone' => 'cream'])
+    @include('website.sections.visit')
 @endsection

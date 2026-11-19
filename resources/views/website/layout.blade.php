@@ -65,9 +65,10 @@
             <nav class="nav" aria-label="Main">
                 <button class="nav-close" aria-label="Close menu"><i class="ri-close-line"></i></button>
                 <div class="item {{ $cur === '' ? 'active' : '' }}"><a href="{{ route('site.home') }}">Home</a></div>
-                <div class="item has-drop {{ str_starts_with($cur, 'pages') || $cur === 'our-team' ? 'active' : '' }}">
-                    <a href="{{ isset($about[0]) ? route('site.page', $about[0]['slug']) : route('site.team') }}">About <i class="ri-arrow-down-s-line"></i></a>
+                <div class="item has-drop {{ str_starts_with($cur, 'pages') || in_array($cur, ['our-team', 'about'], true) ? 'active' : '' }}">
+                    <a href="{{ route('site.about') }}">About <i class="ri-arrow-down-s-line"></i></a>
                     <div class="drop">
+                        <a href="{{ route('site.about') }}">About {{ $farm->name }}</a>
                         @foreach ($about as $p)<a href="{{ route('site.page', $p['slug']) }}">{{ $p['title'] }}</a>@endforeach
                         @foreach ($farmPages as $p)<a href="{{ route('site.page', $p['slug']) }}">{{ $p['title'] }}</a>@endforeach
                         <a href="{{ route('site.team') }}">Our team</a>
@@ -113,6 +114,7 @@
                 <div>
                     <h5>The farm</h5>
                     <ul>
+                        <li><a href="{{ route('site.about') }}">About us</a></li>
                         @foreach ($about as $p)<li><a href="{{ route('site.page', $p['slug']) }}">{{ $p['title'] }}</a></li>@endforeach
                         @foreach (array_slice($farmPages, 0, 3) as $p)<li><a href="{{ route('site.page', $p['slug']) }}">{{ $p['title'] }}</a></li>@endforeach
                         <li><a href="{{ route('site.team') }}">Our team</a></li>

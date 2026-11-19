@@ -100,6 +100,14 @@ class WebsiteAdminController extends Controller
                 ['title', 'Value', 'text', ['required' => true]], ['body', 'Short description', 'textarea'],
                 ['icon', 'Icon', 'icon'], ['sort', 'Order', 'number'], ['published', 'Show', 'check'],
             ]),
+            'steps' => $item('step', [
+                ['title', 'Step', 'text', ['required' => true]], ['body', 'Short text', 'textarea'],
+                ['icon', 'Icon', 'icon'], ['sort', 'Order', 'number'], ['published', 'Show', 'check'],
+            ]),
+            'promises' => $item('promise', [
+                ['title', 'Promise', 'text', ['required' => true]], ['body', 'Short text', 'textarea'],
+                ['icon', 'Icon', 'icon'], ['sort', 'Order', 'number'], ['published', 'Show', 'check'],
+            ]),
             'highlights' => $item('highlight', [
                 ['title', 'Highlight', 'text', ['required' => true]], ['body', 'Short text', 'textarea'],
                 ['icon', 'Icon', 'icon'], ['sort', 'Order', 'number'], ['published', 'Show', 'check'],
@@ -130,6 +138,8 @@ class WebsiteAdminController extends Controller
                 'faqs' => $count('website_items', fn ($q) => $q->where('kind', 'faq')),
                 'values' => $count('website_items', fn ($q) => $q->where('kind', 'value')),
                 'highlights' => $count('website_items', fn ($q) => $q->where('kind', 'highlight')),
+                'steps' => $count('website_items', fn ($q) => $q->where('kind', 'step')),
+                'promises' => $count('website_items', fn ($q) => $q->where('kind', 'promise')),
                 'partners' => $count('website_items', fn ($q) => $q->where('kind', 'partner')),
                 'products' => $count('website_items', fn ($q) => $q->where('kind', 'product')),
                 'unread' => $count('website_messages', fn ($q) => $q->whereNull('read_at')->where('type', '!=', 'newsletter')),
@@ -453,5 +463,20 @@ class WebsiteAdminController extends Controller
             }
             fclose($out);
         }, $name, ['Content-Type' => 'text/csv']);
+    }
+
+    /** Copy the default wording (promise, farm-to-table steps, values, FAQs) in as editable items. */
+    public function starter()
+    {
+        $added = 0;
+        foreach (['promise', 'step', 'value', 'faq'] as $kind) {
+            if (WebsiteItem::where('kind', $kind)->exists()) continue;
+            foreach (W::defaults($kind)->values() as $i => $d) {
+                WebsiteItem::create(['kind' => $kind, 'title' => $d->title, 'body' => $d->body, 'icon' => $d->icon ?: null, 'sort' => $i + 1, 'published' => true]);
+                $added++;
+            }
+        }
+        W::flush();
+        return back()->with('success', $added ? "{$added} items added. Edit them to make them your own." : 'You already have your own wording for these sections.');
     }
 }

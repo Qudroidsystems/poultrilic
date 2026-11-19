@@ -7,8 +7,11 @@
 
 @section('content')
     @include('website.partials.page-hero', ['title' => 'Products & prices', 'lead' => 'Fresh from ' . $farm->name . '. Prices marked "today\'s price" follow the farm\'s current price list.', 'crumbs' => [['Products', null]]])
+    <div class="subnav reveal">
+        <a href="#list">Products</a><a href="#how">Farm to table</a>@if ($ordersOpen)<a href="#order">Order</a>@endif<a href="#bulk">Bulk supply</a><a href="#faq">FAQs</a>
+    </div>
 
-    <section class="section">
+    <section class="section" id="list">
         <div class="container">
             @if ($products->count())
                 <div class="products">
@@ -44,6 +47,9 @@
             </div>
         </section>
     @endif
+
+    @include('website.sections.trend', ['title' => 'Eggs collected, day by day'])
+    <div id="how">@include('website.sections.process', ['tone' => 'cream'])</div>
 
     @if ($ordersOpen)
         <section class="section" id="order">
@@ -92,12 +98,8 @@
         </section>
     @endif
 
-    @if ($faqs->count())
-        <section class="section cream">
-            <div class="container" style="max-width:860px">
-                <div class="section-head center reveal"><span class="eyebrow">FAQs</span><h2>Good to know</h2></div>
-                <div class="faq reveal">@foreach ($faqs as $i => $f)<details @if ($i === 0) open @endif><summary>{{ $f->title }}</summary><div>{!! nl2br(e($f->body)) !!}</div></details>@endforeach</div>
-            </div>
-        </section>
-    @endif
+    @include('website.sections.nutrition')
+    <div id="bulk">@include('website.sections.bulk')</div>
+    <div id="faq">@include('website.sections.faq', ['tone' => 'cream', 'title' => 'Good to know'])</div>
+    @include('website.sections.newsletter')
 @endsection

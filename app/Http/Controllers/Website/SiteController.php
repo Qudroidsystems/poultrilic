@@ -50,10 +50,24 @@ class SiteController extends Controller
         ]);
     }
 
+    /** About the farm: the farm's own About page (when written), story, process, live numbers, team. */
+    public function about()
+    {
+        $ready = W::ready();
+        $pages = $ready ? WebsitePage::where('published', true)->whereIn('menu', ['about', 'farm'])->orderBy('sort')->get() : collect();
+        return view('website.about', [
+            'page'        => $pages->firstWhere('menu', 'about'),
+            'more'        => $pages->slice(1)->values(),
+            'people'      => $ready ? WebsitePerson::where('published', true)->orderBy('sort')->limit(4)->get() : collect(),
+            'enterprises' => W::enterprises(),
+            'stats'       => W::get('show_stats', '1') === '1' ? W::stats() : [],
+        ]);
+    }
+
     public function products()
     {
         return view('website.products', [
-            'products'    => W::products(),
+            'products'    => W::productsOrEggs(),
             'enterprises' => W::enterprises(),
             'faqs'        => $this->items('faq'),
             'pages'       => W::ready() ? WebsitePage::where('menu', 'products')->where('published', true)->orderBy('sort')->get() : collect(),

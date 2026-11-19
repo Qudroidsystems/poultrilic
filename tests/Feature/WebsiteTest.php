@@ -104,3 +104,27 @@ it('shows the website at "/" even before the website tables are migrated', funct
     }
     $this->post(route('site.contact.send'), ['name' => 'Ada', 'message' => 'Hi'])->assertSessionHasErrors('website');
 });
+
+it('fills the home and other pages with standard sections, live data and editable starter wording', function () {
+    $flock = Flock::create(['name' => 'A', 'flock_type' => 'layer', 'initial_bird_count' => 1000, 'status' => 'active']);
+    plDays($flock, now()->subDays(5)->toDateString(), [[1, 800, 2], [0, 820, 2], [2, 810, 2], [0, 830, 2]]);
+    W::flush();
+
+    $this->get('/')->assertOk()
+        ->assertSee('How your eggs get to you')          // farm to table
+        ->assertSee('Small egg, big nutrition')          // why eggs
+        ->assertSee('Supplying a shop, hotel, bakery or caterer?')
+        ->assertSee('Collected every day')               // promise
+        ->assertSee('Fresh table eggs')                  // eggs at today's price before products are added
+        ->assertSee('₦6,000')
+        ->assertSee('eggs a day on average')             // live chart
+        ->assertSee('Questions customers ask');
+
+    $this->get(route('site.about'))->assertOk()->assertSee('About Sunrise Farm')->assertSee('How we farm, every day');
+    $this->get(route('site.products'))->assertOk()->assertSee('Good to know')->assertSee('Bulk');
+    $this->get(route('site.contact'))->assertOk()->assertSee('Book a visit');
+
+    $this->actingAs(plUser(['Manage website', 'dashboard']))->post(route('website.admin.starter'))->assertRedirect();
+    expect(WebsiteItem::where('kind', 'step')->count())->toBe(4)->and(WebsiteItem::where('kind', 'faq')->count())->toBe(5);
+    $this->get(route('website.admin.list', 'steps'))->assertOk()->assertSee('Collected daily');
+});

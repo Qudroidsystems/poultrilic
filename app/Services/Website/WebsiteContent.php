@@ -61,6 +61,7 @@ class WebsiteContent
         self::$ready = null;
         Cache::forget('website.stats');
         Cache::forget('website.menu');
+        foreach ([7, 14, 30] as $d) Cache::forget("website.trend.$d");
     }
 
     /**
@@ -247,6 +248,97 @@ class WebsiteContent
         } catch (\Throwable $e) {
         }
         return $list;
+    }
+
+
+    // ── standard sections: live trend + default wording ──────────────────
+
+    /**
+     * Eggs collected per day over the last $days days that have records (all flocks),
+     * plus the laying rate for each day — drawn as the live chart on the website.
+     */
+    public static function eggTrend(int $days = 14): array
+    {
+        return Cache::remember("website.trend.$days", now()->addHour(), function () use ($days) {
+            try {
+                $rows = DailyEntry::query()
+                    ->selectRaw('entry_date, SUM(eggs_produced) as eggs, SUM(current_birds) as birds')
+                    ->groupBy('entry_date')->orderByDesc('entry_date')->limit($days)->get()->reverse()->values();
+                return $rows->map(fn ($r) => [
+                    'date'  => Carbon::parse($r->entry_date)->format('j M'),
+                    'eggs'  => (int) $r->eggs,
+                    'rate'  => $r->birds > 0 ? round($r->eggs / $r->birds * 100, 1) : 0,
+                ])->filter(fn ($r) => $r['eggs'] > 0)->values()->all();
+            } catch (\Throwable $e) {
+                return [];
+            }
+        });
+    }
+
+    /**
+     * Wording for the standard sections when the farm hasn't written its own yet. Only
+     * plain statements about how the website and the farm records work — no invented
+     * figures, contacts or certificates. The admin can copy them in and edit them
+     * (Website › Overview › "Add starter wording").
+     */
+    public static function defaults(string $kind)
+    {
+        $egg = (float) FarmSettings::eggPrice() > 0;
+        $sets = [
+            'promise' => [
+                ['ri-calendar-check-line', 'Collected every day', 'Eggs are gathered and recorded daily, so what you buy is fresh.'],
+                ['ri-file-list-3-line', 'Every flock on record', 'Feed, health and production are logged for each flock, every day.'],
+                ['ri-price-tag-3-line', $egg ? "Today's price, upfront" : 'Fair farm-gate prices', $egg ? 'Our egg prices on this site follow the farm price list.' : 'Buy straight from the farm, without middlemen.'],
+                ['ri-truck-line', 'Pick-up or delivery', 'Collect at the farm or ask us to deliver your order.'],
+            ],
+            'step' => [
+                ['ri-seedling-line', 'Raised with care', 'Our birds are fed, watered and checked every day by the farm team.'],
+                ['ri-hand-heart-line', 'Collected daily', 'Eggs are gathered from the pens each day and counted into our records.'],
+                ['ri-checkbox-circle-line', 'Checked & packed', 'Cracked or dirty eggs are taken out before eggs are packed into crates.'],
+                ['ri-truck-line', 'To your table', 'You pick up at the farm or we deliver, fresh and on time.'],
+            ],
+            'value' => [
+                ['ri-heart-pulse-line', 'Healthy birds', 'Good feed, clean water and close daily care.'],
+                ['ri-shield-check-line', 'Honest records', 'We count every egg and every bird — the numbers on this site come from them.'],
+                ['ri-customer-service-2-line', 'Customers first', 'Clear prices, quick answers and orders confirmed by phone.'],
+            ],
+            'faq' => [
+                ['', 'How do I order?', "Use the order form on the Products page, call us or send a WhatsApp message. We confirm the price and pick-up or delivery time by phone."],
+                ['', 'How fresh are the eggs?', 'Eggs are collected and recorded every day, so the eggs you buy are recent.'],
+                ['', 'Do you deliver?', self::get('delivery_note') ?: 'Yes — tell us your address and quantity when you order and we will confirm delivery.'],
+                ['', 'Do you supply shops, hotels and caterers?', 'Yes. Send us the quantities you need each week and we will give you a bulk price.'],
+                ['', 'Can I visit the farm?', 'Yes, by appointment. Use "Book a visit" on the Contact page and pick a date.'],
+            ],
+        ];
+        return collect($sets[$kind] ?? [])->map(fn ($r) => (object) ['icon' => $r[0], 'title' => $r[1], 'body' => $r[2], 'subtitle' => null, 'image' => null]);
+    }
+
+    /** The farm's own items of a kind, or the default wording when there are none. */
+    public static function itemsOr(string $kind, string $defaultsKey = null, ?int $limit = null)
+    {
+        $own = collect();
+        if (self::ready()) {
+            $own = WebsiteItem::where('kind', $kind)->where('published', true)->orderBy('sort')->orderBy('id')
+                ->when($limit, fn ($q) => $q->limit($limit))->get();
+        }
+        return $own->count() ? $own : self::defaults($defaultsKey ?? $kind);
+    }
+
+    /** Products for the website, or — before any are added — fresh eggs at today's price. */
+    public static function productsOrEggs(?int $limit = null)
+    {
+        $list = self::products($limit);
+        if ($list->count()) return $list;
+        try {
+            if (!Flock::where('status', 'active')->exists()) return $list;
+        } catch (\Throwable $e) {
+            return $list;
+        }
+        $eggs = new WebsiteItem(['kind' => 'product', 'title' => 'Fresh table eggs', 'subtitle' => 'per crate of 30',
+            'body' => 'Collected daily from our laying flocks.', 'price_source' => 'egg_crate', 'stock_source' => 'eggs']);
+        $eggs->display_price = self::get('show_prices', '1') === '1' ? self::livePrice('egg_crate') : null;
+        $eggs->stock = self::liveStock('eggs');
+        return collect([$eggs]);
     }
 
     /** Upcoming events posted on the website. */

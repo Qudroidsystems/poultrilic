@@ -17,6 +17,8 @@ class WebsiteItem extends Model
         'product'     => ['Products', 'What the farm sells. A price can follow the egg price in Prices & Costs, and stock can follow the farm records.'],
         'testimonial' => ['Testimonials', 'What customers and partners say about the farm.'],
         'faq'         => ['FAQs', 'Questions shown on the home and products pages.'],
+        'step'        => ['Farm to table', 'The steps from the farm to the customer, shown on the home and About pages (icon, title, text).'],
+        'promise'     => ['Our promise', 'Short trust badges under the home page banner (icon, title, text).'],
         'value'       => ['Values', 'What the farm stands for (icon, title, text).'],
         'partner'     => ['Partners & certifications', 'Logos shown in the partners strip.'],
         'highlight'   => ['Why buy from us', 'Short highlights on the home page (icon, title, text).'],

@@ -77,9 +77,9 @@
         io.unobserve(e.target);
       });
     }, { threshold: 0.15 });
-    $$('.reveal, [data-count], [data-stagger], .split-words').forEach((el) => io.observe(el));
+    $$('.reveal, [data-count], [data-stagger], .split-words, [data-draw], .chart-card, .ring-box').forEach((el) => io.observe(el));
   } else {
-    $$('.reveal, [data-stagger], .split-words').forEach((el) => el.classList.add('in'));
+    $$('.reveal, [data-stagger], .split-words, [data-draw], .chart-card, .ring-box').forEach((el) => el.classList.add('in'));
     $$('[data-count]').forEach(count);
   }
 

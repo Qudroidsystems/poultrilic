@@ -25,8 +25,10 @@
                 </div>
                 @include('website.partials.pager', ['pg' => $albums])
             @else
-                <div class="empty"><i class="ri-image-line"></i>Photo albums will appear here soon.</div>
+                <div class="soon reveal"><div class="soon-ic"><i class="ri-camera-3-line"></i></div><h3>Photos coming soon</h3><p>Pictures of our birds, pens, harvests and team will be shared here. Better still — come and see the farm yourself.</p><a class="btn btn-primary" href="{{ route('site.contact') }}#visit">Book a visit</a></div>
             @endif
         </div>
     </section>
+    @include('website.sections.process', ['tone' => 'cream'])
+    @include('website.sections.cta')
 @endsection

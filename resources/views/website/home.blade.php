@@ -3,23 +3,29 @@
 @php
     $s = fn ($k, $d = null) => (isset($site[$k]) && $site[$k] !== '') ? $site[$k] : $d;
     $F = fn ($p) => \App\Services\Website\WebsiteContent::fileUrl($p);
+    $W = \App\Services\Website\WebsiteContent::class;
     $ordersOpen = $s('orders_open', '1') === '1';
+    $products = $W::productsOrEggs(6);
     $heroImage = $F($s('hero_image')) ?: ($albums->first()?->coverPhoto() ? $F($albums->first()->coverPhoto()->path) : null);
     $heroSlides = $slides->count() ? $slides : collect([(object) [
-        'title' => $s('hero_title', $farm->name),
-        'subtitle' => $s('hero_subtitle', $farm->tagline),
+        'title' => $s('hero_title', $farm->tagline ?: 'Fresh from ' . $farm->name),
+        'subtitle' => $s('hero_subtitle', 'Eggs collected every day, healthy birds and honest prices — straight from our farm to your table.'),
         'image' => $s('hero_image'),
-        'button_text' => $s('hero_button_text', $products->count() ? 'See products & prices' : 'Contact us'),
-        'button_link' => $s('hero_button_link', $products->count() ? route('site.products') : route('site.contact')),
+        'button_text' => $s('hero_button_text', 'See products & prices'),
+        'button_link' => $s('hero_button_link', route('site.products')),
     ]]);
     $photos = $albums->flatMap(fn ($a) => $a->photos->take(3)->map(fn ($p) => ['p' => $p, 'a' => $a]))->take(8);
     $heroStats = collect($stats)->take(3);
-    $tickerItems = $highlights->count() ? $highlights->pluck('title') : $enterprises->pluck('name');
+    $tickerItems = $highlights->count() ? $highlights->pluck('title')
+        : $enterprises->pluck('name')->merge(['Collected daily', 'Pick-up or delivery', 'Bulk supply'])->unique();
+    $poultry = $enterprises->firstWhere('name', 'Poultry');
+    $others = $enterprises->where('name', '!=', 'Poultry')->pluck('name');
+    $firstPhoto = $heroImage;
 @endphp
 
 @section('content')
-    {{-- Hero: the farm's slides, or an animated farm scene when no photos have been added --}}
-    <section class="hero" aria-label="Welcome">
+    {{-- 1. Hero: the farm's slides, or an animated farm scene with eggs when no photo has been added --}}
+    <section class="hero {{ $heroImage || $slides->count() ? '' : 'no-photo' }}" aria-label="Welcome">
         @foreach ($heroSlides as $i => $sl)
             @php $img = $F($sl->image) ?: $heroImage; @endphp
             <div class="slide {{ $i === 0 ? 'on' : '' }}">
@@ -33,15 +39,16 @@
                         <i class="ri-seedling-line leaf" style="left:70%;top:62%;animation-delay:-4s"></i>
                         <span class="hill h2"></span><span class="hill h1"></span>
                     </div>
+                    <div class="egg-cluster" aria-hidden="true"><span class="glow"></span><span class="e e2"></span><span class="e e3"></span><span class="e e1"></span></div>
                 @endif
                 <div class="container">
                     <div class="content">
                         <span class="eyebrow" style="color:#fff">{{ $farm->name }}</span>
                         <h1 class="split-words">{{ $sl->title }}</h1>
-                        @if ($sl->subtitle)<p>{{ $sl->subtitle }}</p>@endif
-                        <div class="actions">
+                        @if ($sl->subtitle)<p class="reveal d2">{{ $sl->subtitle }}</p>@endif
+                        <div class="actions reveal d3">
                             @if ($sl->button_text)<a class="btn btn-accent" href="{{ $sl->button_link ?: route('site.products') }}">{{ $sl->button_text }} <i class="ri-arrow-right-line"></i></a>@endif
-                            <a class="btn btn-ghost" href="{{ route('site.contact') }}#visit">Visit the farm</a>
+                            <a class="btn btn-ghost" href="{{ route('site.about') }}">Our story</a>
                         </div>
                     </div>
                 </div>
@@ -60,94 +67,73 @@
         @endif
     </section>
 
-    {{-- Quick cards --}}
-    <div class="quick-cards">
-        <div class="container">
-            <div class="grid" data-stagger>
-                <a href="{{ route('site.products') }}">
-                    <i class="ri-shopping-basket-2-line"></i>
-                    <div><h3>Products &amp; prices</h3><p>{{ $products->count() ? 'Fresh from the farm, with today\'s prices.' : 'See what the farm sells.' }}</p></div>
-                </a>
-                <a href="{{ $ordersOpen ? route('site.products') . '#order' : route('site.contact') }}">
-                    <i class="ri-truck-line"></i>
-                    <div><h3>{{ $ordersOpen ? 'Order online' : 'Talk to us' }}</h3><p>{{ $ordersOpen ? 'Send an order; we call to confirm pick-up or delivery.' : 'Questions, bulk supply or a farm visit.' }}</p></div>
-                </a>
-                <a href="{{ route('site.contact') }}#visit">
-                    <i class="ri-map-pin-user-line"></i>
-                    <div><h3>Visit the farm</h3><p>See how we raise our birds and animals.</p></div>
-                </a>
-            </div>
-        </div>
-    </div>
+    {{-- 2. Our promise (trust badges) --}}
+    @include('website.sections.promise')
 
-    {{-- Ticker of highlights / enterprises --}}
+    {{-- 3. Ticker --}}
     @if ($tickerItems->count())
         <div class="ticker marquee" style="margin-top:60px" aria-hidden="true">
             <div class="track">
-                @foreach (range(1, 2) as $rep)
+                @foreach (range(1, 3) as $rep)
                     @foreach ($tickerItems as $t)<span><i class="ri-sparkling-2-fill"></i>{{ $t }}</span>@endforeach
                 @endforeach
             </div>
         </div>
     @endif
 
-    {{-- Intro (only when the farm has written it) --}}
-    @if ($s('intro_body') || $s('intro_title'))
-        <section class="section">
-            <span class="blob" style="width:300px;height:300px;left:-120px;top:20%;background:var(--accent)"></span>
-            <div class="container split">
-                <div class="reveal from-left">
-                    <span class="eyebrow">Welcome</span>
-                    <h2>{{ $s('intro_title', 'About ' . $farm->name) }}</h2>
+    {{-- 4. Welcome: the farm's own text, or a short introduction built from the farm records --}}
+    <section class="section">
+        <span class="blob" style="width:300px;height:300px;left:-120px;top:20%;background:var(--accent)"></span>
+        <div class="container split">
+            <div class="reveal from-left">
+                <span class="eyebrow">Welcome to {{ $farm->name }}</span>
+                <h2>{{ $s('intro_title', 'Good food starts with good farming') }}</h2>
+                @if ($s('intro_body'))
                     <div class="prose lead">{!! $s('intro_body') !!}</div>
-                    @if ($highlights->count())
-                        <ul class="checks" data-stagger>@foreach ($highlights->take(4) as $h)<li><span><b style="color:var(--ink)">{{ $h->title }}</b>@if ($h->body) — {{ $h->body }}@endif</span></li>@endforeach</ul>
-                    @endif
-                    <div style="display:flex;gap:12px;flex-wrap:wrap">
-                        <a class="btn btn-primary" href="{{ isset($menu['about'][0]) ? route('site.page', $menu['about'][0]['slug']) : route('site.team') }}">Discover more</a>
-                        <a class="btn btn-outline" href="{{ route('site.contact') }}#visit">Book a visit</a>
-                    </div>
+                @else
+                    @php
+                        $story = ($poultry && $poultry->count)
+                            ? 'We look after ' . number_format($poultry->count) . ' birds in ' . $poultry->units . ' ' . $poultry->unit_label
+                              . ($others->count() ? ', alongside ' . $others->map(fn ($o) => strtolower($o))->join(', ', ' and ') : '') . '. '
+                            : '';
+                    @endphp
+                    <p class="lead">
+                        {{ $story }}Every egg collected, every bag of feed and every bird is recorded by our team each day — so what you buy from us is fresh and properly accounted for.
+                    </p>
+                @endif
+                <ul class="checks" data-stagger>
+                    @foreach (($highlights->count() ? $highlights : $W::itemsOr('promise'))->take(4) as $h)
+                        <li><span><b style="color:var(--ink)">{{ $h->title }}</b>@if ($h->body) — {{ $h->body }}@endif</span></li>
+                    @endforeach
+                </ul>
+                <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <a class="btn btn-primary" href="{{ route('site.about') }}">About the farm</a>
+                    <a class="btn btn-outline" href="{{ route('site.contact') }}#visit">Book a visit</a>
                 </div>
-                @php $intro = $F($s('intro_image')) ?: $heroImage; @endphp
+            </div>
+            @php $intro = $F($s('intro_image')) ?: $firstPhoto; @endphp
+            <div class="reveal from-right d2">
                 @if ($intro)
-                    <div class="media-frame reveal from-right d2">
+                    <div class="media-frame">
                         <img src="{{ $intro }}" alt="{{ $farm->name }}" loading="lazy" data-parallax="-0.04">
                         @if ($s('founded_year'))<div class="badge"><b>{{ max(1, now()->year - (int) $s('founded_year')) }}+</b>years of farming</div>@endif
                     </div>
+                @else
+                    <div class="egg-stage" aria-hidden="true">
+                        <div class="big-egg"><span class="shine-dot"></span></div>
+                        @foreach ($heroStats->take(3) as $i => $st)
+                            <span class="orbit o{{ $i + 1 }}"><i class="{{ $st['icon'] }}"></i> {{ number_format($st['value']) }}{{ $st['suffix'] }} <small style="color:var(--muted);font-weight:500">{{ \Illuminate\Support\Str::lower(\Illuminate\Support\Str::limit($st['label'], 22, '')) }}</small></span>
+                        @endforeach
+                        @if ($s('founded_year'))<span class="orbit o4"><i class="ri-calendar-check-line"></i> since {{ $s('founded_year') }}</span>@endif
+                    </div>
                 @endif
             </div>
-        </section>
-    @endif
+        </div>
+    </section>
 
-    {{-- Live numbers --}}
-    @include('website.partials.stats', ['stats' => $stats])
-
-    {{-- What the farm keeps (live from flocks and farm units) --}}
-    @if ($enterprises->count())
-        <section class="section soft">
-            <div class="container">
-                <div class="section-head center reveal">
-                    <span class="eyebrow">On the farm</span>
-                    <h2>What we raise and grow</h2>
-                    <p class="lead">Straight from our records: the birds, animals and produce on the farm right now.</p>
-                </div>
-                <div class="enterprises" data-stagger>
-                    @foreach ($enterprises as $e)
-                        <div class="enterprise" style="--c: {{ $e->color }}" data-tilt>
-                            <i class="{{ $e->icon }}"></i>
-                            <h3>{{ $e->name }}</h3>
-                            @if ($e->count)<div class="n" data-count="{{ $e->count }}">{{ number_format($e->count) }}</div><small style="color:var(--muted)">{{ strtolower($e->count_label) }} · {{ $e->units }} {{ strtolower($e->unit_label) }}</small>@endif
-                            @if ($e->text)<p>{{ \Illuminate\Support\Str::limit($e->text, 120) }}</p>@endif
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-    @endif
-
-    {{-- Products --}}
+    {{-- 5. Products with today's prices --}}
     @if ($products->count())
-        <section class="section">
+        <section class="section soft">
             <span class="blob" style="width:380px;height:380px;right:-140px;top:10%;background:var(--primary)"></span>
             <div class="container">
                 <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:40px" class="reveal">
@@ -163,28 +149,28 @@
         </section>
     @endif
 
-    {{-- Values --}}
-    @if ($values->count())
-        <section class="section cream">
-            <div class="container">
-                <div class="section-head center reveal">
-                    <span class="eyebrow">What we stand for</span>
-                    <h2>{{ $s('values_title', 'How we farm') }}</h2>
-                </div>
-                <div class="grid-3">
-                    @foreach ($values as $i => $v)
-                        <div class="value reveal flip d{{ $i % 3 + 1 }}" data-n="{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}">
-                            <i class="{{ $v->icon ?: 'ri-star-line' }}"></i>
-                            <h3>{{ $v->title }}</h3>
-                            @if ($v->body)<p>{{ $v->body }}</p>@endif
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-    @endif
+    {{-- 6. Live egg chart --}}
+    @include('website.sections.trend')
 
-    {{-- Gallery preview --}}
+    {{-- 7. Farm to table --}}
+    @include('website.sections.process', ['tone' => 'cream'])
+
+    {{-- 8. What we raise (live) --}}
+    @include('website.sections.enterprises', ['enterprises' => $enterprises])
+
+    {{-- 9. Live numbers --}}
+    @include('website.partials.stats', ['stats' => $stats])
+
+    {{-- 10. Values --}}
+    @include('website.sections.values', ['tone' => ''])
+
+    {{-- 11. Why eggs --}}
+    @include('website.sections.nutrition')
+
+    {{-- 12. Bulk buyers --}}
+    @include('website.sections.bulk')
+
+    {{-- 13. Gallery --}}
     @if ($photos->count())
         <section class="section soft">
             <div class="container">
@@ -204,7 +190,7 @@
         </section>
     @endif
 
-    {{-- Testimonials --}}
+    {{-- 14. Testimonials --}}
     @if ($testimonials->count())
         <section class="section">
             <div class="container">
@@ -227,7 +213,7 @@
         </section>
     @endif
 
-    {{-- News & events --}}
+    {{-- 15. News & events --}}
     @if ($news->count() || $events->count())
         <section class="section soft">
             <div class="container">
@@ -257,7 +243,7 @@
         </section>
     @endif
 
-    {{-- Partners --}}
+    {{-- 16. Partners --}}
     @if ($partners->count())
         <section class="section" style="padding:60px 0">
             <div class="container">
@@ -276,41 +262,12 @@
         </section>
     @endif
 
-    {{-- FAQ --}}
-    @if ($faqs->count())
-        <section class="section cream">
-            <div class="container split" style="align-items:start">
-                <div class="reveal from-left">
-                    <span class="eyebrow">FAQs</span>
-                    <h2>Frequently asked questions</h2>
-                    <p class="lead">Can't find what you're looking for? We're happy to help.</p>
-                    <div style="display:flex;gap:12px;flex-wrap:wrap">
-                        <a class="btn btn-primary" href="{{ route('site.contact') }}">Ask a question</a>
-                        @if ($farm->phones)<a class="btn btn-outline" href="tel:{{ preg_replace('/\s+/', '', $farm->phones[0]) }}"><i class="ri-phone-line"></i> {{ $farm->phones[0] }}</a>@endif
-                    </div>
-                </div>
-                <div class="faq reveal from-right d2">
-                    @foreach ($faqs as $i => $f)
-                        <details @if ($i === 0) open @endif><summary>{{ $f->title }}</summary><div>{!! nl2br(e($f->body)) !!}</div></details>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-    @endif
+    {{-- 17. FAQs --}}
+    @include('website.sections.faq', ['tone' => 'cream', 'limit' => 6])
 
-    {{-- Call to action --}}
-    <section class="section" style="padding:70px 0">
-        <div class="container">
-            <div class="cta-band reveal zoom">
-                <div>
-                    <h2>{{ $ordersOpen ? 'Need eggs, birds or farm produce?' : 'Come and see the farm' }}</h2>
-                    <p>{{ $ordersOpen ? 'Send us an order and we will confirm the price, pick-up or delivery by phone.' : 'Meet the team and see how we raise our birds and animals.' }}</p>
-                </div>
-                <div style="display:flex;gap:12px;flex-wrap:wrap">
-                    @if ($ordersOpen)<a class="btn btn-light" href="{{ route('site.products') }}#order">Place an order</a>@endif
-                    <a class="btn btn-ghost" href="{{ route('site.contact') }}#visit">Book a visit</a>
-                </div>
-            </div>
-        </div>
-    </section>
+    {{-- 18. Visit the farm --}}
+    @include('website.sections.visit')
+
+    {{-- 19. Newsletter --}}
+    @include('website.sections.newsletter')
 @endsection

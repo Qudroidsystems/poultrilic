@@ -31,4 +31,5 @@
             </aside>
         </div>
     </section>
+    @include('website.sections.cta')
 @endsection

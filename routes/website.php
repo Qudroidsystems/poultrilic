@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::name('site.')->group(function () {
+    Route::get('/about', [SiteController::class, 'about'])->name('about');
     Route::get('/products', [SiteController::class, 'products'])->name('products');
     Route::post('/products/order', [SiteController::class, 'order'])->middleware('throttle:6,10')->name('order');
     Route::get('/pages/{slug}', [SiteController::class, 'page'])->name('page');
@@ -28,6 +29,7 @@ Route::name('site.')->group(function () {
 Route::middleware('auth')->prefix('admin/website')->name('website.admin.')->group(function () {
     Route::get('/', [WA::class, 'index'])->name('index');
     Route::get('/settings', [WA::class, 'settings'])->name('settings');
+    Route::post('/starter', [WA::class, 'starter'])->name('starter');
     Route::post('/settings', [WA::class, 'saveSettings'])->name('settings.save');
 
     Route::get('/gallery', [WA::class, 'albums'])->name('albums');

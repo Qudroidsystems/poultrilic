@@ -23,8 +23,9 @@
                 </div>
                 @include('website.partials.pager', ['pg' => $posts])
             @else
-                <div class="empty"><i class="ri-newspaper-line"></i>Nothing here yet — check back soon.</div>
+                <div class="soon reveal"><div class="soon-ic"><i class="ri-newspaper-line"></i></div><h3>News is on its way</h3><p>Farm news, offers, farm days and tips will appear here. Join our e-mail list to hear first.</p><a class="btn btn-primary" href="{{ route('site.products') }}">See today's products</a></div>
             @endif
         </div>
     </section>
+    @include('website.sections.newsletter')
 @endsection

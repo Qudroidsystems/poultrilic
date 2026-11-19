@@ -27,6 +27,7 @@
                         ['slides', 'Home slider', 'ri-slideshow-3-line', $counts['slides']], ['pages', 'Pages', 'ri-pages-line', $counts['pages']],
                         ['posts', 'News & events', 'ri-newspaper-line', $counts['posts']], [null, 'Gallery albums', 'ri-image-2-line', $counts['albums']],
                         ['people', 'Our team', 'ri-team-line', $counts['people']], ['testimonials', 'Testimonials', 'ri-chat-quote-line', $counts['testimonials']],
+                        ['promises', 'Our promise', 'ri-shield-star-line', $counts['promises']], ['steps', 'Farm to table', 'ri-route-line', $counts['steps']],
                         ['values', 'Values', 'ri-medal-line', $counts['values']], ['highlights', 'Why buy from us', 'ri-star-smile-line', $counts['highlights']],
                         ['faqs', 'FAQs', 'ri-question-answer-line', $counts['faqs']], ['partners', 'Partners', 'ri-shake-hands-line', $counts['partners']],
                     ] as [$type, $label, $icon, $n])
@@ -60,6 +61,9 @@
                 <div class="d-grid gap-2">
                     <a class="btn btn-outline-primary" href="{{ route('website.admin.settings') }}"><i class="ri-palette-line me-1"></i>Colours, banner, numbers &amp; contacts</a>
                     <a class="btn btn-outline-primary" href="{{ route('website.admin.create', 'products') }}"><i class="ri-add-line me-1"></i>Add a product</a>
+                    <form method="POST" action="{{ route('website.admin.starter') }}" class="d-grid">@csrf
+                        <button class="btn btn-outline-secondary" title="Copies the standard wording for Our promise, Farm to table, Values and FAQs into editable items"><i class="ri-magic-line me-1"></i>Add starter wording to edit</button>
+                    </form>
                     <a class="btn btn-outline-primary" href="{{ route('website.admin.create', 'posts') }}"><i class="ri-add-line me-1"></i>Write news or an event</a>
                     <a class="btn btn-outline-primary" href="{{ route('website.admin.albums') }}"><i class="ri-upload-cloud-2-line me-1"></i>Upload gallery photos</a>
                 </div>
