@@ -58,13 +58,31 @@ class WebsiteContent
     {
         Cache::forget(self::CACHE);
         self::$farm = null;
+        self::$ready = null;
         Cache::forget('website.stats');
         Cache::forget('website.menu');
     }
 
+    /**
+     * The website is on unless the admin switched it off. It also shows before
+     * `php artisan migrate` has created its tables (live farm data only, no content yet).
+     */
     public static function enabled(): bool
     {
-        return Schema::hasTable('website_settings') && self::get('enabled', '1') === '1';
+        return self::get('enabled', '1') === '1';
+    }
+
+    /** True once the website's own tables exist (content, orders and messages can be stored). */
+    private static ?bool $ready = null;
+
+    public static function ready(): bool
+    {
+        try {
+            return self::$ready ??= Schema::hasTable('website_settings') && Schema::hasTable('website_items')
+                && Schema::hasTable('website_posts') && Schema::hasTable('website_albums') && Schema::hasTable('website_messages');
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     // ── the farm (from the portal) ──────────────────────────────────────

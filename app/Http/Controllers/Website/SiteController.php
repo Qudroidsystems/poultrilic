@@ -25,6 +25,15 @@ class SiteController extends Controller
     {
         if (!W::enabled()) return redirect()->route('login');
 
+        if (!W::ready()) {
+            // Before `php artisan migrate`: show the site with the live farm data only.
+            return view('website.home', [
+                'slides' => collect(), 'values' => collect(), 'highlights' => collect(), 'testimonials' => collect(),
+                'faqs' => collect(), 'partners' => collect(), 'products' => collect(), 'news' => collect(),
+                'events' => collect(), 'albums' => collect(), 'enterprises' => W::enterprises(), 'stats' => W::stats(),
+            ]);
+        }
+
         return view('website.home', [
             'slides'       => WebsiteSlide::where('published', true)->orderBy('sort')->orderBy('id')->get(),
             'values'       => $this->items('value'),
@@ -47,12 +56,13 @@ class SiteController extends Controller
             'products'    => W::products(),
             'enterprises' => W::enterprises(),
             'faqs'        => $this->items('faq'),
-            'pages'       => WebsitePage::where('menu', 'products')->where('published', true)->orderBy('sort')->get(),
+            'pages'       => W::ready() ? WebsitePage::where('menu', 'products')->where('published', true)->orderBy('sort')->get() : collect(),
         ]);
     }
 
     public function order(Request $request)
     {
+        if (!W::ready()) return back()->withErrors(['website' => 'Online forms are not available yet. Please call or WhatsApp us.']);
         abort_unless(W::get('orders_open', '1') === '1', 404);
         $data = $request->validate([
             'product'  => 'required|string|max:150',
@@ -79,6 +89,7 @@ class SiteController extends Controller
 
     public function page(string $slug)
     {
+        abort_unless(W::ready(), 404);
         $page = WebsitePage::where('slug', $slug)->where('published', true)->firstOrFail();
         $siblings = $page->menu ? WebsitePage::where('menu', $page->menu)->where('published', true)->orderBy('sort')->get(['title', 'slug']) : collect();
         return view('website.page', compact('page', 'siblings'));
@@ -86,6 +97,7 @@ class SiteController extends Controller
 
     public function news(Request $request)
     {
+        if (!W::ready()) return view('website.news', ['posts' => $this->emptyPage(9), 'categories' => collect(), 'type' => null]);
         $type = in_array($request->get('type'), ['news', 'event', 'tip'], true) ? $request->get('type') : null;
         $q = WebsitePost::live()
             ->when($type, fn ($x) => $x->where('type', $type))
@@ -100,6 +112,7 @@ class SiteController extends Controller
 
     public function post(string $slug)
     {
+        abort_unless(W::ready(), 404);
         $post = WebsitePost::live()->where('slug', $slug)->firstOrFail();
         $more = WebsitePost::live()->where('id', '!=', $post->id)->where('type', $post->type)->orderByDesc('published_at')->limit(3)->get();
         return view('website.post', compact('post', 'more'));
@@ -107,6 +120,7 @@ class SiteController extends Controller
 
     public function gallery()
     {
+        if (!W::ready()) return view('website.gallery', ['albums' => $this->emptyPage(12)]);
         return view('website.gallery', [
             'albums' => WebsiteAlbum::where('published', true)->whereHas('photos')->withCount('photos')->with('photos')
                 ->orderBy('sort')->orderByDesc('taken_on')->paginate(12),
@@ -115,12 +129,14 @@ class SiteController extends Controller
 
     public function album(string $slug)
     {
+        abort_unless(W::ready(), 404);
         $album = WebsiteAlbum::where('slug', $slug)->where('published', true)->with('photos')->firstOrFail();
         return view('website.album', compact('album'));
     }
 
     public function team()
     {
+        if (!W::ready()) return view('website.team', ['people' => collect()]);
         $people = WebsitePerson::where('published', true)->orderBy('sort')->orderBy('name')->get()->groupBy('group');
         return view('website.team', compact('people'));
     }
@@ -132,6 +148,7 @@ class SiteController extends Controller
 
     public function sendContact(Request $request)
     {
+        if (!W::ready()) return back()->withErrors(['website' => 'Online forms are not available yet. Please call or WhatsApp us.']);
         $data = $request->validate([
             'type'       => 'nullable|in:contact,visit',
             'name'       => 'required|string|max:150',
@@ -153,6 +170,7 @@ class SiteController extends Controller
 
     public function newsletter(Request $request)
     {
+        if (!W::ready()) return back()->withErrors(['website' => 'Online forms are not available yet. Please call or WhatsApp us.']);
         $data = $request->validate(['email' => 'required|email|max:150', 'website' => 'nullable|max:0']);
         if (!WebsiteMessage::where('type', 'newsletter')->where('email', $data['email'])->exists()) {
             WebsiteMessage::create(['type' => 'newsletter', 'email' => $data['email'], 'subject' => 'Newsletter sign-up', 'ip' => $request->ip()]);
@@ -174,8 +192,14 @@ class SiteController extends Controller
         return Storage::disk('public')->response($path, null, ['Cache-Control' => 'public, max-age=2592000']);
     }
 
+    private function emptyPage(int $per)
+    {
+        return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $per, 1, ['path' => request()->url()]);
+    }
+
     private function items(string $kind, ?int $limit = null)
     {
+        if (!W::ready()) return collect();
         return WebsiteItem::where('kind', $kind)->where('published', true)->orderBy('sort')->when($limit, fn ($q) => $q->limit($limit))->get();
     }
 }

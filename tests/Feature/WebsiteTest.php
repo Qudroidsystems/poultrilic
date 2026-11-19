@@ -90,3 +90,17 @@ it('calls the farm Prime Farm unless another name is saved', function () {
     $this->get('/login')->assertSee('Prime Farm')->assertDontSee('>Poultrilic<', false);
     $this->get('/')->assertSee('Prime Farm');
 });
+
+it('shows the website at "/" even before the website tables are migrated', function () {
+    foreach (['website_messages', 'website_photos', 'website_albums', 'website_people', 'website_items', 'website_posts', 'website_pages', 'website_slides', 'website_settings'] as $t) {
+        \Illuminate\Support\Facades\Schema::dropIfExists($t);
+    }
+    W::flush();
+    $flock = Flock::create(['name' => 'A', 'flock_type' => 'layer', 'initial_bird_count' => 500, 'status' => 'active']);
+
+    $this->get('/')->assertOk()->assertSee('Sunrise Farm')->assertSee('Birds on the farm today');
+    foreach (['site.products', 'site.news', 'site.gallery', 'site.team', 'site.contact'] as $r) {
+        $this->get(route($r))->assertOk();
+    }
+    $this->post(route('site.contact.send'), ['name' => 'Ada', 'message' => 'Hi'])->assertSessionHasErrors('website');
+});
